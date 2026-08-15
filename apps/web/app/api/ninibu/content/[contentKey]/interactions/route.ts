@@ -1,0 +1,2 @@
+import { NextResponse } from "next/server"; import { authorizedBackend } from "@/lib/backend"; import { apiPaths } from "@ninibu/api";
+export async function POST(request: Request, { params }: { params: Promise<{ contentKey: string }> }) { const { contentKey } = await params; const result = await authorizedBackend(apiPaths.contentInteractions(contentKey), { method: "POST", body: await request.text() }); return NextResponse.json(result.body, { status: result.status }); }

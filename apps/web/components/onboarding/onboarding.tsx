@@ -1,17 +1,109 @@
 "use client";
-import { useEffect,useState } from "react";import { Button } from "@/components/ui/button";import { Input } from "@/components/ui/input";import { Select } from "@/components/ui/select";import { Field } from "@/components/ui/field";import type { Country,Province,City,Profile } from "@ninibu/types";
-type Step="parent"|"residence"|"child";
-async function api<T>(url:string,init?:RequestInit):Promise<T>{const r=await fetch(url,{...init,headers:{"content-type":"application/json",...(init?.headers||{})}});const j=await r.json();if(!j.success)throw new Error(j.error?.message||"خطا در ارتباط با سرور");return j.data as T}
-export function Onboarding({onComplete}:{onComplete:()=>void}){
- const [step,setStep]=useState<Step>("parent");const [profile,setProfile]=useState<Partial<Profile>>({});const [countries,setCountries]=useState<Country[]>([]);const [provinces,setProvinces]=useState<Province[]>([]);const [cities,setCities]=useState<City[]>([]);const [child,setChild]=useState({first_name:"",last_name:"",gender:"",birth_date:""});const [error,setError]=useState("");const [loading,setLoading]=useState(false);
- useEffect(()=>{api<Profile>("/api/ninibu/profile").then(p=>{setProfile(p);if(p.onboarding_step==="residence")setStep("residence");if(p.onboarding_step==="child")setStep("child")}).catch(()=>{});api<Country[]>("/api/ninibu/geo/countries").then(setCountries).catch(()=>{})},[]);
- async function saveParent(){setLoading(true);setError("");try{await api("/api/ninibu/profile",{method:"PATCH",body:JSON.stringify({first_name:profile.first_name,last_name:profile.last_name,birth_date:profile.birth_date||null,gender:profile.gender||null,onboarding_step:"residence"})});setStep("residence")}catch(e){setError(e instanceof Error?e.message:"خطا")}finally{setLoading(false)}}
- async function countryChanged(id:number){setProfile(p=>({...p,country:{id} as Country,province:undefined,city:undefined}));if(id)setProvinces(await api<Province[]>(`/api/ninibu/geo/provinces?country_id=${id}`))}
- async function provinceChanged(id:number){setProfile(p=>({...p,province:{id} as Province,city:undefined}));if(id)setCities(await api<City[]>(`/api/ninibu/geo/cities?province_id=${id}`))}
- async function saveResidence(){setLoading(true);setError("");try{await api("/api/ninibu/profile",{method:"PATCH",body:JSON.stringify({country_id:profile.country?.id,province_id:profile.province?.id,city_id:profile.city?.id,residence_address:profile.residence_address||"",onboarding_step:"child"})});setStep("child")}catch(e){setError(e instanceof Error?e.message:"خطا")}finally{setLoading(false)}}
- async function saveChild(){setLoading(true);setError("");try{await api("/api/ninibu/children",{method:"POST",body:JSON.stringify({...child,blood_type:null,birth_weight_grams:null,birth_height_cm:null,birth_head_circumference_cm:null,notes:""})});await api("/api/ninibu/profile/onboarding/complete",{method:"POST",body:JSON.stringify({skip_preferences:true})});onComplete()}catch(e){setError(e instanceof Error?e.message:"خطا")}finally{setLoading(false)}}
- const progress=step==="parent"?1:step==="residence"?2:3;
- return <section className="onboarding-shell"><div className="onboarding-head"><span>راه‌اندازی نینیبو</span><strong>{progress} از 3</strong></div><div className="progress"><i style={{width:`${progress/3*100}%`}}/></div>{step==="parent"&&<div className="panel"><h1>اول کمی با شما آشنا شویم</h1><p>این اطلاعات برای شخصی‌سازی تجربه شماست.</p><div className="grid-two"><Field label="نام"><Input value={profile.first_name??""} onChange={e=>setProfile(p=>({...p,first_name:e.target.value}))}/></Field><Field label="نام خانوادگی"><Input value={profile.last_name??""} onChange={e=>setProfile(p=>({...p,last_name:e.target.value}))}/></Field></div><Field label="تاریخ تولد (اختیاری)"><Input type="date" dir="ltr" value={profile.birth_date?.slice(0,10)??""} onChange={e=>setProfile(p=>({...p,birth_date:e.target.value}))}/></Field><Field label="جنسیت (اختیاری)"><Select value={profile.gender??""} onChange={e=>setProfile(p=>({...p,gender:e.target.value}))}><option value="">انتخاب کنید</option><option value="female">زن</option><option value="male">مرد</option><option value="other">سایر / ترجیح می‌دهم نگویم</option></Select></Field><Button onClick={saveParent} disabled={loading}>ادامه</Button></div>}
- {step==="residence"&&<div className="panel"><h1>کجا زندگی می‌کنید؟</h1><p>برای پیشنهاد خدمات و مراکز مناسب شهر شما.</p><Field label="کشور"><Select value={profile.country?.id??""} onChange={e=>countryChanged(Number(e.target.value))}><option value="">انتخاب کشور</option>{countries.map(c=><option key={c.id} value={c.id}>{c.local_name||c.name}</option>)}</Select></Field><Field label="استان"><Select value={profile.province?.id??""} onChange={e=>provinceChanged(Number(e.target.value))}><option value="">انتخاب استان</option>{provinces.map(p=><option key={p.id} value={p.id}>{p.local_name||p.name}</option>)}</Select></Field><Field label="شهر"><Select value={profile.city?.id??""} onChange={e=>setProfile(p=>({...p,city:{id:Number(e.target.value)} as City}))}><option value="">انتخاب شهر</option>{cities.map(c=><option key={`${c.province_id}-${c.id}`} value={c.id}>{c.local_name||c.name}</option>)}</Select></Field><Field label="آدرس (اختیاری)"><Input value={profile.residence_address??""} onChange={e=>setProfile(p=>({...p,residence_address:e.target.value}))}/></Field><Button onClick={saveResidence} disabled={loading}>ادامه</Button></div>}
- {step==="child"&&<div className="panel"><h1>فرزندتان را اضافه کنید</h1><p>اطلاعات پزشکی را بعداً از بخش سلامت تکمیل می‌کنید.</p><div className="grid-two"><Field label="نام"><Input value={child.first_name} onChange={e=>setChild(p=>({...p,first_name:e.target.value}))}/></Field><Field label="نام خانوادگی"><Input value={child.last_name} onChange={e=>setChild(p=>({...p,last_name:e.target.value}))}/></Field></div><Field label="تاریخ تولد"><Input type="date" dir="ltr" value={child.birth_date} onChange={e=>setChild(p=>({...p,birth_date:e.target.value}))}/></Field><Field label="جنسیت"><Select value={child.gender} onChange={e=>setChild(p=>({...p,gender:e.target.value}))}><option value="">انتخاب کنید</option><option value="female">دختر</option><option value="male">پسر</option><option value="other">سایر</option></Select></Field><Button onClick={saveChild} disabled={loading}>ورود به نینیبو</Button></div>}{error&&<p className="error panel-error">{error}</p>}</section>
+
+import { useEffect, useState } from "react";
+import type { City, Country, Profile, Province } from "@ninibu/types";
+import { Button } from "@/components/ui/button";
+import { Field } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { JalaliDateInput } from "@/components/ui/jalali-date-input";
+import { Select } from "@/components/ui/select";
+
+type Step = "parent" | "residence" | "child";
+
+async function api<T>(url: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(url, { ...init, headers: { "content-type": "application/json", ...(init?.headers || {}) } });
+  const json = await response.json();
+  if (!json.success) throw new Error(json.error?.message || "خطا در ارتباط با سرور");
+  return json.data as T;
+}
+
+export function Onboarding({ onComplete }: { onComplete: () => void }) {
+  const [step, setStep] = useState<Step>("parent");
+  const [profile, setProfile] = useState<Partial<Profile>>({});
+  const [countries, setCountries] = useState<Country[]>([]);
+  const [provinces, setProvinces] = useState<Province[]>([]);
+  const [cities, setCities] = useState<City[]>([]);
+  const [child, setChild] = useState({ first_name: "", last_name: "", gender: "", birth_date: "" });
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    api<Profile>("/api/ninibu/profile").then((item) => {
+      setProfile(item);
+      if (item.onboarding_step === "residence") setStep("residence");
+      if (item.onboarding_step === "child") setStep("child");
+    }).catch(() => {});
+    api<Country[]>("/api/ninibu/geo/countries").then(setCountries).catch(() => {});
+  }, []);
+
+  async function saveParent() {
+    setLoading(true); setError("");
+    try {
+      await api("/api/ninibu/profile", { method: "PATCH", body: JSON.stringify({ first_name: profile.first_name, last_name: profile.last_name, birth_date: profile.birth_date || null, gender: profile.gender || null, onboarding_step: "residence" }) });
+      setStep("residence");
+    } catch (cause) { setError(cause instanceof Error ? cause.message : "خطا"); }
+    finally { setLoading(false); }
+  }
+
+  async function countryChanged(id: number) {
+    setProfile((current) => ({ ...current, country: { id } as Country, province: undefined, city: undefined }));
+    setCities([]);
+    if (id) setProvinces(await api<Province[]>(`/api/ninibu/geo/provinces?country_id=${id}`));
+  }
+
+  async function provinceChanged(id: number) {
+    setProfile((current) => ({ ...current, province: { id } as Province, city: undefined }));
+    if (id) setCities(await api<City[]>(`/api/ninibu/geo/cities?province_id=${id}`));
+  }
+
+  async function saveResidence() {
+    setLoading(true); setError("");
+    try {
+      await api("/api/ninibu/profile", { method: "PATCH", body: JSON.stringify({ country_id: profile.country?.id, province_id: profile.province?.id, city_id: profile.city?.id, residence_address: profile.residence_address || "", onboarding_step: "child" }) });
+      setStep("child");
+    } catch (cause) { setError(cause instanceof Error ? cause.message : "خطا"); }
+    finally { setLoading(false); }
+  }
+
+  async function saveChild() {
+    setLoading(true); setError("");
+    try {
+      await api("/api/ninibu/children", { method: "POST", body: JSON.stringify({ ...child, blood_type: null, birth_weight_grams: null, birth_height_cm: null, birth_head_circumference_cm: null, notes: "" }) });
+      await api("/api/ninibu/profile/onboarding/complete", { method: "POST", body: JSON.stringify({ skip_preferences: true }) });
+      onComplete();
+    } catch (cause) { setError(cause instanceof Error ? cause.message : "خطا"); }
+    finally { setLoading(false); }
+  }
+
+  const progress = step === "parent" ? 1 : step === "residence" ? 2 : 3;
+  return <section className="onboarding-shell">
+    <div className="onboarding-head"><span>راه‌اندازی نینیبو</span><strong>{progress} از 3</strong></div>
+    <div className="progress"><i style={{ width: `${progress / 3 * 100}%` }} /></div>
+
+    {step === "parent" && <div className="panel">
+      <h1>اول کمی با شما آشنا شویم</h1><p>این اطلاعات برای شخصی‌سازی تجربه شماست.</p>
+      <div className="grid-two"><Field label="نام"><Input value={profile.first_name ?? ""} onChange={(event) => setProfile((current) => ({ ...current, first_name: event.target.value }))} /></Field><Field label="نام خانوادگی"><Input value={profile.last_name ?? ""} onChange={(event) => setProfile((current) => ({ ...current, last_name: event.target.value }))} /></Field></div>
+      <Field label="تاریخ تولد جلالی (اختیاری)"><JalaliDateInput value={profile.birth_date?.slice(0, 10) ?? ""} onChange={(birth_date) => setProfile((current) => ({ ...current, birth_date }))} /></Field>
+      <Field label="جنسیت (اختیاری)"><Select value={profile.gender ?? ""} onChange={(event) => setProfile((current) => ({ ...current, gender: event.target.value }))}><option value="">انتخاب کنید</option><option value="female">زن</option><option value="male">مرد</option><option value="other">سایر / ترجیح می‌دهم نگویم</option></Select></Field>
+      <Button onClick={saveParent} disabled={loading}>ادامه</Button>
+    </div>}
+
+    {step === "residence" && <div className="panel">
+      <h1>کجا زندگی می‌کنید؟</h1><p>برای پیشنهاد خدمات و مراکز مناسب شهر شما.</p>
+      <Field label="کشور"><Select value={profile.country?.id ?? ""} onChange={(event) => countryChanged(Number(event.target.value))}><option value="">انتخاب کشور</option>{countries.map((country) => <option key={country.id} value={country.id}>{country.local_name || country.name}</option>)}</Select></Field>
+      <Field label="استان"><Select value={profile.province?.id ?? ""} onChange={(event) => provinceChanged(Number(event.target.value))}><option value="">انتخاب استان</option>{provinces.map((province) => <option key={province.id} value={province.id}>{province.local_name || province.name}</option>)}</Select></Field>
+      <Field label="شهر"><Select value={profile.city?.id ?? ""} onChange={(event) => setProfile((current) => ({ ...current, city: { id: Number(event.target.value) } as City }))}><option value="">انتخاب شهر</option>{cities.map((city) => <option key={`${city.province_id}-${city.id}`} value={city.id}>{city.local_name || city.name}</option>)}</Select></Field>
+      <Field label="آدرس (اختیاری)"><Input value={profile.residence_address ?? ""} onChange={(event) => setProfile((current) => ({ ...current, residence_address: event.target.value }))} /></Field>
+      <Button onClick={saveResidence} disabled={loading}>ادامه</Button>
+    </div>}
+
+    {step === "child" && <div className="panel">
+      <h1>فرزندتان را اضافه کنید</h1><p>اطلاعات پزشکی را بعداً از بخش سلامت تکمیل می‌کنید.</p>
+      <div className="grid-two"><Field label="نام"><Input value={child.first_name} onChange={(event) => setChild((current) => ({ ...current, first_name: event.target.value }))} /></Field><Field label="نام خانوادگی"><Input value={child.last_name} onChange={(event) => setChild((current) => ({ ...current, last_name: event.target.value }))} /></Field></div>
+      <Field label="تاریخ تولد جلالی"><JalaliDateInput required value={child.birth_date} onChange={(birth_date) => setChild((current) => ({ ...current, birth_date }))} /></Field>
+      <Field label="جنسیت"><Select value={child.gender} onChange={(event) => setChild((current) => ({ ...current, gender: event.target.value }))}><option value="">انتخاب کنید</option><option value="female">دختر</option><option value="male">پسر</option><option value="other">سایر</option></Select></Field>
+      <Button onClick={saveChild} disabled={loading}>ورود به نینیبو</Button>
+    </div>}
+    {error && <p className="error panel-error">{error}</p>}
+  </section>;
 }

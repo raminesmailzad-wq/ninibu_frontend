@@ -1,17 +1,16 @@
+import { formatJalaliDate } from "@/lib/datetime";
+
 export function formatNumber(value?: number | null, maximumFractionDigits = 1): string {
   if (value === undefined || value === null || Number.isNaN(value)) return "—";
   return new Intl.NumberFormat("fa-IR", { maximumFractionDigits }).format(value);
 }
 
 export function formatDate(value?: string | null): string {
-  if (!value) return "—";
-  const date = new Date(value.length === 10 ? `${value}T00:00:00` : value);
-  if (Number.isNaN(date.getTime())) return "—";
-  return new Intl.DateTimeFormat("fa-IR", { year: "numeric", month: "long", day: "numeric" }).format(date);
+  return formatJalaliDate(value);
 }
 
 export function childAge(birthDate: string): string {
-  const birth = new Date(`${birthDate}T00:00:00`);
+  const birth = new Date(`${birthDate}T12:00:00`);
   const now = new Date();
   if (Number.isNaN(birth.getTime()) || birth > now) return "";
   let months = (now.getFullYear() - birth.getFullYear()) * 12 + now.getMonth() - birth.getMonth();
@@ -25,28 +24,16 @@ export function childAge(birthDate: string): string {
 
 export function visitTypeLabel(value: string): string {
   const labels: Record<string, string> = {
-    routine_checkup: "چکاپ دوره‌ای",
-    illness: "بیماری",
-    emergency: "اورژانسی",
-    follow_up: "پیگیری",
-    vaccination: "واکسیناسیون",
-    consultation: "مشاوره",
-    hospitalization: "بستری",
-    other: "سایر"
+    routine_checkup: "چکاپ دوره‌ای", illness: "بیماری", emergency: "اورژانسی", follow_up: "پیگیری",
+    vaccination: "واکسیناسیون", consultation: "مشاوره", hospitalization: "بستری", other: "سایر"
   };
   return labels[value] ?? value;
 }
 
 export function timelineTypeLabel(value: string): string {
   const labels: Record<string, string> = {
-    growth_measurement: "رشد",
-    vaccination: "واکسن",
-    allergy: "حساسیت",
-    medical_visit: "ویزیت",
-    diagnosis: "تشخیص",
-    treatment: "درمان",
-    prescription: "نسخه",
-    child_medication: "دارو"
+    growth_measurement: "رشد", vaccination: "واکسن", allergy: "حساسیت", medical_visit: "ویزیت",
+    diagnosis: "تشخیص", treatment: "درمان", prescription: "نسخه", child_medication: "دارو"
   };
   return labels[value] ?? value;
 }

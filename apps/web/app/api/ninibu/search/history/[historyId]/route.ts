@@ -1,0 +1,2 @@
+import { NextResponse } from "next/server"; import { authorizedBackend } from "@/lib/backend"; import { apiPaths } from "@ninibu/api";
+export async function DELETE(_: Request, { params }: { params: Promise<{ historyId: string }> }) { const { historyId } = await params; const result = await authorizedBackend(apiPaths.searchHistoryItem(historyId), { method: "DELETE" }); return result.status === 204 ? new Response(null, { status: 204 }) : NextResponse.json(result.body, { status: result.status }); }

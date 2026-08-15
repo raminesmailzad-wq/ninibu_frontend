@@ -72,12 +72,57 @@ export type GrowthMeasurement = {
 };
 
 export type GrowthChartPoint = { measurement_id: number; measured_at: string; value: number };
+export type GrowthAssessmentPoint = {
+  measurement_id: number;
+  measured_at: string;
+  age_days: number;
+  age_months: number;
+  value: number;
+  z_score: number;
+  percentile: number;
+  band: string;
+};
+export type GrowthReferencePoint = {
+  age_days: number;
+  age_months: number;
+  minus_3_sd: number;
+  minus_2_sd: number;
+  median: number;
+  plus_2_sd: number;
+  plus_3_sd: number;
+};
+export type GrowthIndicator = {
+  code: "weight_for_age" | "height_for_age" | "bmi_for_age" | "head_circumference_for_age" | string;
+  unit: string;
+  supported: boolean;
+  reason?: string;
+  min_age_months: number;
+  max_age_months: number;
+  points: GrowthAssessmentPoint[];
+  reference: GrowthReferencePoint[];
+  latest?: GrowthAssessmentPoint;
+};
 export type GrowthChart = {
   child_id: number;
+  gender?: string;
+  birth_date?: string;
+  standard?: {
+    name: string;
+    version: string;
+    child_growth_source_url?: string;
+    school_age_source_url?: string;
+    disclaimer?: string;
+  };
   series: {
     weight_kg: GrowthChartPoint[];
     height_cm: GrowthChartPoint[];
     head_circumference_cm: GrowthChartPoint[];
+  };
+  indicators?: {
+    weight_for_age: GrowthIndicator;
+    height_for_age: GrowthIndicator;
+    bmi_for_age: GrowthIndicator;
+    head_circumference_for_age: GrowthIndicator;
   };
 };
 export type ListGrowthMeasurementsResponse = { items: GrowthMeasurement[]; pagination: Pagination };
@@ -386,6 +431,148 @@ export type CommerceCategory = {
   sort_order: number;
 };
 
+export type ProductVariant = {
+  id: number;
+  product_id?: number;
+  sku?: string;
+  title?: string;
+  attributes?: Record<string, string | number | boolean>;
+  price_amount: number;
+  compare_at_price_amount?: number;
+  currency: string;
+  stock?: number;
+  status?: string;
+};
+
+export type CommerceProduct = {
+  id: number;
+  seller_id: number;
+  seller_name?: string;
+  category_id?: number;
+  category_name?: string;
+  brand?: string;
+  name: string;
+  slug?: string;
+  description?: string;
+  status: string;
+  published_at?: string;
+  created_at?: string;
+  updated_at?: string;
+  variants: ProductVariant[];
+};
+
+export type ProductListResponse = { items: CommerceProduct[]; pagination: Pagination };
+
+export type CommerceCartItem = {
+  id: number;
+  seller_id?: number;
+  item_type: "product_variant" | "service" | string;
+  reference_id: number;
+  quantity: number;
+  title_snapshot?: string;
+  sku_snapshot?: string;
+  unit_price_snapshot: number;
+  line_total: number;
+  currency?: string;
+};
+
+export type CommerceCart = {
+  id: number;
+  status: string;
+  currency?: string;
+  items: CommerceCartItem[];
+  items_subtotal: number;
+  discount_amount?: number;
+  shipping_amount?: number;
+  payable_amount?: number;
+  expires_at?: string;
+};
+
+export type CheckoutPreview = {
+  cart_id: number;
+  currency: string;
+  items_subtotal: number;
+  discount_amount: number;
+  shipping_amount: number;
+  payable_amount: number;
+  payment_ready: boolean;
+  notice?: string;
+};
+
+export type CommerceOrderItem = {
+  id?: number;
+  item_type?: string;
+  reference_id?: number;
+  title_snapshot?: string;
+  sku_snapshot?: string;
+  quantity: number;
+  unit_price_snapshot: number;
+  line_total: number;
+};
+
+export type CommerceOrder = {
+  id: number;
+  order_number?: string;
+  status: string;
+  currency: string;
+  items_subtotal?: number;
+  discount_amount?: number;
+  shipping_amount?: number;
+  payable_amount?: number;
+  payment_ready?: boolean;
+  items?: CommerceOrderItem[];
+  created_at?: string;
+  updated_at?: string;
+  cancelled_at?: string;
+  expires_at?: string;
+};
+
+export type CommerceOrderListResponse = { items: CommerceOrder[]; pagination: Pagination };
+
+export type AdvertisingPreferences = {
+  personalized_ads_enabled: boolean;
+  location_based_ads_enabled: boolean;
+  interest_based_ads_enabled: boolean;
+  updated_at?: string;
+};
+
+export type AdvertisingCreative = {
+  id: number;
+  type?: "banner" | "native_card" | "text" | "image" | "announcement" | string;
+  creative_type?: "banner" | "native_card" | "text" | "image" | "announcement" | string;
+  title?: string;
+  body?: string;
+  image_url?: string;
+  call_to_action?: string;
+  destination_type?: string;
+  destination_value?: string;
+  destination_url?: string;
+  internal_path?: string;
+};
+
+export type AdvertisingDeliveryItem = {
+  campaign_id?: number;
+  placement_id?: number;
+  content_kind: "sponsored" | string;
+  sponsored: boolean;
+  creative: AdvertisingCreative;
+};
+
+export type AdvertisingDeliveryResponse = {
+  request_id: string;
+  items: AdvertisingDeliveryItem[];
+};
+
+export type AdvertisingEvent = {
+  id: number;
+  request_id: string;
+  campaign_id?: number;
+  creative_id: number;
+  placement_id?: number;
+  event_type: "impression" | "click" | "dismiss" | "conversion" | string;
+  occurred_at: string;
+};
+
 export type ServiceOffering = {
   id: number;
   seller_id: number;
@@ -483,4 +670,184 @@ export type Payment = {
   failure_message?: string;
   created_at: string;
   updated_at: string;
+};
+
+// Knowledge, search and discovery contracts — Backend v0.22.2.
+export type KnowledgeCategory = {
+  id: number;
+  parent_id?: number;
+  code: string;
+  slug: string;
+  name: string;
+  description?: string;
+  sort_order: number;
+  is_active: boolean;
+};
+
+export type KnowledgeTag = {
+  id: number;
+  code: string;
+  name: string;
+  slug: string;
+  is_active: boolean;
+};
+
+export type KnowledgeContent = {
+  id: number;
+  content_type: "article" | "guide" | "faq" | "educational" | "checklist" | "reference" | "announcement" | string;
+  slug: string;
+  title: string;
+  summary?: string;
+  status: string;
+  language: string;
+  medical_review_required: boolean;
+  featured_image_attachment_id?: number;
+  published_at?: string;
+  created_at: string;
+  updated_at: string;
+};
+export type KnowledgeContentListResponse = { items: KnowledgeContent[]; pagination: Pagination };
+
+export type KnowledgeRevision = {
+  id: number;
+  content_id: number;
+  revision_number: number;
+  title: string;
+  summary?: string;
+  body: string;
+  review_status: string;
+  published_at?: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type KnowledgeSource = {
+  id: number;
+  title: string;
+  publisher?: string;
+  url?: string;
+  publication_date?: string;
+  accessed_at?: string;
+  source_type: string;
+};
+
+export type KnowledgeFAQ = { id: number; question: string; answer: string; sort_order: number };
+export type KnowledgeDisclaimer = { id: number; code: string; text: string };
+export type KnowledgeDetail = {
+  content: KnowledgeContent;
+  revision: KnowledgeRevision;
+  categories: KnowledgeCategory[];
+  tags: KnowledgeTag[];
+  sources: KnowledgeSource[];
+  faqs: KnowledgeFAQ[];
+  disclaimers: KnowledgeDisclaimer[];
+};
+
+export type SearchEntityType = "knowledge_content" | "community_post" | "community_group" | "clinician" | "service" | "product" | "seller" | string;
+export type SearchItem = {
+  type: SearchEntityType;
+  id: number;
+  title: string;
+  summary?: string;
+  language: string;
+  categories?: string[];
+  tags?: string[];
+  metadata?: Record<string, unknown>;
+  score: number;
+  published_at?: string;
+};
+export type SearchResponse = {
+  query: string;
+  normalized_query: string;
+  page: number;
+  limit: number;
+  total: number;
+  results: SearchItem[];
+  facets: { entity_type: Record<string, number>; categories: Record<string, number> };
+};
+export type SearchSuggestionsResponse = { query: string; suggestions: string[] };
+export type SearchHistory = { id: number; query: string; normalized_query: string; result_count: number; created_at: string; updated_at: string };
+export type SearchTrend = { id: number; query: string; search_count: number; unique_users_approx: number; window_start: string; window_end: string; created_at: string; updated_at: string };
+
+export type CareLocation = {
+  id: number;
+  name: string;
+  type: "health_center" | "doctor_office" | "clinic" | "hospital" | "laboratory" | "home" | "other" | string;
+  country_id?: number;
+  province_id?: number;
+  city_id?: number;
+  province?: string;
+  city?: string;
+  latitude?: number;
+  longitude?: number;
+  distance_km?: number;
+  address?: string;
+  postal_code?: string;
+  phone?: string;
+  directory_status: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+};
+export type CareLocationListResponse = { items: CareLocation[]; pagination: Pagination };
+
+export type PersonalizationFeedItem = {
+  recommendation_id: number;
+  entity_type: string;
+  entity_id: number;
+  title: string;
+  summary?: string;
+  score: number;
+  reason_code: string;
+  reason?: Record<string, unknown>;
+  source_kind: string;
+  metadata?: Record<string, unknown>;
+};
+export type PersonalizationFeedResponse = { items: PersonalizationFeedItem[]; experiment_variant?: string };
+
+export type NotificationItem = {
+  id: number;
+  category: string;
+  type: string;
+  title: string;
+  body: string;
+  priority: string;
+  channel: string;
+  reference_type?: string;
+  reference_id?: number;
+  status: string;
+  scheduled_at?: string;
+  sent_at?: string;
+  delivered_at?: string;
+  created_at: string;
+  read_at?: string;
+};
+
+export type NotificationListResponse = {
+  items: NotificationItem[];
+  pagination: Pagination;
+};
+
+export type NotificationPreference = {
+  category: string;
+  in_app_enabled: boolean;
+  push_enabled: boolean;
+  sms_enabled: boolean;
+  email_enabled: boolean;
+  quiet_hours_start?: string;
+  quiet_hours_end?: string;
+  timezone: string;
+  updated_at?: string;
+};
+
+export type UpdateNotificationPreferenceItem = {
+  category: string;
+  in_app_enabled?: boolean;
+  quiet_hours_start?: string;
+  quiet_hours_end?: string;
+  timezone?: string;
+};
+
+export type UpdateNotificationPreferencesRequest = {
+  items: UpdateNotificationPreferenceItem[];
 };

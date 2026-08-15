@@ -1,26 +1,108 @@
 # Ninibu Frontend
 
-Frontend monorepo for Ninibu, aligned with Backend v0.22.2.
+Frontend monorepo for Ninibu, aligned with Backend v0.23.0.
 
-## v0.4.0 scope — Consultation, Services & Booking
+## v0.14.0 scope — WHO Growth Intelligence
 
-This release turns the **Services** navigation item into a real user-facing product surface and connects it to the existing consultation, commerce service, booking and payment modules in Backend v0.22.2.
+- Adds standard growth charts inside the child Health & Growth view using the enriched Backend v0.23.0 `growth-chart` contract.
+- Compares the child trend against WHO reference curves at -3 SD, -2 SD, median, +2 SD and +3 SD.
+- Shows weight-for-age, length/height-for-age, BMI-for-age and head-circumference-for-age when the WHO reference supports the child age.
+- Shows the latest Z-score and approximate percentile without turning the reference position into a diagnosis.
+- Retains the existing raw measurement cards and history; the standards chart is an additional interpretation layer.
+- All measurement dates remain Jalali/Persian in the frontend; the backend still receives/stores Gregorian date-only values and ISO timestamps.
+- Existing approved dashboard visuals, logo, centered Modal stack, nested Jalali Date Picker, routing and privacy-safe analytics are preserved.
+- Requires Ninibu Backend v0.23.0 for WHO indicators; the component degrades gracefully if the older raw-only growth contract is returned.
+
+## v0.13.0 scope — Targeted Advertising + Commerce / Marketplace
+
+- Completes the planned v0.12 advertising phase with explicit sponsored UI, privacy-safe delivery/events and user-controlled ad preferences.
+- Sponsored placements are limited to safe public surfaces; private child health, medication, allergy, diagnosis and private consultation views contain no ad slot.
+- Adds the v0.13 store section with public products, variants, cart, checkout preview, orders, cancellation and payment hand-off.
+- Final checkout collects the backend-required customer/shipping snapshot inside the standard centered Modal without sending those fields to Analytics.
+- Store routes are first-class URLs (`/shop`, product, cart, checkout and order routes) so browser navigation and analytics funnels remain observable.
+- Commerce analytics records coarse product/cart/order funnel events without child-health context or free-text payloads.
+- Existing approved dashboard visuals, logo, centered Modal stack, nested Jalali Date Picker and Gregorian/ISO backend boundary are preserved.
+
+## v0.11.0 scope — Action Center & Resumable Journeys
+
+- Dashboard Action Center for unfinished bookings, upcoming confirmed bookings, consultations waiting for parent input, unread notifications and near-term vaccination follow-up.
+- Booking drafts survive modal close for up to seven days in session storage and can be explicitly dismissed by the parent.
+- Stable detail routes for bookings and consultations so resume/deep-link/back/refresh behavior is predictable.
+- Privacy-safe analytics for continuation actions without free text, child identifiers, selected booking dates/times or health values.
+- Existing approved dashboard visuals, centered Modal stack, Jalali Date Picker and Gregorian/ISO backend boundary remain unchanged.
+- No backend/API contract change.
+
+## v0.10.0 scope — UX Analytics & Funnel Observability
+
+- Privacy-safe session analytics with sequence numbers and a bounded session-local event buffer.
+- Page-view and page-exit events with visible engagement time instead of raw tab-open duration.
+- Persistent funnel lifecycle primitives: start, resume, advance, abandon, interrupt and complete.
+- Booking funnel abandonment is detected when the user closes the booking modal or navigates away from the booking route.
+- Quick health entry flows (growth, vaccination, visit) now emit open/save/abandon funnel signals.
+- Community, Discover/Search, Care discovery, Services and Profile actions emit coarse product events without free text, health values, child identifiers, search queries, dates or coordinates.
+- Failed collector deliveries are buffered for the current session and retried when a collector is configured.
+- Existing route architecture, approved dashboard visuals, centered modals and Jalali Date Picker behavior are preserved.
+- No backend/API contract change.
+
+## v0.8.0 scope — Dashboard Clarity & Visual Refresh
+
+- Higher contrast authenticated dashboard without changing the Ninibu logo.
+- Deeper existing lavender/pink neutrals, clearer borders and card separation.
+- Improved quick-action and dashboard-card visibility.
+- Dashboard discovery shortcuts now navigate to their real product surfaces.
+- Existing centered modal and nested Jalali Date Picker standard is preserved.
+- No backend/API contract change.
+
+## v0.7.0 scope — Profile & Family Management
+
+- Editable parent profile (name, birth date, gender).
+- Editable residence with dependent country/province/city selectors.
+- Family overview and active-child switching.
+- Add-child flow from Profile using the existing children API.
+- Centered form modals and nested Jalali Date Picker standard are preserved.
+- Frontend dates remain Jalali/Persian while API date-only values remain Gregorian `YYYY-MM-DD`.
+
+## v0.6.0 scope — Notification Center & Preferences
+
+This release turns the existing notification badge into a complete in-app notification experience without changing the backend API contract.
 
 Implemented:
 
-- Service catalog with search and category filtering.
-- Service detail, delivery type, provider, duration and price presentation.
-- Live booking availability from the backend schedule engine.
-- Child-aware booking with an explicit privacy notice: selecting a child does not grant health-record access.
-- Free-service instant booking and paid-service `pending_payment` flow.
-- Payment creation through the Next.js BFF, with sandbox success/failure controls only when the backend actually returns the `sandbox` provider.
-- User booking history, meeting links, cancellation and rescheduling.
-- Defensive booking de-duplication because Backend v0.22.2 currently duplicates items in its `ListBookings` response loop; no booking data is lost or merged beyond identical IDs.
-- Asynchronous parent consultation: categories, create question, private/public/anonymous-public privacy modes, child attachment, question list and detail.
-- Official-answer badge, answer acceptance, follow-up messages, close/reopen lifecycle and backend-generated non-diagnostic suggestions.
-- Public answered consultation questions as a separate view.
-- Responsive desktop/mobile states using the existing Ninibu design tokens.
-- Typed shared contracts and API route builders reusable by the future Expo/React Native client.
+- Notification Center drawer from the application header.
+- All/unread filters with backend pagination.
+- Mark one notification as read and mark all as read.
+- Notification category and priority labels in Persian.
+- Jalali/Persian rendering for notification timestamps, including relative time.
+- Defensive handling for Go zero timestamps such as `0001-01-01T00:00:00Z`.
+- Notification preference management by category.
+- In-app opt-in/out controls for health, community, consultation, advertising, commerce and other backend categories.
+- Quiet-hours editor with Persian digits in the UI and ASCII `HH:MM` values at the backend boundary.
+- Existing advertising and commerce notification opt-ins remain explicit and separate from health data.
+- Responsive notification drawer for desktop and mobile.
+
+## Date and time policy
+
+All user-visible calendar dates and date inputs use the Persian/Jalali calendar with Persian digits.
+
+Frontend presentation/input examples:
+
+```text
+۲۱ مرداد ۱۴۰۵
+۱۴۰۵/۰۵/۲۱
+۲۲:۰۰
+```
+
+Backend payload/persistence examples:
+
+```text
+2026-08-12
+2026-08-12T09:30:00Z
+22:00
+```
+
+Date-only values are converted to Gregorian `YYYY-MM-DD` before the API boundary. Backend timestamps remain ISO instants and are converted only for display. Quiet-hour values are displayed with Persian digits but normalized to ASCII `HH:MM` before being sent to the backend.
+
+See `docs/JALALI_DATE_POLICY.md`.
 
 ## Stack
 
@@ -32,11 +114,17 @@ Implemented:
 - Lucide React
 - pnpm workspaces + Turborepo
 
-The future Expo/React Native client can reuse `@ninibu/api`, `@ninibu/types`, `@ninibu/design` and `@ninibu/validation` without sharing Next-specific UI code.
+Shared packages prepared for a future Expo/React Native client:
+
+- `@ninibu/api`
+- `@ninibu/types`
+- `@ninibu/design`
+- `@ninibu/validation`
+- `@ninibu/datetime`
 
 ## Local run
 
-Requirements: Node.js 22+, Corepack/pnpm, and Ninibu Backend v0.22.2 running locally.
+Requirements: Node.js 22+, Corepack/pnpm, and Ninibu Backend v0.23.0 running locally.
 
 ```bash
 corepack enable
@@ -55,8 +143,26 @@ Default backend URL:
 NINIBU_BACKEND_URL=http://localhost:8080
 ```
 
-Suggested smoke flow: login → choose active child → Services → open service → choose slot → book → sandbox payment (for local backend) → My Bookings → Consultation → create private question → open detail.
+Suggested smoke flow:
 
-## Validation caveat
+```text
+Login
+→ Home
+→ open notification bell
+→ switch all/unread
+→ mark one notification read
+→ mark all read
+→ open notification settings
+→ edit quiet hours using Persian digits
+→ save
+→ verify backend receives ASCII HH:MM
+→ open any health/date form and verify Jalali input remains enforced
+```
 
-The packaging environment cannot install the npm dependency graph, so `pnpm typecheck`, ESLint, Vitest and `next build` for **v0.4.0** remain developer/stage gates. TypeScript/TSX syntax, route-contract alignment, JSON manifests, archive integrity and release exclusions are checked during packaging. See `VALIDATION.md`.
+## Validation
+
+Packaging-time checks and environment limitations are documented in `VALIDATION.md`.
+
+
+## Route & analytics architecture (v0.9.0)
+Main product areas now use real Next.js routes instead of dashboard-only state. Booking funnel stages also have stable routes so refresh, deep links, browser history and funnel analysis work predictably. Analytics call sites emit only generic product/navigation metadata; sensitive health/profile content is intentionally excluded. A collector can be connected later through `NEXT_PUBLIC_NINIBU_ANALYTICS_ENDPOINT` without changing feature components.

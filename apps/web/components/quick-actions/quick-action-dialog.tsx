@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ChartNoAxesColumnIncreasing, CheckCircle2, Stethoscope, Syringe, X } from "lucide-react";
 import type { Child, GrowthMeasurement, MedicalVisit, Vaccination } from "@ninibu/types";
@@ -10,28 +10,44 @@ import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { JalaliDateInput } from "@/components/ui/jalali-date-input";
+import { todayGregorianDate } from "@/lib/datetime";
+import { ModalPortal } from "@/components/ui/modal-portal";
+import { abandonFunnel, completeFunnel, startFunnel, trackEvent } from "@/lib/analytics";
 
 export type QuickAction = "growth" | "vaccination" | "visit";
 
-function today() { return new Date().toLocaleDateString("en-CA"); }
+function today() { return todayGregorianDate(); }
 
 export function QuickActionDialog({ action, child, onClose }: { action: QuickAction | null; child: Child; onClose: () => void }) {
-  const ref = useRef<HTMLDialogElement>(null);
   useEffect(() => {
-    const dialog = ref.current;
-    if (!dialog) return;
-    if (action && !dialog.open) dialog.showModal();
-    if (!action && dialog.open) dialog.close();
+    if (!action) return;
+    startFunnel("health_quick_action", action, "form", { form: action });
+    trackEvent("health_quick_action_opened", { form: action, source: "dashboard_or_health" });
   }, [action]);
 
-  return <dialog ref={ref} className="quick-dialog" onClose={onClose} onCancel={onClose}>
-    {action && <div className="quick-dialog-inner">
-      <button className="dialog-close" onClick={onClose} aria-label="بستن"><X size={20} /></button>
-      {action === "growth" && <GrowthForm child={child} onDone={onClose} />}
-      {action === "vaccination" && <VaccinationForm child={child} onDone={onClose} />}
-      {action === "visit" && <VisitForm child={child} onDone={onClose} />}
-    </div>}
-  </dialog>;
+  if (!action) return null;
+
+  const title = action === "growth" ? "ثبت رشد" : action === "vaccination" ? "ثبت واکسن" : "ثبت ویزیت";
+  const closeDialog = () => {
+    abandonFunnel("health_quick_action", action, { form: action, reason: "modal_closed" });
+    trackEvent("health_quick_action_closed", { form: action, result: "abandoned" });
+    onClose();
+  };
+  const saved = () => {
+    completeFunnel("health_quick_action", action, { form: action, result: "saved" });
+    trackEvent("health_quick_action_saved", { form: action, result: "success" });
+    onClose();
+  };
+
+  return <ModalPortal ariaLabel={title} onClose={closeDialog} backdropClassName="quick-dialog-backdrop" contentClassName="quick-dialog">
+    <div className="quick-dialog-inner">
+      <button type="button" className="dialog-close" onClick={closeDialog} aria-label="بستن"><X size={20} /></button>
+      {action === "growth" && <GrowthForm child={child} onDone={saved} />}
+      {action === "vaccination" && <VaccinationForm child={child} onDone={saved} />}
+      {action === "visit" && <VisitForm child={child} onDone={saved} />}
+    </div>
+  </ModalPortal>;
 }
 
 function GrowthForm({ child, onDone }: { child: Child; onDone: () => void }) {
@@ -57,7 +73,7 @@ function GrowthForm({ child, onDone }: { child: Child; onDone: () => void }) {
   }
   return <form onSubmit={submit} className="quick-form">
     <DialogHeading icon={ChartNoAxesColumnIncreasing} title="ثبت رشد" text={`اندازه‌گیری جدید برای ${child.first_name}`} />
-    <Field label="تاریخ اندازه‌گیری"><Input type="date" dir="ltr" value={form.measured_at} onChange={(e) => setForm((p) => ({ ...p, measured_at: e.target.value }))} /></Field>
+    <Field label="تاریخ اندازه‌گیری (جلالی)"><JalaliDateInput required value={form.measured_at} onChange={(measured_at) => setForm((p) => ({ ...p, measured_at }))} /></Field>
     <div className="grid-two"><Field label="وزن (کیلوگرم)"><Input inputMode="decimal" dir="ltr" placeholder="12.4" value={form.weight_kg} onChange={(e) => setForm((p) => ({ ...p, weight_kg: e.target.value }))} /></Field><Field label="قد (سانتی‌متر)"><Input inputMode="decimal" dir="ltr" placeholder="89" value={form.height_cm} onChange={(e) => setForm((p) => ({ ...p, height_cm: e.target.value }))} /></Field></div>
     <Field label="دور سر (سانتی‌متر)"><Input inputMode="decimal" dir="ltr" placeholder="48" value={form.head_circumference_cm} onChange={(e) => setForm((p) => ({ ...p, head_circumference_cm: e.target.value }))} /></Field>
     {error && <p className="dialog-error">{error}</p>}
@@ -83,8 +99,8 @@ function VaccinationForm({ child, onDone }: { child: Child; onDone: () => void }
   return <form onSubmit={submit} className="quick-form">
     <DialogHeading icon={Syringe} title="ثبت واکسن" text={`واکسیناسیون ${child.first_name}`} />
     <Field label="نام واکسن"><Input placeholder="مثلاً MMR" value={form.vaccine_name} onChange={(e) => setForm((p) => ({ ...p, vaccine_name: e.target.value }))} /></Field>
-    <div className="grid-two"><Field label="شماره دوز"><Input type="number" min="1" max="20" dir="ltr" value={form.dose_number} onChange={(e) => setForm((p) => ({ ...p, dose_number: e.target.value }))} /></Field><Field label="تاریخ تزریق"><Input type="date" dir="ltr" value={form.administered_at} onChange={(e) => setForm((p) => ({ ...p, administered_at: e.target.value }))} /></Field></div>
-    <Field label="تاریخ دوز بعدی (اختیاری)"><Input type="date" dir="ltr" value={form.next_dose_due_at} onChange={(e) => setForm((p) => ({ ...p, next_dose_due_at: e.target.value }))} /></Field>
+    <div className="grid-two"><Field label="شماره دوز"><Input type="number" min="1" max="20" dir="ltr" value={form.dose_number} onChange={(e) => setForm((p) => ({ ...p, dose_number: e.target.value }))} /></Field><Field label="تاریخ تزریق (جلالی)"><JalaliDateInput required value={form.administered_at} onChange={(administered_at) => setForm((p) => ({ ...p, administered_at }))} /></Field></div>
+    <Field label="تاریخ دوز بعدی جلالی (اختیاری)"><JalaliDateInput value={form.next_dose_due_at} onChange={(next_dose_due_at) => setForm((p) => ({ ...p, next_dose_due_at }))} /></Field>
     <p className="dialog-note">ثبت این فرم جایگزین توصیه پزشک یا برنامه رسمی واکسیناسیون نیست.</p>
     {error && <p className="dialog-error">{error}</p>}
     <Button type="submit" disabled={mutation.isPending}>{mutation.isPending ? "در حال ثبت…" : "ثبت واکسن"}</Button>
@@ -108,7 +124,7 @@ function VisitForm({ child, onDone }: { child: Child; onDone: () => void }) {
   }
   return <form onSubmit={submit} className="quick-form">
     <DialogHeading icon={Stethoscope} title="ثبت ویزیت" text={`مراجعه پزشکی ${child.first_name}`} />
-    <div className="grid-two"><Field label="تاریخ ویزیت"><Input type="date" dir="ltr" value={form.visited_at} onChange={(e) => setForm((p) => ({ ...p, visited_at: e.target.value }))} /></Field><Field label="نوع مراجعه"><Select value={form.visit_type} onChange={(e) => setForm((p) => ({ ...p, visit_type: e.target.value }))}><option value="routine_checkup">چکاپ دوره‌ای</option><option value="illness">بیماری</option><option value="follow_up">پیگیری</option><option value="vaccination">واکسیناسیون</option><option value="consultation">مشاوره</option><option value="emergency">اورژانسی</option><option value="hospitalization">بستری</option><option value="other">سایر</option></Select></Field></div>
+    <div className="grid-two"><Field label="تاریخ ویزیت (جلالی)"><JalaliDateInput required value={form.visited_at} onChange={(visited_at) => setForm((p) => ({ ...p, visited_at }))} /></Field><Field label="نوع مراجعه"><Select value={form.visit_type} onChange={(e) => setForm((p) => ({ ...p, visit_type: e.target.value }))}><option value="routine_checkup">چکاپ دوره‌ای</option><option value="illness">بیماری</option><option value="follow_up">پیگیری</option><option value="vaccination">واکسیناسیون</option><option value="consultation">مشاوره</option><option value="emergency">اورژانسی</option><option value="hospitalization">بستری</option><option value="other">سایر</option></Select></Field></div>
     <Field label="نام پزشک (اختیاری)"><Input value={form.doctor_name} onChange={(e) => setForm((p) => ({ ...p, doctor_name: e.target.value }))} /></Field>
     <Field label="دلیل مراجعه (اختیاری)"><Input value={form.chief_complaint} onChange={(e) => setForm((p) => ({ ...p, chief_complaint: e.target.value }))} /></Field>
     {error && <p className="dialog-error">{error}</p>}

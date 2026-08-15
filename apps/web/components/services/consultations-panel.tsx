@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { BadgeCheck, Bot, Check, ChevronLeft, LockKeyhole, MessageCircleQuestion, Plus, Send, Sparkles, X } from "lucide-react";
 import type { Child, ConsultationAnswer, ConsultationCategory, ConsultationPrivacy, ConsultationQuestion, ConsultationQuestionListResponse } from "@ninibu/types";
@@ -9,13 +10,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { ModalPortal } from "@/components/ui/modal-portal";
 import { consultationPrivacyLabel, consultationStatusLabel, formatDateTime } from "./services-data";
+import { consultationRoute, consultationRouteState } from "@/lib/routes";
+import { trackEvent } from "@/lib/analytics";
 
 export function ConsultationsPanel({ child }: { child: Child }) {
   const queryClient = useQueryClient();
+  const pathname = usePathname();
+  const router = useRouter();
   const [view, setView] = useState<"mine" | "public">("mine");
   const [composer, setComposer] = useState(false);
-  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const selectedId = consultationRouteState(pathname);
   const categories = useQuery({ queryKey: ["consultations", "categories"], queryFn: () => clientApi<ConsultationCategory[]>("/api/ninibu/consultations/categories") });
   const questions = useQuery({
     queryKey: ["consultations", view, child.id],
@@ -34,14 +40,14 @@ export function ConsultationsPanel({ child }: { child: Child }) {
     {questions.isLoading && <div className="service-list-state">در حال دریافت پرسش‌ها…</div>}
     {questions.isError && <div className="service-list-state error-state">پرسش‌ها دریافت نشدند. <button onClick={() => questions.refetch()}>تلاش دوباره</button></div>}
     {!questions.isLoading && !questions.isError && items.length === 0 && <div className="services-empty"><MessageCircleQuestion size={28} /><strong>{view === "mine" ? "هنوز پرسشی ثبت نکردی" : "پرسش عمومی موجود نیست"}</strong><p>{view === "mine" ? "برای شروع، یک پرسش جدید برای تیم متخصصان ثبت کن." : "پرسش‌های عمومی فقط بعد از پاسخ و با رعایت حریم خصوصی نمایش داده می‌شوند."}</p></div>}
-    <div className="consultation-list">{items.map((question) => <button className="consultation-card surface-card" key={question.id} onClick={() => setSelectedId(question.id)}>
+    <div className="consultation-list">{items.map((question) => <button className="consultation-card surface-card" key={question.id} onClick={() => { const href = consultationRoute(question.id); trackEvent("consultation_detail_opened", { source: "consultations", status: question.status, target_route: href }); router.push(href); }}>
       <div className="consultation-card-top"><span>{question.category.name}</span><em className={`consultation-status status-${question.status}`}>{consultationStatusLabel[question.status] || question.status}</em></div>
       <h3>{question.title}</h3><p>{question.body}</p>
       <footer><span>{consultationPrivacyLabel[question.privacy] || question.privacy}</span><span>{formatDateTime(question.updated_at)}</span><ChevronLeft size={16} /></footer>
     </button>)}</div>
 
-    {composer && <QuestionComposer child={child} categories={categories.data ?? []} onClose={() => setComposer(false)} onCreated={async (created) => { setComposer(false); setSelectedId(created.id); await queryClient.invalidateQueries({ queryKey: ["consultations"] }); }} />}
-    {selectedId && <ConsultationDetail questionId={selectedId} isMine={view === "mine"} onClose={() => setSelectedId(null)} onChanged={() => queryClient.invalidateQueries({ queryKey: ["consultations"] })} />}
+    {composer && <QuestionComposer child={child} categories={categories.data ?? []} onClose={() => setComposer(false)} onCreated={async (created) => { setComposer(false); await queryClient.invalidateQueries({ queryKey: ["consultations"] }); router.push(consultationRoute(created.id)); }} />}
+    {selectedId && <ConsultationDetail questionId={selectedId} isMine={view === "mine"} onClose={() => router.push("/services/consultations")} onChanged={() => queryClient.invalidateQueries({ queryKey: ["consultations"] })} />}
   </div>;
 }
 
@@ -66,8 +72,7 @@ function QuestionComposer({ child, categories, onClose, onCreated }: { child: Ch
     finally { setBusy(false); }
   }
 
-  return <div className="service-modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
-    <div className="service-modal consultation-composer" role="dialog" aria-modal="true" aria-label="پرسش جدید">
+  return <ModalPortal ariaLabel="پرسش جدید" onClose={onClose} backdropClassName="service-modal-backdrop" contentClassName="service-modal consultation-composer">
       <header><strong>پرسش جدید</strong><button onClick={onClose} aria-label="بستن"><X size={19} /></button></header>
       <div className="consultation-form">
         <label><span>دسته‌بندی</span><Select value={categoryCode} onChange={(event) => setCategoryCode(event.target.value)}>{categories.map((category) => <option value={category.code} key={category.id}>{category.name}</option>)}</Select></label>
@@ -79,8 +84,7 @@ function QuestionComposer({ child, categories, onClose, onCreated }: { child: Ch
         {error && <p className="service-error">{error}</p>}
         <Button disabled={busy} onClick={submit}>{busy ? "در حال ثبت…" : "ثبت پرسش"}</Button>
       </div>
-    </div>
-  </div>;
+  </ModalPortal>;
 }
 
 function ConsultationDetail({ questionId, isMine, onClose, onChanged }: { questionId: number; isMine: boolean; onClose: () => void; onChanged: () => Promise<unknown> }) {
@@ -106,8 +110,7 @@ function ConsultationDetail({ questionId, isMine, onClose, onChanged }: { questi
   }
 
   const question = query.data;
-  return <div className="consultation-detail-backdrop service-modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
-    <div className="consultation-detail" role="dialog" aria-modal="true" aria-label="جزئیات مشاوره">
+  return <ModalPortal ariaLabel="جزئیات مشاوره" onClose={onClose} backdropClassName="consultation-detail-backdrop service-modal-backdrop" contentClassName="consultation-detail">
       <header><div><small>مشاوره</small><strong>{question?.category.name || "پرسش"}</strong></div><button onClick={onClose} aria-label="بستن"><X size={19} /></button></header>
       {query.isLoading && <div className="service-list-state">در حال دریافت جزئیات…</div>}
       {query.isError && <div className="service-list-state error-state">جزئیات پرسش دریافت نشد.</div>}
@@ -123,8 +126,7 @@ function ConsultationDetail({ questionId, isMine, onClose, onChanged }: { questi
         {question.status !== "closed" && question.status !== "cancelled" && <div className="consultation-followup"><Textarea value={message} onChange={(event) => setMessage(event.target.value)} placeholder="پیام تکمیلی برای ادامه گفت‌وگو…" /><Button disabled={busy || !message.trim()} onClick={sendFollowup}><Send size={16} /> ارسال</Button></div>}
         <div className="consultation-lifecycle">{question.status === "closed" ? <Button variant="outline" disabled={busy} onClick={() => mutate(`/api/ninibu/consultations/questions/${question.id}/reopen`)}>باز کردن دوباره</Button> : <Button variant="ghost" disabled={busy} onClick={() => mutate(`/api/ninibu/consultations/questions/${question.id}/close`)}>بستن پرسش</Button>}</div>
       </footer>}
-    </div>
-  </div>;
+  </ModalPortal>;
 }
 
 function AnswerCard({ answer, canAccept, onAccept }: { answer: ConsultationAnswer; canAccept: boolean; onAccept: () => Promise<void> }) {

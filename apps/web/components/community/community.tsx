@@ -22,10 +22,12 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ModalPortal } from "@/components/ui/modal-portal";
 import { GroupCard } from "./group-card";
 import { PostCard } from "./post-card";
 import { PostDetail } from "./post-detail";
 import { postTypeLabels, reportReasons } from "./community-data";
+import { trackEvent } from "@/lib/analytics";
 
 type CommunityTab = "feed" | "groups" | "mine";
 
@@ -105,8 +107,19 @@ export function Community({ accountProfile }: { accountProfile?: Profile }) {
 
   const profileMissing = profileQuery.error instanceof NinibuApiError && profileQuery.error.status === 404;
 
+  function changeTab(next: CommunityTab) {
+    if (next === tab) return;
+    trackEvent("community_tab_selected", { tab: next });
+    setTab(next);
+  }
+
+  function openPost(post: CommunityPost) {
+    trackEvent("community_post_opened", { content_type: post.post_type || "post" });
+    setSelectedPost(post);
+  }
+
   if (selectedGroup) {
-    return <GroupDetail group={selectedGroup} onBack={() => setSelectedGroup(null)} onJoin={() => membershipMutation.mutate({ group: selectedGroup, action: "join" })} />;
+    return <GroupDetail group={selectedGroup} onBack={() => setSelectedGroup(null)} onJoin={() => { trackEvent("community_membership_action", { action: "join", category: selectedGroup.category.code }); membershipMutation.mutate({ group: selectedGroup, action: "join" }); }} />;
   }
 
   return <section className="community-page">
@@ -117,20 +130,20 @@ export function Community({ accountProfile }: { accountProfile?: Profile }) {
         <p>سؤال بپرسید، تجربه‌ها را بخوانید و در گروه‌های مورد علاقه‌تان مشارکت کنید. محتوای جامعه جایگزین نظر پزشک نیست.</p>
       </div>
       <div className="community-hero-actions">
-        <Button variant="outline" onClick={() => setProfileOpen(true)}><Settings2 size={17}/> پروفایل جامعه</Button>
-        <Button onClick={() => setComposerOpen(true)} disabled={!activeGroups.length}><CirclePlus size={18}/> پست جدید</Button>
+        <Button variant="outline" onClick={() => { trackEvent("community_profile_opened", { source: "hero" }); setProfileOpen(true); }}><Settings2 size={17}/> پروفایل جامعه</Button>
+        <Button onClick={() => { trackEvent("community_composer_opened", { source: "hero" }); setComposerOpen(true); }} disabled={!activeGroups.length}><CirclePlus size={18}/> پست جدید</Button>
       </div>
     </div>
 
     {profileMissing && <div className="community-profile-nudge">
-      <span><Sparkles size={18}/></span><div><strong>پروفایل جامعه‌تان را بسازید</strong><p>یک نام نمایشی انتخاب کنید؛ هویت واقعی‌تان فقط وقتی خودتان بخواهید نمایش داده می‌شود.</p></div><Button variant="secondary" onClick={() => setProfileOpen(true)}>ساخت پروفایل</Button>
+      <span><Sparkles size={18}/></span><div><strong>پروفایل جامعه‌تان را بسازید</strong><p>یک نام نمایشی انتخاب کنید؛ هویت واقعی‌تان فقط وقتی خودتان بخواهید نمایش داده می‌شود.</p></div><Button variant="secondary" onClick={() => { trackEvent("community_profile_opened", { source: "nudge" }); setProfileOpen(true); }}>ساخت پروفایل</Button>
     </div>}
 
     <div className="community-toolbar surface-card">
       <div className="community-tabs">
-        <button className={tab === "feed" ? "is-active" : ""} onClick={() => setTab("feed")}><MessageCircleMore size={16}/> خوراک</button>
-        <button className={tab === "groups" ? "is-active" : ""} onClick={() => setTab("groups")}><UsersRound size={16}/> گروه‌ها</button>
-        <button className={tab === "mine" ? "is-active" : ""} onClick={() => setTab("mine")}><Sparkles size={16}/> گروه‌های من</button>
+        <button className={tab === "feed" ? "is-active" : ""} onClick={() => changeTab("feed")}><MessageCircleMore size={16}/> خوراک</button>
+        <button className={tab === "groups" ? "is-active" : ""} onClick={() => changeTab("groups")}><UsersRound size={16}/> گروه‌ها</button>
+        <button className={tab === "mine" ? "is-active" : ""} onClick={() => changeTab("mine")}><Sparkles size={16}/> گروه‌های من</button>
       </div>
       <div className="community-search"><Search size={17}/><Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder={tab === "feed" ? "جست‌وجو در پست‌ها..." : "جست‌وجو در گروه‌ها..."}/></div>
       <div className="community-filters">
@@ -146,16 +159,16 @@ export function Community({ accountProfile }: { accountProfile?: Profile }) {
       {feedQuery.isLoading && <CommunityListSkeleton/>}
       {feedQuery.isError && <CommunityError onRetry={() => feedQuery.refetch()} />}
       {!feedQuery.isLoading && !feedQuery.isError && !feedPosts.length && <CommunityEmpty title="هنوز پستی برای نمایش نیست" description="با عضویت در گروه‌ها، خوراک شما پربارتر می‌شود."/>}
-      {feedPosts.map((post) => <PostCard key={post.id} post={post} reactionBusy={reactionMutation.isPending} onOpen={() => setSelectedPost(post)} onReact={(type, active) => reactionMutation.mutate({ post, type, active })} onReport={() => setReportTarget({ entityType: "community_post", entityId: post.id })}/>) }
-      {feedQuery.hasNextPage && <Button variant="outline" className="community-load-more" disabled={feedQuery.isFetchingNextPage} onClick={() => feedQuery.fetchNextPage()}>{feedQuery.isFetchingNextPage ? "در حال دریافت..." : "نمایش پست‌های بیشتر"}</Button>}
+      {feedPosts.map((post) => <PostCard key={post.id} post={post} reactionBusy={reactionMutation.isPending} onOpen={() => openPost(post)} onReact={(type, active) => { trackEvent("community_reaction", { action: active ? "remove" : "add", result_type: type, content_type: post.post_type || "post" }); reactionMutation.mutate({ post, type, active }); }} onReport={() => { trackEvent("community_report_opened", { content_type: "community_post" }); setReportTarget({ entityType: "community_post", entityId: post.id }); }}/>) }
+      {feedQuery.hasNextPage && <Button variant="outline" className="community-load-more" disabled={feedQuery.isFetchingNextPage} onClick={() => { trackEvent("community_feed_load_more", { page: feedQuery.data?.pages.length ?? 1 }); feedQuery.fetchNextPage(); }}>{feedQuery.isFetchingNextPage ? "در حال دریافت..." : "نمایش پست‌های بیشتر"}</Button>}
     </div> : <div className="community-groups-grid">
       {groupsQuery.isLoading && <CommunityListSkeleton/>}
       {groupsQuery.isError && <CommunityError onRetry={() => groupsQuery.refetch()} />}
       {!groupsQuery.isLoading && !visibleGroups.length && <CommunityEmpty title={tab === "mine" ? "هنوز عضو گروهی نیستید" : "گروهی پیدا نشد"} description="فیلترها را تغییر دهید یا از گروه‌های رسمی نینیبو شروع کنید."/>}
-      {visibleGroups.map((group) => <GroupCard key={group.id} group={group} busy={membershipMutation.isPending} onOpen={() => setSelectedGroup(group)} onJoin={() => membershipMutation.mutate({ group, action: "join" })} onLeave={() => membershipMutation.mutate({ group, action: "leave" })}/>) }
+      {visibleGroups.map((group) => <GroupCard key={group.id} group={group} busy={membershipMutation.isPending} onOpen={() => { trackEvent("community_group_opened", { category: group.category.code }); setSelectedGroup(group); }} onJoin={() => { trackEvent("community_membership_action", { action: "join", category: group.category.code }); membershipMutation.mutate({ group, action: "join" }); }} onLeave={() => { trackEvent("community_membership_action", { action: "leave", category: group.category.code }); membershipMutation.mutate({ group, action: "leave" }); }}/>) }
     </div>}
 
-    {composerOpen && <ComposerModal groups={activeGroups} onClose={() => setComposerOpen(false)} onCreated={async (post) => { setComposerOpen(false); await queryClient.invalidateQueries({queryKey:["community","feed"]}); await queryClient.invalidateQueries({queryKey:["community","group-posts"]}); setSelectedPost(post); }}/>} 
+    {composerOpen && <ComposerModal groups={activeGroups} onClose={() => setComposerOpen(false)} onCreated={async (post) => { trackEvent("community_post_created", { content_type: post.post_type || "post" }); setComposerOpen(false); await queryClient.invalidateQueries({queryKey:["community","feed"]}); await queryClient.invalidateQueries({queryKey:["community","group-posts"]}); setSelectedPost(post); }}/>} 
     {profileOpen && <CommunityProfileModal initial={profileQuery.data} accountProfile={accountProfile} onClose={() => setProfileOpen(false)} onSaved={async () => { setProfileOpen(false); await profileQuery.refetch(); }}/>} 
     {selectedPost && <PostDetail postId={selectedPost.id} onClose={() => setSelectedPost(null)} onReport={(entityType,entityId) => setReportTarget({entityType,entityId})}/>} 
     {reportTarget && <ReportModal target={reportTarget} onClose={() => setReportTarget(null)}/>} 
@@ -218,7 +231,7 @@ function ReportModal({ target, onClose }: { target:{entityType:"community_post"|
   return <Modal title="گزارش محتوا" onClose={onClose}><div className="community-form"><label>دلیل گزارش<Select value={reason} onChange={(e)=>setReason(e.target.value as CommunityReportReason)}>{reportReasons.map((item)=><option key={item.value} value={item.value}>{item.label}</option>)}</Select></label><label>توضیح اختیاری<Textarea value={description} onChange={(e)=>setDescription(e.target.value)} placeholder="اگر لازم است جزئیات بیشتری بنویسید..."/></label>{mutation.isError&&<p className="dialog-error">{mutation.error.message}</p>}<Button disabled={mutation.isPending} onClick={()=>mutation.mutate()}>{mutation.isPending?"در حال ارسال...":"ارسال گزارش"}</Button></div></Modal>;
 }
 
-export function Modal({ title, onClose, children }: { title:string; onClose:()=>void; children:ReactNode }) { return <div className="community-modal-backdrop" role="presentation" onMouseDown={(e)=>{if(e.target===e.currentTarget)onClose();}}><div className="community-modal" role="dialog" aria-modal="true" aria-label={title}><header><h2>{title}</h2><button onClick={onClose} aria-label="بستن"><X size={19}/></button></header>{children}</div></div>; }
+export function Modal({ title, onClose, children }: { title:string; onClose:()=>void; children:ReactNode }) { return <ModalPortal ariaLabel={title} onClose={onClose} backdropClassName="community-modal-backdrop" contentClassName="community-modal"><header><h2>{title}</h2><button onClick={onClose} aria-label="بستن"><X size={19}/></button></header>{children}</ModalPortal>; }
 function CommunityListSkeleton(){return <div className="community-list-skeleton"><Skeleton/><Skeleton/><Skeleton/></div>}
 function CommunityError({onRetry}:{onRetry:()=>void}){return <div className="community-empty"><strong>دریافت اطلاعات جامعه ناموفق بود</strong><p>اتصال Backend را بررسی کنید و دوباره تلاش کنید.</p><Button variant="outline" onClick={onRetry}>تلاش دوباره</Button></div>}
 function CommunityEmpty({title,description}:{title:string;description:string}){return <div className="community-empty"><MessageCircleMore size={30}/><strong>{title}</strong><p>{description}</p></div>}

@@ -28,3 +28,15 @@ describe("consultation and booking api paths", () => {
     expect(apiPaths.orderPayments(22)).toBe("/api/v1/commerce/orders/22/payments");
   });
 });
+
+describe("knowledge and discovery api paths", () => {
+  it("builds knowledge routes", () => {
+    expect(apiPaths.contentDetail("sleep-guide")).toBe("/api/v1/content/sleep-guide");
+    expect(apiPaths.contentBookmark(18)).toBe("/api/v1/content/18/bookmark");
+  });
+
+  it("builds search and personalization routes", () => {
+    expect(apiPaths.searchHistoryItem(4)).toBe("/api/v1/search/history/4");
+    expect(apiPaths.personalizationFeedback(9)).toBe("/api/v1/recommendations/9/feedback");
+  });
+});

@@ -2,14 +2,16 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { Activity, CalendarHeart, ChartNoAxesColumnIncreasing, HeartPulse, Pill, ShieldAlert, Syringe, Stethoscope } from "lucide-react";
-import type { Child, HealthTimelineResponse, ListAllergiesResponse, ListChildMedicationsResponse, ListGrowthMeasurementsResponse, ListMedicalVisitsResponse, ListVaccinationsResponse } from "@ninibu/types";
+import type { Child, GrowthChart, HealthTimelineResponse, ListAllergiesResponse, ListChildMedicationsResponse, ListGrowthMeasurementsResponse, ListMedicalVisitsResponse, ListVaccinationsResponse } from "@ninibu/types";
 import { clientApi } from "@/lib/client-api";
 import { formatDate, formatNumber, timelineTypeLabel, visitTypeLabel } from "@/lib/format";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { QuickAction } from "@/components/quick-actions/quick-action-dialog";
+import { GrowthStandardChart } from "@/components/health/growth-standard-chart";
 
 export function HealthDashboard({ child, onQuickAction }: { child: Child; onQuickAction: (action: QuickAction) => void }) {
   const growth = useQuery({ queryKey: ["child", child.id, "growth", "health"], queryFn: () => clientApi<ListGrowthMeasurementsResponse>(`/api/ninibu/children/${child.id}/growth-measurements?limit=6`) });
+  const growthChart = useQuery({ queryKey: ["child", child.id, "growth-chart", "who"], queryFn: () => clientApi<GrowthChart>(`/api/ninibu/children/${child.id}/growth-chart`) });
   const vaccinations = useQuery({ queryKey: ["child", child.id, "vaccinations", "health"], queryFn: () => clientApi<ListVaccinationsResponse>(`/api/ninibu/children/${child.id}/vaccinations?limit=1`) });
   const allergies = useQuery({ queryKey: ["child", child.id, "allergies", "health"], queryFn: () => clientApi<ListAllergiesResponse>(`/api/ninibu/children/${child.id}/allergies?limit=3&status=active`) });
   const medications = useQuery({ queryKey: ["child", child.id, "medications", "health"], queryFn: () => clientApi<ListChildMedicationsResponse>(`/api/ninibu/children/${child.id}/medications?limit=3&status=active`) });
@@ -17,7 +19,7 @@ export function HealthDashboard({ child, onQuickAction }: { child: Child; onQuic
   const timeline = useQuery({ queryKey: ["child", child.id, "timeline"], queryFn: () => clientApi<HealthTimelineResponse>(`/api/ninibu/children/${child.id}/health-timeline?limit=8`) });
 
   const latestGrowth = growth.data?.items[0];
-  const hasAnyError = growth.isError || vaccinations.isError || allergies.isError || medications.isError || visits.isError || timeline.isError;
+  const hasAnyError = growth.isError || growthChart.isError || vaccinations.isError || allergies.isError || medications.isError || visits.isError || timeline.isError;
 
   return <div className="health-page">
     <section className="page-intro">
@@ -69,6 +71,8 @@ export function HealthDashboard({ child, onQuickAction }: { child: Child; onQuic
         </div>
       </article>
     </section>
+
+    {growthChart.isLoading ? <section className="surface-card who-growth-card"><Skeleton className="who-growth-loading" /></section> : <GrowthStandardChart chart={growthChart.data} childName={child.first_name} />}
 
     <section className="surface-card timeline-card">
       <div className="card-heading"><div><span className="card-icon subtle"><Activity size={20} /></span><div><small>تاریخچه یکپارچه</small><h3>خط زمانی سلامت</h3></div></div></div>

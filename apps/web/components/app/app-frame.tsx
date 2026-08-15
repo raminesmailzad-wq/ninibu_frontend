@@ -1,9 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
 import { useQuery } from "@tanstack/react-query";
-import { Bell, LogOut, Menu, Plus, RotateCcw, X } from "lucide-react";
+import { ArrowRight, LogOut, Menu, Plus, RotateCcw, X } from "lucide-react";
 import type { ListChildrenResponse, NotificationUnreadCount, Profile } from "@ninibu/types";
 import { clientApi } from "@/lib/client-api";
 import { Button } from "@/components/ui/button";
@@ -13,13 +14,23 @@ import { Dashboard } from "@/components/dashboard/dashboard";
 import { HealthDashboard } from "@/components/health/health-dashboard";
 import { Community } from "@/components/community/community";
 import { ServicesHub } from "@/components/services/services-hub";
+import { DiscoverHub } from "@/components/discovery/discover-hub";
+import { NotificationCenter } from "@/components/notifications/notification-center";
 import { QuickActionDialog, type QuickAction } from "@/components/quick-actions/quick-action-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ProfilePanel } from "@/components/profile/profile-panel";
+import { ShopHub } from "@/components/shop/shop-hub";
+import { SponsoredSlot } from "@/components/advertising/sponsored-slot";
+import { RouteAnalytics } from "@/components/app/route-analytics";
+import { sectionFromPathname, sectionRoutes } from "@/lib/routes";
+import { trackEvent } from "@/lib/analytics";
 
 const ACTIVE_CHILD_KEY = "ninibu_active_child_id";
 
 export function AppFrame({ onLogout }: { onLogout: () => void }) {
-  const [section, setSection] = useState<AppSection>("home");
+  const router = useRouter();
+  const pathname = usePathname();
+  const section: AppSection = sectionFromPathname(pathname);
   const [activeChildId, setActiveChildId] = useState<number | undefined>(() => {
     if (typeof window === "undefined") return undefined;
     const stored = Number(window.localStorage.getItem(ACTIVE_CHILD_KEY));
@@ -27,6 +38,7 @@ export function AppFrame({ onLogout }: { onLogout: () => void }) {
   });
   const [quickAction, setQuickAction] = useState<QuickAction | null>(null);
   const [mobileMenu, setMobileMenu] = useState(false);
+  const [notificationOpenRequest, setNotificationOpenRequest] = useState(0);
 
   const profileQuery = useQuery({ queryKey: ["profile"], queryFn: () => clientApi<Profile>("/api/ninibu/profile") });
   const childrenQuery = useQuery({ queryKey: ["children"], queryFn: () => clientApi<ListChildrenResponse>("/api/ninibu/children?limit=100") });
@@ -39,12 +51,27 @@ export function AppFrame({ onLogout }: { onLogout: () => void }) {
     [children, activeChildId]
   );
 
+
+  function navigateTo(next: AppSection) {
+    const href = sectionRoutes[next];
+    if (href === pathname) return;
+    trackEvent("navigation_selected", { from_section: section, to_section: next, target_route: href });
+    router.push(href);
+  }
+
+  function goBack() {
+    trackEvent("navigation_back", { from_section: section, from_route: pathname });
+    router.back();
+  }
+
   function changeActiveChild(id: number) {
+    trackEvent("active_child_changed", { section, source: "child_switcher" });
     setActiveChildId(id);
     window.localStorage.setItem(ACTIVE_CHILD_KEY, String(id));
   }
 
   async function logout() {
+    trackEvent("logout_clicked", { section });
     await fetch("/api/ninibu/auth/logout", { method: "POST" });
     window.localStorage.removeItem(ACTIVE_CHILD_KEY);
     onLogout();
@@ -78,15 +105,16 @@ export function AppFrame({ onLogout }: { onLogout: () => void }) {
   const unreadCount = unreadQuery.data?.count ?? 0;
 
   return <div className="app-layout">
+    <RouteAnalytics />
     <aside className={`sidebar ${mobileMenu ? "is-open" : ""}`}>
       <div className="sidebar-head">
-        <button className="brand-lockup" onClick={() => setSection("home")} aria-label="خانه نینیبو">
+        <button className="brand-lockup" onClick={() => navigateTo("home")} aria-label="خانه نینیبو">
           <Image src="/brand/ninibu-logo.png" alt="نینیبو" width={512} height={512} priority />
         </button>
         <button className="sidebar-close" onClick={() => setMobileMenu(false)} aria-label="بستن منو"><X size={20} /></button>
       </div>
       <ChildSwitcher items={children} activeId={activeChild.id} onChange={changeActiveChild} />
-      <DesktopNavigation active={section} onChange={(next) => { setSection(next); setMobileMenu(false); }} />
+      <DesktopNavigation active={section} onChange={(next) => { navigateTo(next); setMobileMenu(false); }} />
       <div className="sidebar-footer">
         <div className="mini-profile">
           <span>{(profile?.first_name || "ن").slice(0, 1)}</span>
@@ -101,42 +129,27 @@ export function AppFrame({ onLogout }: { onLogout: () => void }) {
       <header className="app-header">
         <div className="app-header-copy">
           <button className="mobile-menu-button" onClick={() => setMobileMenu(true)} aria-label="باز کردن منو"><Menu size={21} /></button>
+          {pathname !== "/dashboard" && <button className="app-back-button" type="button" onClick={goBack} aria-label="بازگشت به صفحه قبل" title="بازگشت"><ArrowRight size={16} /></button>}
           <div><span>سلام {profile?.first_name || ""} 👋</span><strong>امروز حال {activeChild.first_name} چطوره؟</strong></div>
         </div>
         <div className="app-header-actions">
-          <button className="notification-button" aria-label={`${unreadCount} اعلان خوانده‌نشده`}>
-            <Bell size={20} />
-            {unreadCount > 0 && <span>{unreadCount > 99 ? "۹۹+" : new Intl.NumberFormat("fa-IR").format(unreadCount)}</span>}
-          </button>
+          <NotificationCenter unreadCount={unreadCount} openRequest={notificationOpenRequest} />
           <div className="mobile-child-switcher"><ChildSwitcher items={children} activeId={activeChild.id} onChange={changeActiveChild} /></div>
         </div>
       </header>
 
       <div className="app-content">
-        {section === "home" && <Dashboard child={activeChild} profile={profile} onQuickAction={setQuickAction} onOpenHealth={() => setSection("health")} />}
+        {section === "home" && <Dashboard child={activeChild} profile={profile} unreadCount={unreadCount} onQuickAction={setQuickAction} onOpenHealth={() => navigateTo("health")} onOpenNotifications={() => setNotificationOpenRequest((current) => current + 1)} onNavigate={navigateTo} />}
         {section === "health" && <HealthDashboard child={activeChild} onQuickAction={setQuickAction} />}
-        {section === "community" && <Community accountProfile={profile} />}
+        {section === "community" && <><SponsoredSlot placement="community_feed" className="section-sponsored-slot" /><Community accountProfile={profile} /></>}
+        {section === "discover" && <><SponsoredSlot placement="public_content_list" className="section-sponsored-slot" /><DiscoverHub child={activeChild} profile={profile} /></>}
         {section === "services" && <ServicesHub child={activeChild} profile={profile} />}
-        {section === "profile" && <ProfilePanel profile={profile} childrenCount={children.length} onLogout={logout} />}
+        {section === "shop" && <ShopHub profile={profile} />}
+        {section === "profile" && <ProfilePanel profile={profile} children={children} activeChildId={activeChild.id} onSelectChild={changeActiveChild} onLogout={logout} />}
       </div>
     </main>
 
-    <MobileNavigation active={section} onChange={setSection} />
+    <MobileNavigation active={section} onChange={navigateTo} />
     <QuickActionDialog action={quickAction} child={activeChild} onClose={() => setQuickAction(null)} />
   </div>;
-}
-
-function ProfilePanel({ profile, childrenCount, onLogout }: { profile?: Profile; childrenCount: number; onLogout: () => void }) {
-  return <section className="profile-page">
-    <div className="profile-hero-card">
-      <span className="profile-avatar">{(profile?.first_name || "ن").slice(0, 1)}</span>
-      <div><span className="eyebrow">حساب نینیبو</span><h2>{profile?.first_name} {profile?.last_name}</h2><p>{profile?.mobile}</p></div>
-    </div>
-    <div className="profile-grid">
-      <article className="surface-card"><small>شهر محل اقامت</small><strong>{profile?.city?.local_name || profile?.city?.name || "—"}</strong><p>{profile?.province?.local_name || profile?.province?.name || ""}</p></article>
-      <article className="surface-card"><small>فرزندان متصل</small><strong>{new Intl.NumberFormat("fa-IR").format(childrenCount)}</strong><p>قابل تغییر از انتخاب‌گر فرزند</p></article>
-      <article className="surface-card"><small>وضعیت راه‌اندازی</small><strong>{profile?.onboarding_completed ? "تکمیل شده" : "ناقص"}</strong><p>اطلاعات اولیه حساب</p></article>
-    </div>
-    <Button variant="outline" onClick={onLogout}><LogOut size={18} /> خروج از حساب</Button>
-  </section>;
 }

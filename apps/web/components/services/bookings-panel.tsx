@@ -1,19 +1,40 @@
 "use client";
 
+import { formatPersianTime } from "@/lib/datetime";
 import { useMemo, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CalendarClock, CalendarDays, ExternalLink, RefreshCw, XCircle } from "lucide-react";
 import type { Booking, BookingListResponse, ServiceAvailability } from "@ninibu/types";
 import { clientApi, NinibuApiError } from "@/lib/client-api";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { ModalPortal } from "@/components/ui/modal-portal";
 import { bookingStatusLabel, dedupeBookings, formatDateOnly, formatDateTime, formatMoney } from "./services-data";
+import { bookingDetailRoute, bookingDetailRouteState } from "@/lib/routes";
+import { trackEvent } from "@/lib/analytics";
 
 export function BookingsPanel() {
   const queryClient = useQueryClient();
-  const [selected, setSelected] = useState<Booking | null>(null);
+  const pathname = usePathname();
+  const router = useRouter();
+  const routeBookingId = bookingDetailRouteState(pathname);
   const query = useQuery({ queryKey: ["bookings"], queryFn: () => clientApi<BookingListResponse>("/api/ninibu/bookings?limit=100") });
   const items = useMemo(() => dedupeBookings(query.data?.items ?? []).sort((a, b) => new Date(b.starts_at).getTime() - new Date(a.starts_at).getTime()), [query.data]);
+  const selectedFromList = routeBookingId ? items.find((item) => item.id === routeBookingId) : undefined;
+  const detailQuery = useQuery({
+    queryKey: ["bookings", "detail", routeBookingId],
+    queryFn: () => clientApi<Booking>(`/api/ninibu/bookings/${routeBookingId}`),
+    enabled: Boolean(routeBookingId),
+    placeholderData: selectedFromList,
+  });
+  const selected = detailQuery.data ?? selectedFromList ?? null;
+
+  function openBookingDetail(booking: Booking) {
+    const href = bookingDetailRoute(booking.id);
+    trackEvent("booking_detail_opened", { source: "bookings", target_route: href, status: booking.status });
+    router.push(href);
+  }
 
   if (query.isLoading) return <div className="service-list-state">در حال دریافت رزروها…</div>;
   if (query.isError) return <div className="service-list-state error-state">رزروها دریافت نشدند. <button onClick={() => query.refetch()}>تلاش دوباره</button></div>;
@@ -29,10 +50,11 @@ export function BookingsPanel() {
       </div>
       <div className="booking-card-actions">
         {booking.meeting?.meeting_url && <a className="booking-meeting-link" href={booking.meeting.meeting_url} target="_blank" rel="noreferrer"><ExternalLink size={15} /> ورود به جلسه</a>}
-        <Button variant="outline" onClick={() => setSelected(booking)}>جزئیات</Button>
+        <Button variant="outline" onClick={() => openBookingDetail(booking)}>جزئیات</Button>
       </div>
     </article>)}
-    {selected && <BookingActions booking={selected} onClose={() => setSelected(null)} onChanged={async (updated) => { setSelected(updated); await queryClient.invalidateQueries({ queryKey: ["bookings"] }); }} />}
+    {routeBookingId && detailQuery.isLoading && <div className="service-modal-route-loading">در حال دریافت جزئیات رزرو…</div>}
+    {selected && <BookingActions booking={selected} onClose={() => router.push("/services/bookings")} onChanged={async () => { await queryClient.invalidateQueries({ queryKey: ["bookings"] }); await queryClient.invalidateQueries({ queryKey: ["bookings", "detail", routeBookingId] }); }} />}
   </div>;
 }
 
@@ -70,8 +92,7 @@ function BookingActions({ booking, onClose, onChanged }: { booking: Booking; onC
   }
 
   const actionable = booking.status === "confirmed" || booking.status === "pending_payment";
-  return <div className="service-modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
-    <div className="service-modal booking-detail-modal" role="dialog" aria-modal="true" aria-label="جزئیات رزرو">
+  return <ModalPortal ariaLabel="جزئیات رزرو" onClose={onClose} backdropClassName="service-modal-backdrop" contentClassName="service-modal booking-detail-modal">
       <header><strong>جزئیات رزرو</strong><button onClick={onClose} aria-label="بستن"><XCircle size={19} /></button></header>
       <div className="booking-detail-body">
         <div className="booking-detail-title"><span className={`booking-status status-${booking.status}`}>{bookingStatusLabel[booking.status] || booking.status}</span><h2>{booking.service_name || "خدمت رزروشده"}</h2><p>{booking.seller_name || "ارائه‌دهنده"}</p></div>
@@ -87,8 +108,7 @@ function BookingActions({ booking, onClose, onChanged }: { booking: Booking; onC
 
         {mode === "cancel" && <div className="booking-action-box"><strong>لغو رزرو</strong><Textarea value={reason} onChange={(event) => setReason(event.target.value)} placeholder="دلیل لغو" />{error && <p className="service-error">{error}</p>}<div><Button disabled={busy} onClick={cancelBooking}>تأیید لغو</Button><Button variant="ghost" onClick={() => { setMode("view"); setError(""); }}>انصراف</Button></div></div>}
 
-        {mode === "reschedule" && <div className="booking-action-box"><strong>انتخاب زمان جدید</strong>{availability.isLoading && <p>در حال دریافت زمان‌ها…</p>}{availability.isError && <p className="service-error">زمان‌های آزاد دریافت نشد.</p>}<div className="reschedule-days">{days.map((day) => <div key={day.date}><span>{formatDateOnly(day.date)}</span><div>{day.slots.map((item) => <button key={item.starts_at} className={slot === item.starts_at ? "is-active" : ""} onClick={() => setSlot(item.starts_at)}>{new Intl.DateTimeFormat("fa-IR", { hour: "2-digit", minute: "2-digit" }).format(new Date(item.starts_at))}</button>)}</div></div>)}</div>{error && <p className="service-error">{error}</p>}<div><Button disabled={busy || !slot} onClick={rescheduleBooking}>ثبت زمان جدید</Button><Button variant="ghost" onClick={() => { setMode("view"); setError(""); }}>انصراف</Button></div></div>}
+        {mode === "reschedule" && <div className="booking-action-box"><strong>انتخاب زمان جدید</strong>{availability.isLoading && <p>در حال دریافت زمان‌ها…</p>}{availability.isError && <p className="service-error">زمان‌های آزاد دریافت نشد.</p>}<div className="reschedule-days">{days.map((day) => <div key={day.date}><span>{formatDateOnly(day.date)}</span><div>{day.slots.map((item) => <button key={item.starts_at} className={slot === item.starts_at ? "is-active" : ""} onClick={() => setSlot(item.starts_at)}>{formatPersianTime(item.starts_at)}</button>)}</div></div>)}</div>{error && <p className="service-error">{error}</p>}<div><Button disabled={busy || !slot} onClick={rescheduleBooking}>ثبت زمان جدید</Button><Button variant="ghost" onClick={() => { setMode("view"); setError(""); }}>انصراف</Button></div></div>}
       </div>
-    </div>
-  </div>;
+  </ModalPortal>;
 }
