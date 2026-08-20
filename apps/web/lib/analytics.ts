@@ -223,8 +223,17 @@ export function advanceFunnel(funnel: string, key: string, step: string, propert
     return;
   }
   const current = funnels[index];
+  if (!current) {
+    startFunnel(funnel, key, step, properties);
+    return;
+  }
   if (current.step === step) return;
-  const next = { ...current, step, updated_at: new Date().toISOString(), properties: { ...current.properties, ...sanitize(properties) } };
+  const next: ActiveFunnel = {
+    ...current,
+    step,
+    updated_at: new Date().toISOString(),
+    properties: { ...current.properties, ...sanitize(properties) },
+  };
   funnels[index] = next;
   writeFunnels(funnels);
   trackEvent("funnel_step_viewed", {
@@ -272,8 +281,10 @@ export function handleRouteFunnelTransition(fromPath: string, toPath: string) {
   const booking = /^\/services\/(\d+)\/book(?:\/(?:schedule|review|payment|success))?\/?$/.exec(fromPath);
   if (booking) {
     const serviceKey = booking[1];
-    const stillSameBooking = new RegExp(`^/services/${serviceKey}/book(?:/(?:schedule|review|payment|success))?/?$`).test(toPath);
-    if (!stillSameBooking) abandonFunnel("service_booking", serviceKey, { reason: "navigation_away" });
+    if (serviceKey) {
+      const stillSameBooking = new RegExp(`^/services/${serviceKey}/book(?:/(?:schedule|review|payment|success))?/?$`).test(toPath);
+      if (!stillSameBooking) abandonFunnel("service_booking", serviceKey, { reason: "navigation_away" });
+    }
   }
 
   const commerceCheckout = /^\/shop\/checkout\/?$/.test(fromPath);

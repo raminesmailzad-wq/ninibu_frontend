@@ -51,10 +51,24 @@ export function SponsoredSlot({ placement, className = "" }: { placement: SafeAd
   }, [item, delivery?.request_id]);
 
   if (!item || !delivery?.request_id) return null;
-  const destination = destinationOf(item);
+  const activeItem = item;
+  const requestId = delivery.request_id;
+  const destination = destinationOf(activeItem);
 
   async function record(type: "click" | "dismiss") {
-    try { await clientApi("/api/ninibu/advertising/events", { method: "POST", body: JSON.stringify(eventBody(delivery!.request_id, item!.creative.id, type, type === "click" ? { destination: destination.kind } : { screen: placement })) }); } catch {}
+    try {
+      await clientApi("/api/ninibu/advertising/events", {
+        method: "POST",
+        body: JSON.stringify(
+          eventBody(
+            requestId,
+            activeItem.creative.id,
+            type,
+            type === "click" ? { destination: destination.kind } : { screen: placement },
+          ),
+        ),
+      });
+    } catch {}
   }
 
   async function openDestination() {
@@ -65,17 +79,17 @@ export function SponsoredSlot({ placement, className = "" }: { placement: SafeAd
   }
 
   async function dismiss() {
-    setDismissed((current) => new Set(current).add(item.creative.id));
+    setDismissed((current) => new Set(current).add(activeItem.creative.id));
     await record("dismiss");
   }
 
   return <aside className={`sponsored-slot ${className}`} aria-label="تبلیغ حمایت‌شده">
     <div className="sponsored-slot-mark"><Megaphone size={17} /><span>حمایت‌شده</span></div>
     <div className="sponsored-slot-copy">
-      <strong>{item.creative.title || "پیشنهاد تبلیغاتی"}</strong>
-      {item.creative.body && <p>{item.creative.body}</p>}
+      <strong>{activeItem.creative.title || "پیشنهاد تبلیغاتی"}</strong>
+      {activeItem.creative.body && <p>{activeItem.creative.body}</p>}
     </div>
-    {destination.kind !== "none" && <button type="button" className="sponsored-slot-action" onClick={openDestination}>{item.creative.call_to_action || "مشاهده"}{destination.kind === "external" && <ExternalLink size={13} />}</button>}
+    {destination.kind !== "none" && <button type="button" className="sponsored-slot-action" onClick={openDestination}>{activeItem.creative.call_to_action || "مشاهده"}{destination.kind === "external" && <ExternalLink size={13} />}</button>}
     <button type="button" className="sponsored-slot-dismiss" onClick={dismiss} aria-label="بستن تبلیغ" title="این تبلیغ را نبین"><X size={14} /></button>
   </aside>;
 }
