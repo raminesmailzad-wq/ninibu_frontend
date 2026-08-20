@@ -1,0 +1,34 @@
+services:
+  frontend:
+    image: ninibu-frontend:0.14.0
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_NINIBU_DEV_OTP: ""
+        NEXT_PUBLIC_NINIBU_ANALYTICS_ENDPOINT: ""
+        NEXT_PUBLIC_NINIBU_PAYMENT_PROVIDER: "sandbox"
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      HOSTNAME: 0.0.0.0
+      PORT: 3000
+      NINIBU_BACKEND_URL: http://api:8081
+    ports:
+      - "127.0.0.1:3000:3000"
+    networks:
+      - ninibu_backend
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          node -e "fetch('http://127.0.0.1:3000/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+networks:
+  ninibu_backend:
+    external: true
+    name: ninibu-backend_ninibu_backend

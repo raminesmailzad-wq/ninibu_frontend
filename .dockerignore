@@ -1,0 +1,14 @@
+.git
+.gitignore
+**/node_modules
+**/.next
+**/.turbo
+coverage
+*.log
+.env
+.env.*
+!.env.example
+!apps/web/.env.example
+Dockerfile*
+docker-compose*.yml
+DEPLOY_DOCKER.md
