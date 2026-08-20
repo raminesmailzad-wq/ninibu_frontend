@@ -1,6 +1,15 @@
 # Ninibu Frontend
 
-Frontend monorepo for Ninibu, aligned with Backend v0.23.0.
+Frontend monorepo for Ninibu, aligned with Backend v0.24.0.
+
+## v0.15.0 scope — Password-first Authentication + SMS OTP
+
+- Daily login now uses mobile + password without SMS.
+- SMS OTP is reserved for first-time signup and password recovery.
+- Existing OTP-only accounts are guided through password setup using the recovery flow.
+- Signup/recovery validates the new password before requesting SMS to avoid unnecessary OTP cost.
+- Frontend BFF stores access/refresh tokens in the existing HttpOnly cookies after login, signup, or reset.
+- Requires Ninibu Backend v0.24.0.
 
 ## v0.14.0 scope — WHO Growth Intelligence
 
@@ -11,7 +20,7 @@ Frontend monorepo for Ninibu, aligned with Backend v0.23.0.
 - Retains the existing raw measurement cards and history; the standards chart is an additional interpretation layer.
 - All measurement dates remain Jalali/Persian in the frontend; the backend still receives/stores Gregorian date-only values and ISO timestamps.
 - Existing approved dashboard visuals, logo, centered Modal stack, nested Jalali Date Picker, routing and privacy-safe analytics are preserved.
-- Requires Ninibu Backend v0.23.0 for WHO indicators; the component degrades gracefully if the older raw-only growth contract is returned.
+- Requires Ninibu Backend v0.24.0 for WHO indicators; the component degrades gracefully if the older raw-only growth contract is returned.
 
 ## v0.13.0 scope — Targeted Advertising + Commerce / Marketplace
 
@@ -124,7 +133,7 @@ Shared packages prepared for a future Expo/React Native client:
 
 ## Local run
 
-Requirements: Node.js 22+, Corepack/pnpm, and Ninibu Backend v0.23.0 running locally.
+Requirements: Node.js 22+, Corepack/pnpm, and Ninibu Backend v0.24.0 running locally.
 
 ```bash
 corepack enable

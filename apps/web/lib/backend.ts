@@ -50,6 +50,13 @@ export function cookieOptions(expires?: Date) {
   return { httpOnly: true, sameSite: "lax" as const, secure: process.env.NODE_ENV === "production", path: "/", ...(expires ? {expires} : {}) };
 }
 
+
+export async function setSessionCookies(data: {access_token:string;refresh_token:string;access_expires_at:string;refresh_expires_at:string}) {
+  const store = await cookies();
+  store.set(ACCESS_COOKIE, data.access_token, cookieOptions(new Date(data.access_expires_at)));
+  store.set(REFRESH_COOKIE, data.refresh_token, cookieOptions(new Date(data.refresh_expires_at)));
+}
+
 export async function clearSessionCookies() {
   const store = await cookies();
   store.set(ACCESS_COOKIE, "", {...cookieOptions(), maxAge:0});

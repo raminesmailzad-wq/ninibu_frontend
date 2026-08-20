@@ -1,7 +1,11 @@
 import { z } from "zod";
 
 export const iranMobileSchema = z.string().trim().regex(/^(?:\+98|0098|98|0)?9\d{9}$/, "شماره موبایل معتبر نیست");
-export const otpSchema = z.string().trim().regex(/^\d{4,8}$/, "کد تایید معتبر نیست");
+export const otpSchema = z.string().trim().regex(/^\d{6}$/, "کد تایید باید ۶ رقم باشد");
+export const passwordSchema = z.string()
+  .refine((value) => value.trim().length > 0, "رمز عبور نمی‌تواند فقط شامل فاصله باشد")
+  .refine((value) => Array.from(value).length >= 8, "رمز عبور باید حداقل ۸ کاراکتر باشد")
+  .refine((value) => new TextEncoder().encode(value).length <= 72, "رمز عبور برای ذخیره امن بیش از حد طولانی است");
 
 export const growthMeasurementSchema = z.object({
   measured_at: z.string().min(1, "تاریخ اندازه‌گیری الزامی است"),

@@ -1,4 +1,4 @@
-# Ninibu Frontend v0.14.0 — Docker deployment
+# Ninibu Frontend v0.15.0 — Docker deployment
 
 This package is prepared for the current Ninibu home-server deployment:
 
@@ -55,7 +55,6 @@ The important routing split is:
 
 `NEXT_PUBLIC_*` values are compiled into the Next.js browser bundle at build time. The Compose defaults are suitable for the current staging/sandbox deployment:
 
-- `NEXT_PUBLIC_NINIBU_DEV_OTP` empty
 - `NEXT_PUBLIC_NINIBU_ANALYTICS_ENDPOINT` empty
 - `NEXT_PUBLIC_NINIBU_PAYMENT_PROVIDER=sandbox`
 

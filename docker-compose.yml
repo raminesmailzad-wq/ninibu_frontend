@@ -1,11 +1,10 @@
 services:
   frontend:
-    image: ninibu-frontend:0.14.0
+    image: ninibu-frontend:0.15.0
     build:
       context: .
       dockerfile: Dockerfile
       args:
-        NEXT_PUBLIC_NINIBU_DEV_OTP: ""
         NEXT_PUBLIC_NINIBU_ANALYTICS_ENDPOINT: ""
         NEXT_PUBLIC_NINIBU_PAYMENT_PROVIDER: "sandbox"
     restart: unless-stopped

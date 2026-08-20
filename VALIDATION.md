@@ -1,22 +1,22 @@
-# Validation — Ninibu Frontend v0.14.0
+# Validation — Ninibu Frontend v0.15.0
 
 ## Scope
 
-WHO Growth Intelligence UI on top of the complete v0.13.0 frontend.
+Password-first authentication UI/BFF aligned with Ninibu Backend v0.24.0.
 
 ## Checks performed
 
-- Parsed/transpiled 172 TypeScript/TSX source files with TypeScript 5.8.3: zero syntax diagnostics.
+- Parsed/transpiled 177 TypeScript/TSX source files with TypeScript 5.8.3: zero syntax/transpile diagnostics.
 - Jalali date policy audit passes.
-- No native `type="date"` or `datetime-local` control is present in app TypeScript/TSX sources.
-- `apps/web` has no runtime import of `@ninibu/datetime`; date UI remains on the stable local datetime boundary.
-- Growth chart keeps legacy raw measurement cards and adds WHO indicators through the existing `growth-chart` route.
-- Chart dates are rendered through the centralized Jalali formatter.
-- Chart is responsive and does not require horizontal scrolling.
-- Missing WHO indicators / unspecified gender degrade to an explanatory empty state instead of breaking health records.
-- Root and web package versions are `0.14.0`.
-- Ninibu logo SHA256 remains `51fc51093e4b555899890b230a26e206110a5b9ddf5df74ee5f01f5f5e36abf8`.
+- Login UI defaults to mobile + password and does not request an OTP.
+- Signup requires mobile, password and password confirmation before the OTP request.
+- Password recovery requires the new password and confirmation before the OTP request.
+- Existing backend accounts returning `PASSWORD_SETUP_REQUIRED` are routed to the password-bootstrap recovery flow.
+- BFF routes for login, signup and reset store access/refresh tokens using the existing HttpOnly cookie boundary.
+- Legacy OTP-login frontend routes remain unused by the UI; the backend rejects them without SMS.
+- Root, web and workspace package versions are `0.15.0`; Docker image tag is `0.15.0`.
+- Existing centered Modal/Jalali Date Picker/navigation behavior outside authentication is unchanged.
 
-## Build note
+## Build environment note
 
-The packaging environment does not contain the release dependency store (`node_modules` is intentionally excluded), so this report does not claim a full dependency-resolving Next.js build/lint/project-wide semantic typecheck. Syntax-level TypeScript parsing, route/API boundary inspection, date-policy audit and archive integrity are verified.
+The packaging environment has Node.js 22 and TypeScript 5.8.3 but does not contain `node_modules`; Corepack cannot download pnpm because outbound registry access is blocked. This report therefore does not claim a dependency-resolving Next.js build/lint/typecheck. A syntax parse of TypeScript/TSX sources and the Jalali date-policy audit passed during packaging; run `pnpm install --frozen-lockfile && pnpm typecheck && pnpm lint && pnpm build` in CI before production deployment.

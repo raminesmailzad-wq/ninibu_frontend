@@ -1,4 +1,9 @@
 export const apiPaths = {
+  login: "/api/v1/auth/login",
+  signupRequestOtp: "/api/v1/auth/signup/request-otp",
+  signup: "/api/v1/auth/signup",
+  passwordForgotRequestOtp: "/api/v1/auth/password/forgot/request-otp",
+  passwordReset: "/api/v1/auth/password/reset",
   requestOtp: "/api/v1/auth/request-otp",
   verifyOtp: "/api/v1/auth/verify-otp",
   refresh: "/api/v1/auth/refresh",

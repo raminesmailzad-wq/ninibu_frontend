@@ -11,6 +11,7 @@ export type User = {
   last_name: string;
   status: boolean;
   role: string;
+  has_password?: boolean;
   last_login_at?: string;
 };
 
