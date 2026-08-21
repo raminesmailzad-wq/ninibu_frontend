@@ -2,6 +2,17 @@
 
 Frontend monorepo for Ninibu, aligned with Backend v0.24.0.
 
+## v0.16.0 scope — Native Expo Mobile App
+
+- Adds a real React Native / Expo application under `apps/mobile`; it is not a WebView.
+- Reuses Ninibu API contracts, types, validation, design tokens and Jalali helpers from the monorepo.
+- Supports password-first authentication, signup/recovery SMS verification, token refresh and SecureStore credential persistence.
+- Includes onboarding, family/child switching, dashboard, health and WHO growth context, community, Discover/Search, services/bookings/consultations, commerce, notifications, profile and advertising consent.
+- Mobile talks directly to the Go backend while the existing web app keeps its BFF + HttpOnly-cookie authentication model.
+- Expo Go on a physical Android phone is the default development emulator; Android Studio is not required.
+- Includes `eas.json` for later cloud APK builds without installing the Android toolchain locally.
+- Existing web application behavior from v0.15.0 is retained.
+
 ## v0.15.0 scope — Password-first Authentication + SMS OTP
 
 - Daily login now uses mobile + password without SMS.
@@ -115,7 +126,8 @@ See `docs/JALALI_DATE_POLICY.md`.
 
 ## Stack
 
-- Next.js App Router + React + TypeScript
+- Next.js App Router + React + TypeScript (web)
+- Expo + React Native + Expo Router (mobile)
 - Tailwind CSS v4
 - shadcn/ui-style open component conventions
 - Zod
@@ -123,7 +135,7 @@ See `docs/JALALI_DATE_POLICY.md`.
 - Lucide React
 - pnpm workspaces + Turborepo
 
-Shared packages prepared for a future Expo/React Native client:
+Shared packages used by both web and the Expo/React Native client:
 
 - `@ninibu/api`
 - `@ninibu/types`
@@ -151,6 +163,15 @@ Default backend URL:
 ```env
 NINIBU_BACKEND_URL=http://localhost:8080
 ```
+
+### Run the native mobile app on your Android phone
+
+```bash
+pnpm install --no-frozen-lockfile
+pnpm dev:mobile:clear
+```
+
+Scan the QR code in Expo Go. The mobile app normally derives the computer LAN IP and talks to backend port `8080`. For an explicit address, copy `apps/mobile/.env.example` to `apps/mobile/.env` and set `EXPO_PUBLIC_NINIBU_BACKEND_URL`. See `apps/mobile/README.md`.
 
 Suggested smoke flow:
 

@@ -1,5 +1,39 @@
 # Changelog
 
+## v0.16.3 — Android bottom safe-area fix
+
+- Fixed the mobile bottom tab bar overlapping Android system navigation controls.
+- Bottom tab height and padding now use `react-native-safe-area-context` dynamically.
+- Added a minimum bottom padding for gesture-navigation devices while respecting larger 3-button navigation insets.
+- Kept the existing five-tab navigation and styling unchanged above the safe-area adjustment.
+
+# v0.16.2 — Mobile post-login routing fix
+
+- Fixed a race after successful mobile authentication where `/auth/me` and `/profile` both succeeded but the router could render `/` before the new SessionProvider state had committed, briefly resolve the user as signed out, and leave the app on the auth screen.
+- Added a declarative authenticated-user guard to the Expo Router auth layout. A valid signed-in session now always leaves `/(auth)` and goes to onboarding or the main tabs as appropriate.
+- Removed the imperative `router.replace('/')` from the auth completion path; navigation now follows committed session state.
+- Added complementary onboarding guards so signed-out users cannot remain on onboarding and completed users cannot get stranded there after session refresh.
+- Preserved v0.16.1 safe auth/API diagnostics and production API default (`https://ninibu.com`).
+
+# v0.16.1 — Mobile auth diagnostics
+
+- Production mobile API base defaults to `https://ninibu.com`.
+- Added safe Metro diagnostics for auth/session/API requests without printing access/refresh tokens or passwords.
+- Login/session validation errors are no longer swallowed silently after a successful auth response.
+- Removed `SplashScreen.setOptions` call that warns in Expo Go.
+
+# Changelog
+
+## 0.16.0 - Native Expo Mobile
+
+- Added `apps/mobile` as a complete Expo SDK 54 / React Native client.
+- Added password-first native auth with SecureStore access/refresh token handling and automatic refresh on 401.
+- Added Persian RTL onboarding, profile/residence editing, child creation and active-child switching.
+- Added mobile dashboard, health/growth, WHO chart context, vaccination and visit quick-entry flows.
+- Added community, Discover/Search/personalization, services/bookings/consultations, commerce/cart/orders/payment, notifications/preferences and advertising consent.
+- Added real-device development through Expo Go and EAS cloud-build configuration so Android Studio is not required.
+- Preserved the v0.15.0 web application and its Next.js BFF/HttpOnly-cookie authentication behavior.
+
 ## v0.15.0 — Password-first Authentication + Mediana OTP
 
 - ورود روزمره با شماره موبایل و رمز عبور انجام می‌شود و دیگر پیامک مصرف نمی‌کند.
