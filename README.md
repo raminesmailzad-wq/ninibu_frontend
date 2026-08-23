@@ -1,6 +1,17 @@
 # Ninibu Frontend
 
-Frontend monorepo for Ninibu, aligned with Backend v0.24.0.
+Frontend monorepo for Ninibu, aligned with Backend v0.26.1.
+
+## v0.18.1 scope — Admin Control Center deployment patch
+
+- Corrects Docker image/deployment versioning and local backend port defaults.
+- Keeps the v0.18.0 Admin Control Center feature set unchanged.
+- Adds a dedicated Web Backoffice under `/admin` for Admin/Super Admin accounts.
+- Covers dashboard KPIs, knowledge content workflow, advertising, unified provider verification, community moderation, user access, commission reporting, feature flags, settings and audit history.
+- `super_admin` is the only role allowed to change management roles and global System Settings; regular Admin keeps day-to-day operational access.
+- Admin forms use centered viewport modals and never expose secret configuration in the browser.
+- The mobile parent app remains v0.17.0; administration is intentionally Web-only.
+- Requires Ninibu Backend v0.26.1.
 
 ## v0.16.0 scope — Native Expo Mobile App
 
@@ -145,7 +156,7 @@ Shared packages used by both web and the Expo/React Native client:
 
 ## Local run
 
-Requirements: Node.js 22+, Corepack/pnpm, and Ninibu Backend v0.24.0 running locally.
+Requirements: Node.js 22+, Corepack/pnpm, and Ninibu Backend v0.26.1 running locally.
 
 ```bash
 corepack enable
@@ -161,7 +172,7 @@ pnpm dev
 Default backend URL:
 
 ```env
-NINIBU_BACKEND_URL=http://localhost:8080
+NINIBU_BACKEND_URL=http://localhost:8081
 ```
 
 ### Run the native mobile app on your Android phone
@@ -171,7 +182,7 @@ pnpm install --no-frozen-lockfile
 pnpm dev:mobile:clear
 ```
 
-Scan the QR code in Expo Go. The mobile app normally derives the computer LAN IP and talks to backend port `8080`. For an explicit address, copy `apps/mobile/.env.example` to `apps/mobile/.env` and set `EXPO_PUBLIC_NINIBU_BACKEND_URL`. See `apps/mobile/README.md`.
+Scan the QR code in Expo Go. Mobile defaults to the production HTTPS API (`https://ninibu.com`). For a local development backend, copy `apps/mobile/.env.example` to `apps/mobile/.env` and set `EXPO_PUBLIC_NINIBU_BACKEND_URL` to an address reachable by the phone. See `apps/mobile/README.md`.
 
 Suggested smoke flow:
 

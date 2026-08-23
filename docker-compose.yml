@@ -1,6 +1,6 @@
 services:
   frontend:
-    image: ninibu-frontend:0.15.0
+    image: ${NINIBU_FRONTEND_IMAGE:-ninibu-frontend:0.18.1}
     build:
       context: .
       dockerfile: Dockerfile

@@ -852,3 +852,75 @@ export type UpdateNotificationPreferenceItem = {
 export type UpdateNotificationPreferencesRequest = {
   items: UpdateNotificationPreferenceItem[];
 };
+
+
+// Maternal health and clinician-approved child nutrition — Backend v0.25.0.
+export type MaternalLifeStage = "menstrual" | "preconception" | "pregnancy" | "postpartum" | "breastfeeding" | "perimenopause" | "menopause";
+export type MaternalProfile = {
+  id: number; user_id: number; life_stage: MaternalLifeStage; first_period_date?: string; last_period_date?: string; last_delivery_date?: string; breastfeeding: boolean; notes?: string; created_at?: string; updated_at?: string;
+};
+export type MaternalCycle = { id: number; user_id: number; started_at: string; ended_at?: string; flow?: string; pain_level?: number; notes?: string; created_at?: string; updated_at?: string; };
+export type BreastfeedingLog = { id: number; user_id: number; child_id?: number; started_at: string; duration_minutes?: number; side?: string; feeding_method: "breast" | "pumped_milk" | "mixed" | string; notes?: string; created_at?: string; };
+export type MaternalCheckIn = { id: number; user_id: number; recorded_at: string; mood?: string; sleep_quality?: string; energy_level?: number; symptoms?: string[]; notes?: string; created_at?: string; };
+export type MaternalGuidanceItem = { code: string; title: string; summary: string; actions: string[]; source_kind: string; safety_level: string; };
+export type MaternalGuidanceResponse = { life_stage: MaternalLifeStage; generated_at: string; items: MaternalGuidanceItem[]; disclaimer: string; };
+export type ChildNutritionRecommendation = {
+  id: number; child_id: number; clinician_user_id: number; clinician_name: string; clinician_specialty?: string; recommendation_type: "food" | "vitamin" | "combined"; title: string; guidance: string; rationale?: string; follow_up_at?: string; status: "active" | "revoked" | string; child_snapshot?: Record<string, unknown>; source_type: "clinician" | string; verification_status: string; revoked_at?: string; revoke_reason?: string; created_at: string; updated_at: string;
+};
+export type ChildNutritionRecommendationListResponse = { items: ChildNutritionRecommendation[] };
+
+
+export type AdminDashboard = {
+  counts: Record<string, number>;
+  privacy_note?: string;
+};
+
+export type AdminUser = {
+  id: number; mobile: string; first_name: string; last_name: string; role: string; active: boolean;
+  created_at: string; last_login_at?: string;
+};
+export type AdminUserList = { items: AdminUser[]; pagination: { page: number; limit: number; total: number } };
+
+export type AdminProvider = {
+  provider_type: "clinician" | "seller"; provider_id: number; user_id: number; name: string; mobile: string;
+  category: string; verification_status: string; operational_status: string; city?: string; created_at: string;
+};
+export type AdminProviderList = { items: AdminProvider[]; pagination: { page: number; limit: number; total: number } };
+
+export type AdminFinanceCurrency = {
+  currency: string; paid_gross_amount: number; commission_amount: number; seller_receivable_amount: number;
+  refunded_amount: number; pending_seller_balance: number; available_seller_balance: number;
+};
+export type AdminFinanceSummary = {
+  currencies: AdminFinanceCurrency[]; paid_orders: number; total_orders: number; confirmed_bookings: number;
+  completed_bookings: number; pending_refunds: number;
+};
+
+export type AdminKnowledgeContent = {
+  id: number; content_type: string; slug: string; title: string; summary?: string; status: string; language: string;
+  author_user_id: number; current_revision_id?: number; published_revision_id?: number; medical_review_required: boolean;
+  published_at?: string; archived_at?: string; created_at: string; updated_at: string;
+};
+export type AdminKnowledgeList = { items: AdminKnowledgeContent[]; pagination: { page: number; limit: number; total: number } };
+
+export type AdminAdvertiser = {
+  id: number; name: string; legal_name?: string; contact_name: string; contact_mobile: string; contact_email?: string;
+  website_url?: string; status: string; notes?: string; created_at: string; updated_at: string;
+};
+export type AdminAdCampaign = {
+  id: number; advertiser_id: number; advertiser_name: string; name: string; objective: string; status: string;
+  starts_at: string; ends_at: string; priority: number; frequency_cap_per_user: number; rejection_reason?: string;
+  created_at: string; updated_at: string;
+};
+export type AdminList<T> = { items: T[]; pagination: Pagination };
+export type AdminAdReport = { campaign_id: number; campaign_name: string; impressions: number; unique_impressions: number; clicks: number; unique_clicks: number; dismissals: number; conversions: number; ctr: number; average_frequency: number };
+
+export type AdminCommunityReport = {
+  id: number; reporter_user_id?: number; entity_type: string; entity_id: number; reason: string; description?: string; status: string;
+  reviewed_by_user_id?: number; reviewed_at?: string; resolution?: string; is_system_generated: boolean; created_at: string;
+};
+export type AdminCommunityReportList = { items: AdminCommunityReport[]; pagination: Pagination };
+
+export type AdminFeatureFlag = { id: number; code: string; name: string; description?: string; enabled: boolean; rollout_percent: number; updated_by_user_id?: number; updated_at: string };
+export type AdminSystemSetting = { id: number; key: string; value: string; value_type: string; description?: string; is_public: boolean; updated_by_user_id?: number; updated_at: string };
+export type AdminAuditEvent = { id: number; actor_user_id: number; action: string; entity_type?: string; entity_id?: string; metadata?: Record<string, unknown>; created_at: string };

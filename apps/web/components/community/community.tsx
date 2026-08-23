@@ -85,12 +85,20 @@ export function Community({ accountProfile }: { accountProfile?: Profile }) {
 
   const membershipMutation = useMutation({
     mutationFn: async ({ group, action }: { group: CommunityGroup; action: "join" | "leave" }) => {
-      if (action === "join") return clientApi<CommunityGroup>(`/api/ninibu/community/groups/${group.id}/join`, { method: "POST" });
-      await clientApi<void>(`/api/ninibu/community/groups/${group.id}/leave`, { method: "POST" });
+      if (action === "join") await clientApi(`/api/ninibu/community/groups/${group.id}/join`, { method: "POST" });
+      else await clientApi<void>(`/api/ninibu/community/groups/${group.id}/leave`, { method: "POST" });
+      return group.id;
     },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["community", "groups"] });
-      await queryClient.invalidateQueries({ queryKey: ["community", "feed"] });
+    onSuccess: async (groupId) => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["community", "groups"] }),
+        queryClient.invalidateQueries({ queryKey: ["community", "feed"] }),
+        queryClient.invalidateQueries({ queryKey: ["community", "group-posts", groupId] })
+      ]);
+      if (selectedGroup?.id === groupId) {
+        const refreshed = await clientApi<CommunityGroup>(`/api/ninibu/community/groups/${groupId}`);
+        setSelectedGroup(refreshed);
+      }
     }
   });
 
@@ -181,7 +189,12 @@ function GroupDetail({ group, onBack, onJoin }: { group: CommunityGroup; onBack:
   const [selectedPost, setSelectedPost] = useState<CommunityPost | null>(null);
   const [composerOpen, setComposerOpen] = useState(false);
   const [reportTarget, setReportTarget] = useState<{entityType:"community_post"|"community_comment";entityId:number}|null>(null);
-  const postsQuery = useQuery({ queryKey: ["community", "group-posts", group.id, page], queryFn: () => clientApi<CommunityPostListResponse>(`/api/ninibu/community/groups/${group.id}/posts?page=${page}&limit=12`) });
+  const canReadPosts = group.visibility === "public" || group.membership_status === "active";
+  const postsQuery = useQuery({
+    queryKey: ["community", "group-posts", group.id, page],
+    queryFn: () => clientApi<CommunityPostListResponse>(`/api/ninibu/community/groups/${group.id}/posts?page=${page}&limit=12`),
+    enabled: canReadPosts
+  });
   return <section className="community-page">
     <button className="community-back" onClick={onBack}><ArrowRight size={18}/> بازگشت به جامعه</button>
     <div className="community-group-hero surface-card">
@@ -189,8 +202,9 @@ function GroupDetail({ group, onBack, onJoin }: { group: CommunityGroup; onBack:
       <div><div className="community-group-title-row"><h1>{group.name}</h1>{group.is_official && <span className="official-badge">رسمی نینیبو</span>}</div><p>{group.description}</p><div className="community-group-meta"><span>{new Intl.NumberFormat("fa-IR").format(group.member_count)} عضو</span><span>{group.category.name}</span><span>{group.visibility === "public" ? "عمومی" : "خصوصی"}</span></div></div>
       <div>{group.membership_status === "active" ? <Button onClick={()=>setComposerOpen(true)}><CirclePlus size={17}/> نوشتن پست</Button> : group.membership_status === "pending" ? <Button variant="secondary" disabled>در انتظار تأیید</Button> : <Button onClick={onJoin}>عضویت در گروه</Button>}</div>
     </div>
-    {postsQuery.isLoading && <CommunityListSkeleton/>}
-    {postsQuery.isError && <CommunityError onRetry={() => postsQuery.refetch()}/>} 
+    {!canReadPosts && <CommunityEmpty title="محتوای این گروه خصوصی است" description="برای دیدن پست‌ها ابتدا عضو گروه شوید. اطلاعات و موضوع گروه برای تصمیم‌گیری درباره عضویت قابل مشاهده است."/>}
+    {canReadPosts && postsQuery.isLoading && <CommunityListSkeleton/>}
+    {canReadPosts && postsQuery.isError && <CommunityError onRetry={() => postsQuery.refetch()}/>} 
     {postsQuery.data?.items.map((post) => <PostCard key={post.id} post={post} onOpen={() => setSelectedPost(post)} onReact={() => setSelectedPost(post)} onReport={() => setReportTarget({entityType:"community_post",entityId:post.id})}/>) }
     {postsQuery.data && postsQuery.data.pagination.total_pages > 1 && <div className="community-pagination"><Button variant="outline" disabled={page <= 1} onClick={() => setPage((p) => p-1)}>قبلی</Button><span>صفحه {new Intl.NumberFormat("fa-IR").format(page)} از {new Intl.NumberFormat("fa-IR").format(postsQuery.data.pagination.total_pages)}</span><Button variant="outline" disabled={page >= postsQuery.data.pagination.total_pages} onClick={() => setPage((p) => p+1)}>بعدی</Button></div>}
     {composerOpen && <ComposerModal groups={[group]} defaultGroupId={group.id} onClose={()=>setComposerOpen(false)} onCreated={async(post)=>{setComposerOpen(false);await queryClient.invalidateQueries({queryKey:["community","group-posts",group.id]});setSelectedPost(post)}}/>}

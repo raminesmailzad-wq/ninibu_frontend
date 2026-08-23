@@ -8,6 +8,8 @@ import { formatDate, formatNumber, timelineTypeLabel, visitTypeLabel } from "@/l
 import { Skeleton } from "@/components/ui/skeleton";
 import type { QuickAction } from "@/components/quick-actions/quick-action-dialog";
 import { GrowthStandardChart } from "@/components/health/growth-standard-chart";
+import { MaternalHealthPanel } from "@/components/health/maternal-health-panel";
+import { NutritionRecommendations } from "@/components/health/nutrition-recommendations";
 
 export function HealthDashboard({ child, onQuickAction }: { child: Child; onQuickAction: (action: QuickAction) => void }) {
   const growth = useQuery({ queryKey: ["child", child.id, "growth", "health"], queryFn: () => clientApi<ListGrowthMeasurementsResponse>(`/api/ninibu/children/${child.id}/growth-measurements?limit=6`) });
@@ -32,6 +34,8 @@ export function HealthDashboard({ child, onQuickAction }: { child: Child; onQuic
     </section>
 
     {hasAnyError && <div className="health-warning"><ShieldAlert size={18} /><span>بخشی از اطلاعات دریافت نشد. سایر بخش‌های پرونده همچنان قابل استفاده‌اند.</span></div>}
+
+    <section className="health-family-grid"><MaternalHealthPanel /><NutritionRecommendations child={child} /></section>
 
     <section className="health-stat-grid">
       <HealthStat icon={Syringe} label="واکسن ثبت‌شده" value={vaccinations.data ? vaccinations.data.pagination.total : undefined} loading={vaccinations.isLoading} />

@@ -51,6 +51,7 @@ export function ShopHub({ profile }: { profile?: Profile }) {
         <button onClick={() => navigate("/shop/cart", "cart")} className="shop-cart-button"><ShoppingCart size={18} /><span>سبد خرید</span>{cartCount > 0 && <b>{new Intl.NumberFormat("fa-IR").format(cartCount)}</b>}</button>
       </div>
     </div>
+    <div className="ninibu-free-note surface-card"><strong>عضویت و استفاده از نینیبو رایگان است.</strong><span>در فروشگاه فقط بهای کالایی را که انتخاب می‌کنید می‌پردازید؛ درآمد پلتفرم از کارمزد فروشنده تأمین می‌شود، نه از اشتراک والدین.</span></div>
 
     {route.view === "catalog" && <ProductCatalog />}
     {route.view === "product" && <><ProductCatalog /><ProductDetail productId={route.id} onClose={() => router.push("/shop")} /></>}

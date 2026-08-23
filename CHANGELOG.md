@@ -1,5 +1,26 @@
 # Changelog
 
+## v0.18.1 — Deployment consistency patch
+
+- Updated the Web Docker image fallback to `ninibu-frontend:0.18.1`.
+- Updated deployment documentation to the current Admin Control Center release.
+- Kept the parent mobile application at v0.17.0; no mobile feature contract changed.
+- Aligned the documented backend dependency with Ninibu Backend v0.26.1.
+
+## v0.18.0 — Admin Control Center
+
+- Added Web-only `/admin` control center with Admin/Super Admin role gating.
+- Added operational management for content, ads, providers, community reports, users, commission finance, feature flags, global settings and audit events.
+- System-setting edits and management-role changes are Super Admin only.
+- Added unified authenticated admin BFF proxy and responsive RTL admin UI with centered modals.
+
+## v0.17.0 — Mother/child health, community reliability, free-core model
+
+- Maternal health and breastfeeding UI on Web/Mobile.
+- Clinician-verified nutrition recommendation display.
+- Mobile post comments and group detail/join flow fixes; Web group membership refresh fix.
+- Free-core messaging in services/shop; no subscription UI.
+
 ## v0.16.3 — Android bottom safe-area fix
 
 - Fixed the mobile bottom tab bar overlapping Android system navigation controls.

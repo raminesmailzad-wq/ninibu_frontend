@@ -1,12 +1,13 @@
-# Ninibu Frontend v0.15.0 — Docker deployment
+# Ninibu Frontend v0.18.1 — Docker deployment
 
-This package is prepared for the current Ninibu home-server deployment:
+This package targets the current Ninibu server topology:
 
 - Ubuntu host Nginx terminates HTTPS for `ninibu.com`.
-- Backend Compose is already running on Docker network `ninibu-backend_ninibu_backend`.
-- Backend API service is reachable inside that network as `http://api:8081`.
-- Frontend is exposed only on host loopback: `127.0.0.1:3000`.
-- Nginx proxies normal web traffic to the frontend and may keep `/api/v1/*` pointed directly at backend port `127.0.0.1:8081`.
+- Backend v0.26.1 is running on Docker network `ninibu-backend_ninibu_backend`.
+- MySQL runs directly on the host machine; the frontend never connects to MySQL.
+- Backend API is reachable from the frontend container as `http://api:8081`.
+- Frontend is exposed only on host loopback at `127.0.0.1:3000`.
+- Nginx proxies normal web traffic to the frontend and `/api/v1/*` to the backend.
 
 ## Build and start
 
@@ -18,13 +19,17 @@ sudo docker compose ps
 sudo docker compose logs --tail=100 frontend
 ```
 
-If Compose reports that external network `ninibu-backend_ninibu_backend` does not exist, verify the backend is running:
+The default image tag is `ninibu-frontend:0.18.1`. Override it when needed:
+
+```bash
+NINIBU_FRONTEND_IMAGE=registry.example/ninibu-frontend:0.18.1 docker compose up -d
+```
+
+If Compose reports that external network `ninibu-backend_ninibu_backend` does not exist, start the backend first and verify:
 
 ```bash
 sudo docker network ls | grep ninibu
 ```
-
-The backend deployment seen on this server creates `ninibu-backend_ninibu_backend`.
 
 ## Local host smoke test
 
@@ -32,13 +37,11 @@ The backend deployment seen on this server creates `ninibu-backend_ninibu_backen
 curl -I http://127.0.0.1:3000
 ```
 
-The frontend container itself can reach backend at `http://api:8081`; this URL is server-side only and is not exposed as a `NEXT_PUBLIC_*` value.
+The frontend container reaches the backend through the shared Docker network. `NINIBU_BACKEND_URL=http://api:8081` is server-side only and must not be exposed as a `NEXT_PUBLIC_*` value.
 
 ## Nginx
 
-Merge `nginx-ninibu.conf.example` into the existing `server { listen 443 ssl; ... }` block that Certbot configured for `ninibu.com`. Keep the existing certificate directives.
-
-Then:
+Merge `nginx-ninibu.conf.example` into the existing TLS server block and preserve the certificate directives, then:
 
 ```bash
 sudo nginx -t
@@ -46,20 +49,20 @@ sudo systemctl reload nginx
 curl -I https://ninibu.com
 ```
 
-The important routing split is:
+Routing split:
 
 - `/api/v1/*` -> `127.0.0.1:8081` (Go backend)
 - everything else, including `/api/ninibu/*` -> `127.0.0.1:3000` (Next.js frontend/BFF)
 
 ## Public build variables
 
-`NEXT_PUBLIC_*` values are compiled into the Next.js browser bundle at build time. The Compose defaults are suitable for the current staging/sandbox deployment:
+`NEXT_PUBLIC_*` values are compiled into the browser bundle at build time. Current defaults are:
 
 - `NEXT_PUBLIC_NINIBU_ANALYTICS_ENDPOINT` empty
 - `NEXT_PUBLIC_NINIBU_PAYMENT_PROVIDER=sandbox`
 
-If any of these change, rebuild the frontend image.
+Rebuild the frontend image whenever these values change.
 
 ## Persistence
 
-The frontend is stateless and has no persistent Docker volume. User data remains in the backend/MySQL stack. Recreating or deleting the frontend container does not delete application data.
+The frontend is stateless and has no persistent Docker volume. Recreating the frontend container does not affect host MySQL or backend data.

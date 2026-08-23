@@ -1,6 +1,6 @@
 {
   "name": "@ninibu/types",
-  "version": "0.15.0",
+  "version": "0.18.1",
   "private": true,
   "type": "module",
   "exports": {

@@ -4,7 +4,7 @@ import type { ApiEnvelope } from "@ninibu/types";
 
 const ACCESS_COOKIE = "ninibu_access";
 const REFRESH_COOKIE = "ninibu_refresh";
-const backendURL = () => process.env.NINIBU_BACKEND_URL ?? "http://localhost:8080";
+const backendURL = () => process.env.NINIBU_BACKEND_URL ?? "http://localhost:8081";
 
 export async function rawBackend<T>(path: string, init: RequestInit = {}): Promise<{status:number; body: ApiEnvelope<T>}> {
   const response = await fetch(`${backendURL()}${path}`, {

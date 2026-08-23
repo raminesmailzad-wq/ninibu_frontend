@@ -20,9 +20,7 @@ pnpm install --no-frozen-lockfile
 pnpm dev:mobile:clear
 ```
 
-Scan the QR code with Expo Go.
-
-If LAN discovery fails:
+Scan the QR code with Expo Go. If LAN discovery fails, use:
 
 ```bash
 pnpm dev:mobile:tunnel
@@ -30,29 +28,29 @@ pnpm dev:mobile:tunnel
 
 ## Backend URL
 
-The default development behavior derives the computer IP from Metro and connects to port `8080`:
+The mobile client defaults to the production HTTPS API:
 
 ```text
-http://<metro-computer-ip>:8080
+https://ninibu.com
 ```
 
-For an explicit backend address:
+For an explicit local-development backend:
 
 ```bash
 cp apps/mobile/.env.example apps/mobile/.env
 ```
 
-Then set:
+Then set an address that the physical phone can reach, for example:
 
 ```env
-EXPO_PUBLIC_NINIBU_BACKEND_URL=http://192.168.1.20:8080
+EXPO_PUBLIC_NINIBU_BACKEND_URL=http://192.168.1.20:8081
 ```
 
-The backend must listen on an address reachable by the phone (for example `0.0.0.0:8080`) and the firewall must allow the port. `localhost` on the phone is the phone itself.
+For this LAN-only development case, the Go backend must intentionally listen on a LAN-reachable interface and the host firewall should restrict access to the trusted development network. The production Docker deployment intentionally publishes the API only on `127.0.0.1:8081` behind Nginx, so do not open the production API port merely for Expo testing.
 
 ## Native authentication
 
-Web authentication continues to use the Next.js BFF + HttpOnly cookies. Mobile talks directly to the Go backend and stores only the access/refresh credentials in `expo-secure-store`. Password is never persisted by the mobile client.
+Web authentication continues to use the Next.js BFF + HttpOnly cookies. Mobile talks directly to the Go backend and stores only access/refresh credentials in `expo-secure-store`. Password is never persisted by the mobile client.
 
 Flows implemented:
 
@@ -69,10 +67,12 @@ Flows implemented:
 - Child switcher and add-child flow
 - Dashboard and action shortcuts
 - Health record: growth, WHO growth context, vaccines, visits, allergies, medications
-- Community feed and group membership
+- Maternal health and breastfeeding guidance
+- Clinician-approved child nutrition recommendations
+- Community feed, post comments and group membership
 - Discover/search and personalization feed
-- Services, bookings, consultations and sandbox payment flow
-- Store catalog, variants, cart, checkout, orders and sandbox payment flow
+- Services, bookings and consultations
+- Store catalog, cart, checkout and orders
 - Notifications and in-app notification preferences
 - Advertising consent controls
 - Jalali date input/display with Gregorian API boundary
@@ -88,4 +88,4 @@ npx eas-cli build:configure
 npx eas-cli build --platform android --profile preview
 ```
 
-`eas.json` is already included. Production should use an HTTPS backend URL.
+`eas.json` is already included. Production should use the HTTPS backend URL.

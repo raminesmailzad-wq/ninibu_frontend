@@ -1,7 +1,7 @@
 {
   "name": "ninibu-frontend",
   "private": true,
-  "version": "0.16.3",
+  "version": "0.18.1",
   "packageManager": "pnpm@10.15.0",
   "engines": {
     "node": ">=22.0.0"

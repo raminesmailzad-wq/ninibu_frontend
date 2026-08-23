@@ -2,7 +2,7 @@
   "expo": {
     "name": "نینیبو",
     "slug": "ninibu-mobile",
-    "version": "0.16.1",
+    "version": "0.17.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "scheme": "ninibu",
@@ -41,12 +41,6 @@
           "backgroundColor": "#F8F7FB"
         }
       ]
-    ],
-    "extra": {
-      "router": {},
-      "eas": {
-        "projectId": "4ac73e35-fbd0-4a0e-baeb-ced1428b9ef2"
-      }
-    }
+    ]
   }
 }
