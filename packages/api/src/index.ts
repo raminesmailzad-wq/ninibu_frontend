@@ -1,5 +1,6 @@
 export const apiPaths = {
   login: "/api/v1/auth/login",
+  adminLogin: "/api/v1/auth/admin/login",
   signupRequestOtp: "/api/v1/auth/signup/request-otp",
   signup: "/api/v1/auth/signup",
   passwordForgotRequestOtp: "/api/v1/auth/password/forgot/request-otp",

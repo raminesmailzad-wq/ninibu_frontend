@@ -876,7 +876,7 @@ export type AdminDashboard = {
 };
 
 export type AdminUser = {
-  id: number; mobile: string; first_name: string; last_name: string; role: string; active: boolean;
+  id: number; mobile: string; first_name: string; last_name: string; role: string; active: boolean; environment_managed: boolean;
   created_at: string; last_login_at?: string;
 };
 export type AdminUserList = { items: AdminUser[]; pagination: { page: number; limit: number; total: number } };

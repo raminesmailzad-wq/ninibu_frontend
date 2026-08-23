@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.19.0 - Admin login hardening
+
+- `/admin` now has a dedicated login-only experience with no registration, OTP signup, or password-reset controls.
+- Added a server-side proxy for the backend admin-only login endpoint.
+- Public Ninibu signup remains available outside the admin console.
+
 ## v0.18.1 — Deployment consistency patch
 
 - Updated the Web Docker image fallback to `ninibu-frontend:0.18.1`.

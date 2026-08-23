@@ -2,7 +2,7 @@
 
 Frontend monorepo for Ninibu, aligned with Backend v0.26.1.
 
-## v0.18.1 scope — Admin Control Center deployment patch
+## v0.19.0 scope — Admin Control Center deployment patch
 
 - Corrects Docker image/deployment versioning and local backend port defaults.
 - Keeps the v0.18.0 Admin Control Center feature set unchanged.

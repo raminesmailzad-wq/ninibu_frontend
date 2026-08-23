@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { BarChart3, BookOpenText, CircleDollarSign, LayoutDashboard, LogOut, Megaphone, MessageSquareWarning, Settings2, ShieldCheck, Store, UsersRound } from "lucide-react";
 import type { AuthSession, User } from "@ninibu/types";
-import { Login } from "@/components/auth/login";
+import { AdminLogin } from "@/components/admin/admin-login";
 import { Button } from "@/components/ui/button";
 import { AdminDashboardPanel } from "@/components/admin/dashboard-panel";
 import { AdminContentPanel } from "@/components/admin/content-panel";
@@ -61,7 +61,7 @@ export function AdminShell() {
   }
 
   if (phase === "loading") return <div className="admin-loading"><div className="admin-loading-mark">n</div><strong>در حال بررسی دسترسی مدیریت…</strong></div>;
-  if (phase === "login") return <div className="center-stage admin-login-stage"><div className="admin-login-copy"><ShieldCheck size={34}/><div><strong>پنل مدیریت نینیبو</strong><span>ورود فقط برای Admin و Super Admin</span></div></div><Login onAuthenticated={resolve} /></div>;
+  if (phase === "login") return <div className="center-stage admin-login-stage"><div className="admin-login-copy"><ShieldCheck size={34}/><div><strong>پنل مدیریت نینیبو</strong><span>ورود فقط برای Admin و Super Admin</span></div></div><AdminLogin onAuthenticated={resolve} /></div>;
   if (phase === "forbidden" || !isStaff) return <main className="admin-forbidden"><ShieldCheck size={42}/><h1>دسترسی مدیریت ندارید</h1><p>این حساب با نقش <b>{user?.role || "user"}</b> وارد شده است. پنل ادمین فقط برای حساب‌های مدیریتی در دسترس است.</p><div><Button onClick={() => router.push("/dashboard")}>بازگشت به نینیبو</Button><Button variant="outline" onClick={logout}>خروج از حساب</Button></div></main>;
 
   return <div className="admin-layout">
