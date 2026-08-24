@@ -1,9 +1,10 @@
 services:
   frontend:
-    image: ${NINIBU_FRONTEND_IMAGE:-ninibu-frontend:0.19.2}
+    image: ${NINIBU_FRONTEND_IMAGE:-ninibu-frontend:0.19.4}
     build:
       context: .
       dockerfile: Dockerfile
+      network: host
       args:
         NEXT_PUBLIC_NINIBU_ANALYTICS_ENDPOINT: ""
         NEXT_PUBLIC_NINIBU_PAYMENT_PROVIDER: "sandbox"

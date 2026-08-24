@@ -3,7 +3,13 @@
 FROM node:22-alpine AS base
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
-RUN corepack enable && corepack prepare pnpm@10.15.0 --activate
+RUN corepack enable && corepack prepare pnpm@10.15.0 --activate \
+    && pnpm config set store-dir /pnpm/store \
+    && pnpm config set fetch-retries 6 \
+    && pnpm config set fetch-retry-factor 2 \
+    && pnpm config set fetch-retry-mintimeout 20000 \
+    && pnpm config set fetch-retry-maxtimeout 120000 \
+    && pnpm config set network-concurrency 4
 WORKDIR /app
 
 FROM base AS deps
@@ -14,8 +20,8 @@ COPY packages/datetime/package.json packages/datetime/package.json
 COPY packages/design/package.json packages/design/package.json
 COPY packages/types/package.json packages/types/package.json
 COPY packages/validation/package.json packages/validation/package.json
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
-    pnpm install --frozen-lockfile
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store,sharing=locked \
+    pnpm install --frozen-lockfile --prefer-offline
 
 FROM base AS builder
 COPY --from=deps /app/ ./
