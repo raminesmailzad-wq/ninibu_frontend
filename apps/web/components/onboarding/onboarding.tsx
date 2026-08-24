@@ -7,13 +7,24 @@ import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { JalaliDateInput } from "@/components/ui/jalali-date-input";
 import { Select } from "@/components/ui/select";
+import { resolveApiErrorMessage } from "@/lib/client-api";
 
 type Step = "parent" | "residence" | "child";
 
 async function api<T>(url: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(url, { ...init, headers: { "content-type": "application/json", ...(init?.headers || {}) } });
-  const json = await response.json();
-  if (!json.success) throw new Error(json.error?.message || "خطا در ارتباط با سرور");
+  let response: Response;
+  try {
+    response = await fetch(url, { ...init, headers: { "content-type": "application/json", ...(init?.headers || {}) } });
+  } catch {
+    throw new Error("ارتباط با سرور برقرار نشد. اتصال اینترنت را بررسی کنید.");
+  }
+  let json: { success?: boolean; data?: T; error?: { code?: string; message?: string } };
+  try {
+    json = await response.json() as { success?: boolean; data?: T; error?: { code?: string; message?: string } };
+  } catch {
+    throw new Error("پاسخ سرور قابل خواندن نیست. لطفاً دوباره تلاش کنید.");
+  }
+  if (!json.success) throw new Error(resolveApiErrorMessage(json.error, response.status));
   return json.data as T;
 }
 
@@ -41,7 +52,7 @@ export function Onboarding({ onComplete }: { onComplete: () => void }) {
     try {
       await api("/api/ninibu/profile", { method: "PATCH", body: JSON.stringify({ first_name: profile.first_name, last_name: profile.last_name, birth_date: profile.birth_date || null, gender: profile.gender || null, onboarding_step: "residence" }) });
       setStep("residence");
-    } catch (cause) { setError(cause instanceof Error ? cause.message : "خطا"); }
+    } catch (cause) { setError(cause instanceof Error ? cause.message : "خطا در ذخیره اطلاعات"); }
     finally { setLoading(false); }
   }
 
@@ -61,7 +72,7 @@ export function Onboarding({ onComplete }: { onComplete: () => void }) {
     try {
       await api("/api/ninibu/profile", { method: "PATCH", body: JSON.stringify({ country_id: profile.country?.id, province_id: profile.province?.id, city_id: profile.city?.id, residence_address: profile.residence_address || "", onboarding_step: "child" }) });
       setStep("child");
-    } catch (cause) { setError(cause instanceof Error ? cause.message : "خطا"); }
+    } catch (cause) { setError(cause instanceof Error ? cause.message : "خطا در ذخیره اطلاعات"); }
     finally { setLoading(false); }
   }
 
@@ -71,7 +82,7 @@ export function Onboarding({ onComplete }: { onComplete: () => void }) {
       await api("/api/ninibu/children", { method: "POST", body: JSON.stringify({ ...child, blood_type: null, birth_weight_grams: null, birth_height_cm: null, birth_head_circumference_cm: null, notes: "" }) });
       await api("/api/ninibu/profile/onboarding/complete", { method: "POST", body: JSON.stringify({ skip_preferences: true }) });
       onComplete();
-    } catch (cause) { setError(cause instanceof Error ? cause.message : "خطا"); }
+    } catch (cause) { setError(cause instanceof Error ? cause.message : "ثبت فرزند انجام نشد"); }
     finally { setLoading(false); }
   }
 

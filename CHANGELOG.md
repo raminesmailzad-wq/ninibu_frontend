@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.19.2 - Dashboard polish, maternal route, Persian error UX
+
+- Maternal health moved out of child health into `/maternal-health` with its own navigation entry.
+- Dashboard spacing, cards, responsive navigation and maternal shortcut were polished.
+- YekanBakh is the preferred UI font with safe local/system fallbacks.
+- Network, authentication, onboarding and API errors are normalized to Persian before display.
+- Child health remains focused on growth, vaccination, medication, allergy, visit and clinician nutrition guidance.
+
 ## v0.19.0 - Admin login hardening
 
 - `/admin` now has a dedicated login-only experience with no registration, OTP signup, or password-reset controls.
@@ -50,6 +58,14 @@
 - Removed `SplashScreen.setOptions` call that warns in Expo Go.
 
 # Changelog
+
+## v0.19.2 - Dashboard polish, maternal route, Persian error UX
+
+- Maternal health moved out of child health into `/maternal-health` with its own navigation entry.
+- Dashboard spacing, cards, responsive navigation and maternal shortcut were polished.
+- YekanBakh is the preferred UI font with safe local/system fallbacks.
+- Network, authentication, onboarding and API errors are normalized to Persian before display.
+- Child health remains focused on growth, vaccination, medication, allergy, visit and clinician nutrition guidance.
 
 ## 0.16.0 - Native Expo Mobile
 
@@ -157,6 +173,14 @@
 - Escape فقط بالاترین modal را می‌بندد.
 
 # Changelog
+
+## v0.19.2 - Dashboard polish, maternal route, Persian error UX
+
+- Maternal health moved out of child health into `/maternal-health` with its own navigation entry.
+- Dashboard spacing, cards, responsive navigation and maternal shortcut were polished.
+- YekanBakh is the preferred UI font with safe local/system fallbacks.
+- Network, authentication, onboarding and API errors are normalized to Persian before display.
+- Child health remains focused on growth, vaccination, medication, allergy, visit and clinician nutrition guidance.
 
 ## v0.6.4
 - Centered quick-action modal stack.

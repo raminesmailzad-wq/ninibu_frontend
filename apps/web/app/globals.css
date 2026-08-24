@@ -337,3 +337,38 @@ img{max-width:100%}
 @media(max-width:1100px){.admin-kpi-grid{grid-template-columns:repeat(3,1fr)}.admin-kpi-grid-five{grid-template-columns:repeat(3,1fr)}.admin-quick-grid,.admin-report-grid{grid-template-columns:repeat(2,1fr)}.admin-money-grid{grid-template-columns:1fr 1fr}.admin-two-column{grid-template-columns:1fr}}
 @media(max-width:820px){.admin-layout{grid-template-columns:76px minmax(0,1fr)}.admin-sidebar{padding:14px 9px}.admin-brand img{width:58px}.admin-brand span,.admin-role-card div,.admin-sidebar nav span,.admin-sidebar-bottom button{font-size:0}.admin-role-card{justify-content:center;padding:10px}.admin-sidebar nav button,.admin-sidebar-bottom button{justify-content:center;padding:0}.admin-main{padding:18px}.admin-page-header{align-items:flex-start}.admin-toolbar{grid-template-columns:1fr 1fr}.admin-toolbar>*:first-child{grid-column:1/-1}.admin-kpi-grid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:560px){.admin-layout{display:block}.admin-sidebar{position:sticky;height:auto;bottom:auto;top:0;flex-direction:row;align-items:center;padding:8px 10px;overflow:auto}.admin-brand{height:45px;min-width:58px}.admin-role-card,.admin-sidebar-bottom{display:none}.admin-sidebar nav{display:flex;gap:4px}.admin-sidebar nav button{min-width:42px;height:42px}.admin-main{padding:14px}.admin-page-header{display:grid}.admin-page-actions{width:100%}.admin-page-actions button{flex:1}.admin-kpi-grid,.admin-kpi-grid-five,.admin-quick-grid,.admin-report-grid,.admin-money-grid{grid-template-columns:1fr 1fr}.admin-finance-highlight{align-items:flex-start;display:grid}.admin-toolbar{grid-template-columns:1fr}.admin-toolbar>*:first-child{grid-column:auto}.admin-form-grid,.admin-fieldset{grid-template-columns:1fr}.admin-form-grid>*{grid-column:1!important}.admin-modal-backdrop{padding:10px}.admin-modal{width:calc(100vw - 20px);max-height:calc(100svh - 20px)}.admin-two-column{grid-template-columns:1fr}}
+
+/* v0.19.2 dashboard polish + maternal route + Persian error UX */
+@font-face{font-family:"YekanBakh";src:local("Yekan Bakh"),local("YekanBakh"),local("Yekan Bakh FaNum"),local("YekanBakh FaNum");font-style:normal;font-weight:100 900;font-display:swap}
+body{font-family:"YekanBakh",Vazirmatn,"IRANSansX",Tahoma,Arial,sans-serif}
+.desktop-nav{gap:8px}
+.nav-item{min-height:50px;padding:0 14px;border-radius:16px}
+.app-content{padding-top:30px;padding-bottom:78px}
+.dashboard-page{gap:24px}
+.welcome-card{min-height:248px;padding:38px 40px;border-radius:34px}
+.welcome-copy>p{max-width:700px}
+.quick-actions-grid,.overview-grid,.recommendation-grid,.discovery-strip,.action-center-grid,.family-spotlight-grid,.maternal-page-grid{display:grid;gap:14px}
+.family-spotlight-grid{grid-template-columns:1fr}
+.growth-card,.health-card,.maternal-spotlight-card,.maternal-insight-card,.maternal-health-card,.nutrition-recommendations-card,.recent-health-card,.health-growth-detail,.timeline-card{padding:24px}
+.maternal-spotlight-card>p{margin:0;color:#675f72;line-height:1.95}
+.maternal-spotlight-actions{display:grid;gap:8px;margin-top:auto}
+.maternal-spotlight-actions button{height:44px;border:0;border-radius:14px;background:linear-gradient(135deg,var(--brand-primary),#7a6bd4);color:#fff;font-weight:800;cursor:pointer}
+.maternal-spotlight-actions small{color:var(--muted);font-size:11px;line-height:1.8}
+.health-page{gap:18px}
+.page-intro{padding-bottom:4px}
+.page-intro h1{margin-bottom:7px}
+.health-page-actions{gap:10px}
+.health-page-actions button{min-width:118px;justify-content:center}
+.maternal-health-page .page-intro p{max-width:680px}
+.maternal-page-grid{grid-template-columns:minmax(0,1.4fr) minmax(280px,.9fr);align-items:start}
+.maternal-insight-list{display:grid;gap:12px}
+.maternal-insight-list>div{padding:14px 15px;border:1px solid var(--border);border-radius:18px;background:#fbfafc}
+.maternal-insight-list strong{display:flex;align-items:center;gap:8px;font-size:13px;color:#2e2837}
+.maternal-insight-list p{margin:8px 0 0;color:#686173;font-size:12px;line-height:1.9}
+.maternal-health-card{min-height:100%}
+.maternal-health-summary{background:#f5f2fb}
+.mobile-nav{grid-template-columns:repeat(7,1fr);height:72px}
+.mobile-nav-item{font-size:8px;gap:2px;padding-top:3px}
+.mobile-nav-item svg{width:18px;height:18px}
+@media(max-width:1024px){.maternal-page-grid{grid-template-columns:1fr}.welcome-card{padding:32px}.app-content{padding-top:24px}}
+@media(max-width:760px){.app-content{padding:18px 14px 96px}.welcome-card{padding:24px;border-radius:28px;min-height:220px}.quick-actions-grid,.overview-grid,.recommendation-grid,.action-center-grid,.maternal-page-grid,.family-spotlight-grid{grid-template-columns:1fr}.mobile-nav{grid-template-columns:repeat(7,1fr);height:74px}.mobile-nav-item{font-size:8px}.health-page-actions{grid-template-columns:repeat(3,1fr);width:100%}.health-page-actions button{min-width:0;height:44px;font-size:10px;padding-inline:8px}.nav-item span{font-size:12px}}

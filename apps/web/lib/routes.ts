@@ -3,6 +3,7 @@ import type { AppSection } from "@/components/app/navigation";
 export const sectionRoutes: Record<AppSection, string> = {
   home: "/dashboard",
   health: "/health",
+  maternal: "/maternal-health",
   community: "/community",
   discover: "/discover",
   services: "/services",
@@ -11,6 +12,7 @@ export const sectionRoutes: Record<AppSection, string> = {
 };
 
 export function sectionFromPathname(pathname: string): AppSection {
+  if (pathname.startsWith("/maternal-health")) return "maternal";
   if (pathname.startsWith("/health")) return "health";
   if (pathname.startsWith("/community")) return "community";
   if (pathname.startsWith("/discover")) return "discover";

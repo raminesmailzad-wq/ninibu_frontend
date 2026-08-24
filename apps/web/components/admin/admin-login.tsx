@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { normalizeIranMobile } from "@ninibu/validation";
+import { resolveApiErrorMessage } from "@/lib/client-api";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -34,13 +35,23 @@ export function AdminLogin({ onAuthenticated }: { onAuthenticated: () => void })
       if (!/^\+989\d{9}$/.test(normalized)) throw new Error("شماره موبایل معتبر وارد کنید.");
       if (!password) throw new Error("رمز عبور را وارد کنید.");
 
-      const response = await fetch("/api/ninibu/auth/admin/login", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ mobile: normalized, password, device_id: deviceId() }),
-      });
-      const body = await response.json() as { success?: boolean; error?: ApiFailure };
-      if (!body.success) throw new Error(body.error?.message || "اطلاعات ورود مدیریت صحیح نیست.");
+      let response: Response;
+      try {
+        response = await fetch("/api/ninibu/auth/admin/login", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ mobile: normalized, password, device_id: deviceId() }),
+        });
+      } catch {
+        throw new Error("ارتباط با سرور برقرار نشد. اتصال اینترنت را بررسی کنید.");
+      }
+      let body: { success?: boolean; error?: ApiFailure };
+      try {
+        body = await response.json() as { success?: boolean; error?: ApiFailure };
+      } catch {
+        throw new Error("پاسخ سرور قابل خواندن نیست. لطفاً دوباره تلاش کنید.");
+      }
+      if (!body.success) throw new Error(resolveApiErrorMessage(body.error, response.status, "اطلاعات ورود مدیریت صحیح نیست."));
       onAuthenticated();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "ورود مدیریت ناموفق بود.");

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, BellRing, CalendarCheck2, CalendarHeart, ChartNoAxesColumnIncreasing, HeartPulse, MapPin, MessageCircleReply, MessagesSquare, Pill, Plus, ShieldCheck, Sparkles, Syringe, Stethoscope, X } from "lucide-react";
+import { ArrowLeft, BellRing, CalendarCheck2, CalendarHeart, ChartNoAxesColumnIncreasing, HeartHandshake, HeartPulse, MapPin, MessageCircleReply, MessagesSquare, Pill, Plus, ShieldCheck, Sparkles, Syringe, Stethoscope, X } from "lucide-react";
 import type { BookingListResponse, Child, ConsultationQuestionListResponse, ListAllergiesResponse, ListChildMedicationsResponse, ListGrowthMeasurementsResponse, ListMedicalVisitsResponse, ListVaccinationsResponse, Profile, RecommendationListResponse } from "@ninibu/types";
 import { clientApi } from "@/lib/client-api";
 import { childAge, formatDate, formatNumber, visitTypeLabel } from "@/lib/format";
@@ -16,7 +16,7 @@ import { dedupeBookings, formatDateTime } from "@/components/services/services-d
 import { trackEvent } from "@/lib/analytics";
 import { SponsoredSlot } from "@/components/advertising/sponsored-slot";
 
-export function Dashboard({ child, profile, unreadCount, onQuickAction, onOpenHealth, onOpenNotifications, onNavigate }: { child: Child; profile?: Profile; unreadCount: number; onQuickAction: (action: QuickAction) => void; onOpenHealth: () => void; onOpenNotifications: () => void; onNavigate: (section: "community" | "discover" | "services") => void }) {
+export function Dashboard({ child, profile, unreadCount, onQuickAction, onOpenHealth, onOpenMaternalHealth, onOpenNotifications, onNavigate }: { child: Child; profile?: Profile; unreadCount: number; onQuickAction: (action: QuickAction) => void; onOpenHealth: () => void; onOpenMaternalHealth: () => void; onOpenNotifications: () => void; onNavigate: (section: "community" | "discover" | "services") => void }) {
   const router = useRouter();
   const [bookingDrafts, setBookingDrafts] = useState<BookingDraftSummary[]>([]);
   const growth = useQuery({ queryKey: ["child", child.id, "growth", "latest"], queryFn: () => clientApi<ListGrowthMeasurementsResponse>(`/api/ninibu/children/${child.id}/growth-measurements?limit=1`) });
@@ -70,7 +70,7 @@ export function Dashboard({ child, profile, unreadCount, onQuickAction, onOpenHe
       <div className="welcome-copy">
         <Badge tone="accent"><Sparkles size={14} /> همراه روزهای رشد {child.first_name}</Badge>
         <h1>{child.first_name}، {childAge(child.birth_date)}</h1>
-        <p>یک نمای سریع از رشد و پرونده سلامت؛ بدون اینکه لازم باشد بین چند صفحه بگردید.</p>
+        <p>داشبورد را بازطراحی کردیم تا پرونده سلامت فرزند، مسیر سلامت مادر و اقدام‌های روزانه با فاصله‌گذاری و خوانایی بهتر در دسترس باشند.</p>
         <div className="welcome-meta">
           <span><MapPin size={16} /> {profile?.city?.local_name || profile?.city?.name || "شهر ثبت نشده"}</span>
           <span><ShieldCheck size={16} /> پرونده سلامت خصوصی</span>
@@ -115,12 +115,23 @@ export function Dashboard({ child, profile, unreadCount, onQuickAction, onOpenHe
       </article>
 
       <article className="surface-card health-card">
-        <div className="card-heading"><div><span className="card-icon pink"><HeartPulse size={20} /></span><div><small>خلاصه پرونده</small><h3>سلامت</h3></div></div><button className="text-link" onClick={onOpenHealth}>پرونده <ArrowLeft size={15} /></button></div>
+        <div className="card-heading"><div><span className="card-icon pink"><HeartPulse size={20} /></span><div><small>خلاصه پرونده</small><h3>سلامت فرزند</h3></div></div><button className="text-link" onClick={onOpenHealth}>پرونده <ArrowLeft size={15} /></button></div>
         <div className="health-summary-list">
           <SummaryLine icon={Syringe} label="واکسن بعدی" value={nextDose ? `${nextDose.vaccine_name} · ${formatDate(nextDose.next_dose_due_at)}` : "مورد زمان‌بندی‌شده‌ای پیدا نشد"} loading={vaccinations.isLoading} />
           <SummaryLine icon={Pill} label="داروی فعال" value={medications.data ? `${new Intl.NumberFormat("fa-IR").format(medications.data.pagination.total)} مورد` : "—"} loading={medications.isLoading} />
           <SummaryLine icon={ShieldCheck} label="حساسیت فعال" value={allergies.data ? `${new Intl.NumberFormat("fa-IR").format(allergies.data.pagination.total)} مورد` : "—"} loading={allergies.isLoading} />
           <SummaryLine icon={CalendarHeart} label="آخرین ویزیت" value={latestVisit ? `${visitTypeLabel(latestVisit.visit_type)} · ${formatDate(latestVisit.visited_at)}` : "هنوز ویزیتی ثبت نشده"} loading={visits.isLoading} />
+        </div>
+      </article>
+    </section>
+
+    <section className="family-spotlight-grid">
+      <article className="surface-card maternal-spotlight-card">
+        <div className="card-heading"><div><span className="card-icon pink"><HeartHandshake size={20} /></span><div><small>مسیر مستقل</small><h3>سلامت مادر</h3></div></div><button className="text-link" onClick={onOpenMaternalHealth}>ورود <ArrowLeft size={15} /></button></div>
+        <p>سلامت مادر از پرونده سلامت فرزند جدا شده تا مدیریت چرخه، بارداری، شیردهی و حال عمومی در مسیر مخصوص خودش انجام شود.</p>
+        <div className="maternal-spotlight-actions">
+          <button type="button" onClick={onOpenMaternalHealth}>رفتن به مسیر سلامت مادر</button>
+          <small>مسیر جدید با ظاهر و فاصله‌گذاری بهینه در داشبورد در دسترس است.</small>
         </div>
       </article>
     </section>

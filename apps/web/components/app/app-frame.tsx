@@ -24,6 +24,7 @@ import { SponsoredSlot } from "@/components/advertising/sponsored-slot";
 import { RouteAnalytics } from "@/components/app/route-analytics";
 import { sectionFromPathname, sectionRoutes } from "@/lib/routes";
 import { trackEvent } from "@/lib/analytics";
+import { MaternalHealthHub } from "@/components/health/maternal-health-hub";
 
 const ACTIVE_CHILD_KEY = "ninibu_active_child_id";
 
@@ -50,7 +51,6 @@ export function AppFrame({ onLogout }: { onLogout: () => void }) {
     () => children.find((child) => child.id === activeChildId) ?? children[0],
     [children, activeChildId]
   );
-
 
   function navigateTo(next: AppSection) {
     const href = sectionRoutes[next];
@@ -88,7 +88,7 @@ export function AppFrame({ onLogout }: { onLogout: () => void }) {
     return <main className="fatal-state">
       <div className="fatal-icon"><RotateCcw size={28} /></div>
       <h1>اتصال به نینیبو برقرار نشد</h1>
-      <p>اطلاعات حساب یا فرزندان دریافت نشد. Backend را بررسی کنید و دوباره تلاش کنید.</p>
+      <p>اطلاعات حساب یا فرزندان دریافت نشد. دوباره تلاش کنید و در صورت تداوم مشکل، سرویس‌ها را بررسی کنید.</p>
       <Button onClick={() => { profileQuery.refetch(); childrenQuery.refetch(); }}>تلاش دوباره</Button>
     </main>;
   }
@@ -103,6 +103,8 @@ export function AppFrame({ onLogout }: { onLogout: () => void }) {
 
   const profile = profileQuery.data;
   const unreadCount = unreadQuery.data?.count ?? 0;
+  const headerSubtitle = section === "maternal" ? `سلام ${profile?.first_name || ""} 👋` : `سلام ${profile?.first_name || ""} 👋`;
+  const headerTitle = section === "maternal" ? "امروز حال شما چطوره؟" : `امروز حال ${activeChild.first_name} چطوره؟`;
 
   return <div className="app-layout">
     <RouteAnalytics />
@@ -130,7 +132,7 @@ export function AppFrame({ onLogout }: { onLogout: () => void }) {
         <div className="app-header-copy">
           <button className="mobile-menu-button" onClick={() => setMobileMenu(true)} aria-label="باز کردن منو"><Menu size={21} /></button>
           {pathname !== "/dashboard" && <button className="app-back-button" type="button" onClick={goBack} aria-label="بازگشت به صفحه قبل" title="بازگشت"><ArrowRight size={16} /></button>}
-          <div><span>سلام {profile?.first_name || ""} 👋</span><strong>امروز حال {activeChild.first_name} چطوره؟</strong></div>
+          <div><span>{headerSubtitle}</span><strong>{headerTitle}</strong></div>
         </div>
         <div className="app-header-actions">
           <NotificationCenter unreadCount={unreadCount} openRequest={notificationOpenRequest} />
@@ -139,8 +141,9 @@ export function AppFrame({ onLogout }: { onLogout: () => void }) {
       </header>
 
       <div className="app-content">
-        {section === "home" && <Dashboard child={activeChild} profile={profile} unreadCount={unreadCount} onQuickAction={setQuickAction} onOpenHealth={() => navigateTo("health")} onOpenNotifications={() => setNotificationOpenRequest((current) => current + 1)} onNavigate={navigateTo} />}
+        {section === "home" && <Dashboard child={activeChild} profile={profile} unreadCount={unreadCount} onQuickAction={setQuickAction} onOpenHealth={() => navigateTo("health")} onOpenMaternalHealth={() => navigateTo("maternal")} onOpenNotifications={() => setNotificationOpenRequest((current) => current + 1)} onNavigate={navigateTo} />}
         {section === "health" && <HealthDashboard child={activeChild} onQuickAction={setQuickAction} />}
+        {section === "maternal" && <MaternalHealthHub />}
         {section === "community" && <><SponsoredSlot placement="community_feed" className="section-sponsored-slot" /><Community accountProfile={profile} /></>}
         {section === "discover" && <><SponsoredSlot placement="public_content_list" className="section-sponsored-slot" /><DiscoverHub child={activeChild} profile={profile} /></>}
         {section === "services" && <ServicesHub child={activeChild} profile={profile} />}

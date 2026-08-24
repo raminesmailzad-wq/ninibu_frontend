@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { normalizeIranMobile } from "@ninibu/validation";
+import { resolveApiErrorMessage } from "@/lib/client-api";
 
 type Mode = "login" | "signup" | "forgot";
 type ApiFailure = { code?: string; message?: string };
@@ -24,15 +25,25 @@ function deviceId() {
 }
 
 async function post<T>(url: string, payload: unknown): Promise<T> {
-  const response = await fetch(url, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-  const body = await response.json();
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+  } catch {
+    throw new Error("ارتباط با سرور برقرار نشد. اتصال اینترنت را بررسی کنید.");
+  }
+  let body: { success?: boolean; data?: T; error?: ApiFailure };
+  try {
+    body = await response.json() as { success?: boolean; data?: T; error?: ApiFailure };
+  } catch {
+    throw new Error("پاسخ سرور قابل خواندن نیست. لطفاً دوباره تلاش کنید.");
+  }
   if (!body.success) {
     const failure: ApiFailure = body.error ?? {};
-    const error = new Error(failure.message || "خطا در ارتباط با سرور") as Error & { code?: string };
+    const error = new Error(resolveApiErrorMessage(failure, response.status)) as Error & { code?: string };
     error.code = failure.code;
     throw error;
   }

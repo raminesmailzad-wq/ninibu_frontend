@@ -1,11 +1,3 @@
-# Validation — Ninibu Frontend v0.19.0
+# Validation — Ninibu Frontend v0.19.2
 
-Current release validation is documented in `docs/releases/VALIDATION_v0.19.0.md`.
-
-The Web Admin Control Center from v0.18.0 is retained. The parent mobile application remains v0.17.0 intentionally. Production CI should run:
-
-```bash
-pnpm install --frozen-lockfile
-pnpm typecheck
-pnpm build
-```
+Current release validation is documented in `docs/releases/VALIDATION_v0.19.2.md`.

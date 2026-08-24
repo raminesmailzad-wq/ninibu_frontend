@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Activity, CalendarHeart, ChartNoAxesColumnIncreasing, HeartPulse, Pill, ShieldAlert, Syringe, Stethoscope } from "lucide-react";
 import type { Child, GrowthChart, HealthTimelineResponse, ListAllergiesResponse, ListChildMedicationsResponse, ListGrowthMeasurementsResponse, ListMedicalVisitsResponse, ListVaccinationsResponse } from "@ninibu/types";
@@ -8,7 +9,6 @@ import { formatDate, formatNumber, timelineTypeLabel, visitTypeLabel } from "@/l
 import { Skeleton } from "@/components/ui/skeleton";
 import type { QuickAction } from "@/components/quick-actions/quick-action-dialog";
 import { GrowthStandardChart } from "@/components/health/growth-standard-chart";
-import { MaternalHealthPanel } from "@/components/health/maternal-health-panel";
 import { NutritionRecommendations } from "@/components/health/nutrition-recommendations";
 
 export function HealthDashboard({ child, onQuickAction }: { child: Child; onQuickAction: (action: QuickAction) => void }) {
@@ -25,7 +25,7 @@ export function HealthDashboard({ child, onQuickAction }: { child: Child; onQuic
 
   return <div className="health-page">
     <section className="page-intro">
-      <div><span className="section-kicker">پرونده خصوصی {child.first_name}</span><h1>سلامت و رشد</h1><p>روند رشد، واکسن‌ها، حساسیت‌ها، داروها و ویزیت‌ها در یک نمای واحد.</p></div>
+      <div><span className="section-kicker">پرونده خصوصی {child.first_name}</span><h1>سلامت و رشد فرزند</h1><p>روند رشد، واکسن‌ها، حساسیت‌ها، داروها و ویزیت‌ها در یک نمای واحد.</p></div>
       <div className="health-page-actions">
         <button onClick={() => onQuickAction("growth")}><ChartNoAxesColumnIncreasing size={18} /> ثبت رشد</button>
         <button onClick={() => onQuickAction("vaccination")}><Syringe size={18} /> واکسن</button>
@@ -35,7 +35,7 @@ export function HealthDashboard({ child, onQuickAction }: { child: Child; onQuic
 
     {hasAnyError && <div className="health-warning"><ShieldAlert size={18} /><span>بخشی از اطلاعات دریافت نشد. سایر بخش‌های پرونده همچنان قابل استفاده‌اند.</span></div>}
 
-    <section className="health-family-grid"><MaternalHealthPanel /><NutritionRecommendations child={child} /></section>
+    <NutritionRecommendations child={child} />
 
     <section className="health-stat-grid">
       <HealthStat icon={Syringe} label="واکسن ثبت‌شده" value={vaccinations.data ? vaccinations.data.pagination.total : undefined} loading={vaccinations.isLoading} />
@@ -76,7 +76,7 @@ export function HealthDashboard({ child, onQuickAction }: { child: Child; onQuic
       </article>
     </section>
 
-    {growthChart.isLoading ? <section className="surface-card who-growth-card"><Skeleton className="who-growth-loading" /></section> : <GrowthStandardChart chart={growthChart.data} childName={child.first_name} />}
+    {growthChart.isLoading ? <section className="surface-card who-growth-card"><Skeleton className="who-growth-loading" /></section> : growthChart.data ? <GrowthStandardChart chart={growthChart.data} childName={child.first_name} /> : <section className="surface-card who-growth-card"><div className="mini-error">نمودار رشد در حال حاضر در دسترس نیست.</div></section>}
 
     <section className="surface-card timeline-card">
       <div className="card-heading"><div><span className="card-icon subtle"><Activity size={20} /></span><div><small>تاریخچه یکپارچه</small><h3>خط زمانی سلامت</h3></div></div></div>
@@ -93,7 +93,7 @@ export function HealthDashboard({ child, onQuickAction }: { child: Child; onQuic
 function HealthStat({ icon: Icon, label, value, loading }: { icon: typeof Syringe; label: string; value?: number; loading: boolean }) {
   return <article className="health-stat"><span><Icon size={19} /></span><div><small>{label}</small>{loading ? <Skeleton className="stat-number-skeleton" /> : <strong>{value === undefined ? "—" : new Intl.NumberFormat("fa-IR").format(value)}</strong>}</div></article>;
 }
-function RecordGroup({ icon: Icon, title, loading, empty, children }: { icon: typeof Pill; title: string; loading: boolean; empty: string; children: React.ReactNode }) {
+function RecordGroup({ icon: Icon, title, loading, empty, children }: { icon: typeof Pill; title: string; loading: boolean; empty: string; children: ReactNode }) {
   const entries = Array.isArray(children) ? children.filter(Boolean) : children ? [children] : [];
   return <div className="record-group"><div className="record-group-title"><Icon size={17} /><strong>{title}</strong></div>{loading ? <Skeleton className="record-skeleton" /> : entries.length ? children : <p className="record-empty">{empty}</p>}</div>;
 }

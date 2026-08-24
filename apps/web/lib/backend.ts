@@ -37,7 +37,7 @@ export async function authorizedBackend<T>(path: string, init: RequestInit = {})
   const store = await cookies();
   let token = store.get(ACCESS_COOKIE)?.value;
   if (!token) token = await refreshAccessToken() ?? undefined;
-  if (!token) return {status:401, body:{success:false,error:{code:"UNAUTHORIZED",message:"session not found"}}};
+  if (!token) return {status:401, body:{success:false,error:{code:"UNAUTHORIZED",message:"نشست کاربری پیدا نشد"}}};
   let result = await rawBackend<T>(path, {...init, headers:{...(init.headers ?? {}), authorization:`Bearer ${token}`}});
   if (result.status === 401) {
     token = await refreshAccessToken() ?? undefined;
