@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet } from 'react-native';
 import Svg, { Line, Polyline } from 'react-native-svg';
 import type { GrowthChartPoint } from '@ninibu/types';
-import { colors } from '@/theme';
+import { colors, typography } from '@/theme';
 export function GrowthMiniChart({points,height=120}:{points:GrowthChartPoint[];height?:number}){const width=320;const pad=12;if(points.length<2)return <View style={s.empty}><Text style={s.emptyText}>برای نمایش روند حداقل دو اندازه‌گیری لازم است.</Text></View>;const vals=points.map(x=>x.value);const min=Math.min(...vals);const max=Math.max(...vals);const range=Math.max(1,max-min);const poly=points.map((p,i)=>`${pad+i*(width-2*pad)/(points.length-1)},${height-pad-(p.value-min)*(height-2*pad)/range}`).join(' ');return <View style={s.wrap}><Svg width="100%" height={height} viewBox={`0 0 ${width} ${height}`}><Line x1={pad} y1={height-pad} x2={width-pad} y2={height-pad} stroke={colors.border}/><Line x1={pad} y1={pad} x2={pad} y2={height-pad} stroke={colors.border}/><Polyline points={poly} fill="none" stroke={colors.primary} strokeWidth="4" strokeLinejoin="round" strokeLinecap="round"/></Svg></View>}
-const s=StyleSheet.create({wrap:{width:'100%',overflow:'hidden'},empty:{height:90,alignItems:'center',justifyContent:'center'},emptyText:{fontSize:11,color:colors.muted,writingDirection:'rtl'}});
+const s=StyleSheet.create({wrap:{width:'100%',overflow:'hidden'},empty:{height:90,alignItems:'center',justifyContent:'center'},emptyText:{ fontFamily: typography.regular,fontSize:11,color:colors.muted,writingDirection:'rtl'}});

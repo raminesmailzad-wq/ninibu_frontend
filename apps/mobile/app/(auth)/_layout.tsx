@@ -1,4 +1,5 @@
 import { Redirect, Stack } from 'expo-router';
+import { href } from '@/lib/navigation';
 import { useSession } from '@/providers/SessionProvider';
 
 export default function AuthLayout() {
@@ -11,8 +12,8 @@ export default function AuthLayout() {
   // imperative navigation call. Keeping this guard declarative prevents the
   // app from getting stranded on /(auth) with a valid session.
   if (session.authenticated) {
-    if (!session.onboardingComplete) return <Redirect href="/onboarding" />;
-    return <Redirect href="/(app)/(tabs)" />;
+    if (!session.onboardingComplete) return <Redirect href={href("/onboarding")} />;
+    return <Redirect href={href("/")} />;
   }
 
   return <Stack screenOptions={{ headerShown: false }} />;

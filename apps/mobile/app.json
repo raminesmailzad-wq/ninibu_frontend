@@ -2,7 +2,8 @@
   "expo": {
     "name": "نینیبو",
     "slug": "ninibu-mobile",
-    "version": "0.17.0",
+    "owner": "raminesi",
+    "version": "0.21.3",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "scheme": "ninibu",
@@ -13,7 +14,8 @@
       "bundleIdentifier": "com.ninibu.app",
       "config": {
         "usesNonExemptEncryption": false
-      }
+      },
+      "buildNumber": "26"
     },
     "android": {
       "package": "com.ninibu.app",
@@ -22,7 +24,12 @@
         "backgroundColor": "#F8F7FB"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": true
+      "predictiveBackGestureEnabled": true,
+      "versionCode": 26,
+      "permissions": [
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ]
     },
     "plugins": [
       "expo-router",
@@ -40,7 +47,29 @@
           "resizeMode": "contain",
           "backgroundColor": "#F8F7FB"
         }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "نینیبو فقط هنگام درخواست شما از موقعیت فعلی برای نمایش مراکز درمانی نزدیک استفاده می‌کند و آن را در پروفایل ذخیره نمی‌کند."
+        }
       ]
-    ]
+    ],
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "androidNavigationBar": {
+      "backgroundColor": "#F8F7FB",
+      "barStyle": "dark-content"
+    },
+    "experiments": {
+      "typedRoutes": false
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "e614fc0c-d8b4-4521-8916-e4558762fa94"
+      }
+    }
   }
 }

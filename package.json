@@ -1,7 +1,7 @@
 {
   "name": "ninibu-frontend",
   "private": true,
-  "version": "0.19.4",
+  "version": "0.21.3",
   "packageManager": "pnpm@10.15.0",
   "engines": {
     "node": ">=22.0.0"
@@ -16,7 +16,11 @@
     "dev:web": "pnpm --filter @ninibu/web dev",
     "dev:mobile": "pnpm --filter @ninibu/mobile start",
     "dev:mobile:clear": "pnpm --filter @ninibu/mobile start:clear",
-    "dev:mobile:tunnel": "pnpm --filter @ninibu/mobile start:tunnel"
+    "dev:mobile:tunnel": "pnpm --filter @ninibu/mobile start:tunnel",
+    "dev:mobile:lan": "pnpm --filter @ninibu/mobile start:lan",
+    "mobile:prepare-font": "node scripts/mobile-font-prepare.mjs",
+    "mobile:verify": "pnpm --filter @ninibu/mobile typecheck",
+    "mobile:apk-check": "pnpm --filter @ninibu/mobile typecheck && node scripts/mobile-apk-readiness.mjs"
   },
   "devDependencies": {
     "turbo": "^2.10.0",

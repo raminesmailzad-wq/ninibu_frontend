@@ -1,6 +1,19 @@
 # Ninibu Frontend
 
-Frontend monorepo for Ninibu, aligned with Backend v0.26.1.
+Frontend monorepo for Ninibu. Web remains available alongside the native Expo/React Native parent app.
+
+## v0.21.2 scope — Mobile user parity + Expo APK readiness
+
+- Brings the normal-user mobile app to feature parity with the user-facing web panel across Home, child health, maternal health, community, discovery, services/consultations, shop, notifications and profile.
+- Keeps maternal health as an independent bottom-tab route separate from child health and growth.
+- Adds community profile/post/reaction/report flows, discovery knowledge/search/care-location flows, health timeline, booking management and consultation follow-up flows.
+- Adds privacy-safe sponsored placements to Home, Community and Discover to match the web user experience.
+- Prepares the mobile typography layer for licensed YekanBakh FaNum assets using expo-font.
+- Removes small kicker/eyebrow labels above primary section titles.
+- Adds parity, hook-order and font-family audits before Expo/typecheck.
+- Expo SDK 54; Metro development port 8082; Android versionCode 25.
+- APK preview profile is configured in apps/mobile/eas.json.
+
 
 ## v0.19.2 scope — Admin Control Center deployment patch
 
@@ -10,7 +23,7 @@ Frontend monorepo for Ninibu, aligned with Backend v0.26.1.
 - Covers dashboard KPIs, knowledge content workflow, advertising, unified provider verification, community moderation, user access, commission reporting, feature flags, settings and audit history.
 - `super_admin` is the only role allowed to change management roles and global System Settings; regular Admin keeps day-to-day operational access.
 - Admin forms use centered viewport modals and never expose secret configuration in the browser.
-- The mobile parent app remains v0.17.0; administration is intentionally Web-only.
+- Administration remains intentionally Web-only; the parent mobile app is v0.21.2.
 - Requires Ninibu Backend v0.26.1.
 
 ## v0.16.0 scope — Native Expo Mobile App
@@ -178,8 +191,10 @@ NINIBU_BACKEND_URL=http://localhost:8081
 ### Run the native mobile app on your Android phone
 
 ```bash
-pnpm install --no-frozen-lockfile
-pnpm dev:mobile:clear
+pnpm install --no-frozen-lockfile --prefer-offline
+pnpm mobile:prepare-font
+pnpm --filter @ninibu/mobile typecheck
+pnpm dev:mobile:lan
 ```
 
 Scan the QR code in Expo Go. Mobile defaults to the production HTTPS API (`https://ninibu.com`). For a local development backend, copy `apps/mobile/.env.example` to `apps/mobile/.env` and set `EXPO_PUBLIC_NINIBU_BACKEND_URL` to an address reachable by the phone. See `apps/mobile/README.md`.

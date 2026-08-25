@@ -1,4 +1,5 @@
 import { ninibuColors, ninibuRadius, ninibuSpacing } from '@ninibu/design';
+import { NINIBU_FONT_FAMILY } from './generated-font';
 
 export const colors = {
   ...ninibuColors,
@@ -14,4 +15,4 @@ export const space = ninibuSpacing;
 export const shadow = {
   shadowColor: '#3E306A', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.10, shadowRadius: 24, elevation: 4,
 };
-export const typography = { regular: undefined, medium: undefined, bold: undefined } as const;
+export const typography = NINIBU_FONT_FAMILY;

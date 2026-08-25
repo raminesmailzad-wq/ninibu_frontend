@@ -1,4 +1,60 @@
+# v0.21.2 — Expo Android APK readiness and final user parity
+
+- Fixed the final TypeScript nullability errors in service booking and SponsoredSlot.
+- Strengthened web/mobile user-access parity audit across 14 capability groups.
+- Removed remaining small kicker/eyebrow labels above primary titles in mobile UI.
+- YekanBakh FaNum preparation now distinguishes complete Regular/Medium/Bold assets from partial assets.
+- Added `mobile:apk-check` to validate fonts, EAS preview APK config, Android identifiers/assets, lockfile and legacy routes.
+- Added EAS lifecycle hooks so font preparation/preflight runs on the cloud builder and mobile typecheck runs after install/prebuild.
+- Preview and development EAS profiles build installable Android APK artifacts; production remains store-oriented.
+- App version is 0.21.2 / Android versionCode 25.
+
+# v0.21.1 — Expo legacy-route/font-audit fix
+
+- Fixed `mobile-font-audit` failure after overlay upgrades from v0.20.0.
+- `mobile-preflight` now removes legacy `app/(auth)/index.tsx`, root `app/index.tsx`, and old maternal-health alias before audits/typecheck.
+- Keeps the current `/login` auth route and independent `/maternal-health` route.
+- No dependency changes from v0.21.0; existing regenerated `pnpm-lock.yaml` remains valid.
+- Android versionCode: 24; app version: 0.21.1.
+
+# v0.21.0 — Expo mobile user parity + YekanBakh FaNum
+
+- ممیزی کامل دسترسی‌های کاربر عادی بین پنل وب و اپ موبایل.
+- تکمیل Home action center با رزرو پیش‌رو، مشاوره منتظر پاسخ و اعلان‌ها.
+- تکمیل سلامت فرزند با Health Timeline در کنار WHO، واکسن، ویزیت، دارو، حساسیت و تغذیه.
+- سلامت مادر به‌صورت Tab مستقل و جدا از پرونده فرزند حفظ شد.
+- تکمیل Community: پروفایل جامعه، ساخت پست، گروه‌های من، واکنش‌ها، پاسخ به دیدگاه و گزارش محتوا.
+- تکمیل Discover: دانشنامه و جزئیات، bookmark، جست‌وجو/ترند/تاریخچه، personalization و مراکز نزدیک با expo-location.
+- تکمیل Services/Consultations: رزرو، جزئیات، لغو/تغییر زمان، لینک جلسه، پرسش عمومی/شخصی، پاسخ، follow-up، accept، close/reopen.
+- اضافه شدن Sponsored Slotهای کاربر برای Home/Community/Discover مطابق وب.
+- آماده‌سازی کل UI موبایل برای YekanBakh FaNum با expo-font و اسکریپت تشخیص فایل فونت دارای مجوز.
+- حذف kicker/eyebrowهای ریز بالای تیترهای اصلی در UI موبایل.
+- اضافه شدن mobile-parity-audit به preflight.
+- Android versionCode: 23 و app version: 0.21.0.
+
+# v0.20.1
+
+- Fix Expo mobile typecheck by excluding/removing stale `app-example` and `.expo` generated route types.
+- Move auth screen to explicit `/login` route.
+- Remove duplicate maternal-health alias route.
+- Normalize mobile navigation URLs and add typed `href()` boundary.
+- Fix duplicate React Native `elevation` style declarations.
+- Keep Metro on port 8082 for coexistence with backend 8081.
+
 # Changelog
+
+## v0.20.0 — Expo physical-device mobile release
+
+- Kept Expo SDK 54 intentionally for Expo Go physical-device testing during the current SDK transition.
+- Moved Metro development server to port 8082 so it does not collide with the Ninibu backend on 8081.
+- Added a dedicated bottom tab for maternal health and kept child health as a separate tab.
+- Reworked maternal profile, cycle, breastfeeding and daily check-in forms with safe-area/keyboard-aware modals and Jalali date selection.
+- Improved child-health quick-entry forms and kept clinician-approved nutrition recommendations in the child health route.
+- Hardened community group join/leave and post-comment loading so comment failures no longer hide the post itself.
+- Added identified/anonymous comment submission on mobile.
+- Centralized Persian API error mapping for network, authentication, validation, access, rate-limit and server errors.
+- Added an in-app backend connection test for Expo/device validation.
+- Synced mobile app version metadata to 0.20.0 and added EAS preview APK configuration.
 
 ## v0.19.2 - Dashboard polish, maternal route, Persian error UX
 
@@ -290,3 +346,15 @@
 
 ## 0.3.0
 - Added full Community & Parent Groups product surface.
+
+## v0.20.0 — Expo Android mobile test
+- Dedicated maternal health tab and mobile maternal records flow.
+- Reworked child health, dashboard, community comments/groups, profile forms, onboarding, and Persian API errors.
+- Expo Go LAN/tunnel scripts run Metro on port 8082 to avoid backend port 8081 conflict.
+- EAS preview APK profile prepared.
+
+## 0.20.2 - Expo hook-order runtime fix
+- Fixed Android/Expo home screen crash: `Rendered more hooks than during the previous render`.
+- Removed conditional `useMemo` execution from the mobile dashboard and made derived vaccine selection hook-free.
+- Added `scripts/mobile-hooks-audit.mjs` and wired it into Expo/typecheck preflight so hook-after-early-return regressions fail before runtime.
+- Bumped Expo app version to 0.20.2 and Android versionCode to 22.
