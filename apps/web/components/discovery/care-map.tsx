@@ -49,7 +49,8 @@ export function CareMap({ locations, selectedId, onSelect }: { locations: CareLo
       markersRef.current.push(marker);
       bounds.extend([item.longitude!, item.latitude!]);
     }
-    if (points.length === 1) map.easeTo({ center: [points[0].longitude!, points[0].latitude!], zoom: 14 });
+    const onlyPoint = points.length === 1 ? points[0] : undefined;
+    if (onlyPoint) map.easeTo({ center: [onlyPoint.longitude!, onlyPoint.latitude!], zoom: 14 });
     else if (points.length > 1 && !bounds.isEmpty()) map.fitBounds(bounds, { padding: 44, maxZoom: 14, duration: 500 });
   }, [locations, selectedId, onSelect]);
 

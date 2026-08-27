@@ -1,8 +1,14 @@
-# v0.23.1 — MapLibre v6 production build fix
+# v0.23.2 — MapLibre v6 production build fix
+
+## v0.23.2 — 2026-08-27
+
+- Fixed Admin Care Location form initialization TypeScript error (`x` was referenced outside scope).
+- Fixed MapLibre single-point bounds handling under strict `noUncheckedIndexedAccess` TypeScript settings.
+- Production `next build` now passes the two TypeScript failures reported after the v0.23.1 MapLibre ESM fix.
 
 - Fixed Next.js 16 Turbopack build failure caused by the removed MapLibre GL JS v6 default export.
 - Care Map now imports `Map`, `Marker`, `LngLatBounds`, `NavigationControl` and `AttributionControl` as ESM named exports.
-- Frontend/Expo release metadata bumped to 0.23.1 (Android/iOS build 29).
+- Frontend/Expo release metadata bumped to 0.23.2 (Android/iOS build 29).
 
 # v0.23.0 — Admin CMS, Media Library and Care Directory
 

@@ -2,7 +2,7 @@
   "expo": {
     "name": "نینیبو",
     "slug": "ninibu-mobile",
-    "version": "0.23.1",
+    "version": "0.23.2",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "scheme": "ninibu",
@@ -14,7 +14,7 @@
       "config": {
         "usesNonExemptEncryption": false
       },
-      "buildNumber": "29"
+      "buildNumber": "30"
     },
     "android": {
       "package": "com.ninibu.app",
@@ -24,7 +24,7 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": true,
-      "versionCode": 29
+      "versionCode": 30
     },
     "plugins": [
       "expo-router",
