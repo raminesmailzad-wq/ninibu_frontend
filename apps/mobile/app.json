@@ -1,8 +1,9 @@
 {
   "expo": {
+     "owner": "raminesi",
     "name": "نینیبو",
     "slug": "ninibu-mobile",
-    "version": "0.23.2",
+    "version": "0.23.4",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "scheme": "ninibu",
@@ -14,7 +15,7 @@
       "config": {
         "usesNonExemptEncryption": false
       },
-      "buildNumber": "30"
+      "buildNumber": "32"
     },
     "android": {
       "package": "com.ninibu.app",
@@ -24,7 +25,7 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": true,
-      "versionCode": 30
+      "versionCode": 32
     },
     "plugins": [
       "expo-router",
@@ -50,15 +51,19 @@
         }
       ]
     ],
-    "runtimeVersion": {
-      "policy": "appVersion"
-    },
     "androidNavigationBar": {
       "backgroundColor": "#F8F7FB",
       "barStyle": "dark-content"
     },
     "experiments": {
       "typedRoutes": false
+    },
+    "owner": "raminesi",
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "e614fc0c-d8b4-4521-8916-e4558762fa94"
+      }
     }
   }
 }

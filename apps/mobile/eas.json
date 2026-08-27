@@ -10,7 +10,8 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_NINIBU_BACKEND_URL": "https://ninibu.com"
+        "EXPO_PUBLIC_NINIBU_BACKEND_URL": "https://ninibu.com",
+        "EXPO_PUBLIC_NINIBU_MAP_TILE_URL": "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       }
     },
     "preview": {
@@ -19,7 +20,8 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_NINIBU_BACKEND_URL": "https://ninibu.com"
+        "EXPO_PUBLIC_NINIBU_BACKEND_URL": "https://ninibu.com",
+        "EXPO_PUBLIC_NINIBU_MAP_TILE_URL": "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       }
     },
     "production": {

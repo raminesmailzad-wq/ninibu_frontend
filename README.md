@@ -2,7 +2,7 @@
 
 Frontend monorepo for Ninibu. Web remains available alongside the native Expo/React Native parent app.
 
-## v0.23.2 scope — Website + Admin Panel + Expo App
+## v0.23.4 scope — Website + Admin Panel + Expo App
 
 - Public/user website remains under `apps/web` and keeps the existing authenticated/user-facing routes.
 - Web Admin Control Center remains an isolated `/admin` surface with Admin/Super Admin access.
@@ -32,7 +32,7 @@ Frontend monorepo for Ninibu. Web remains available alongside the native Expo/Re
 - Covers dashboard KPIs, knowledge content workflow, advertising, unified provider verification, community moderation, user access, commission reporting, feature flags, settings and audit history.
 - `super_admin` is the only role allowed to change management roles and global System Settings; regular Admin keeps day-to-day operational access.
 - Admin forms use centered viewport modals and never expose secret configuration in the browser.
-- Administration remains intentionally Web-only; the parent mobile app is v0.23.2.
+- Administration remains intentionally Web-only; the parent mobile app is v0.23.4.
 - Requires Ninibu Backend v0.26.1.
 
 ## v0.16.0 scope — Native Expo Mobile App
@@ -231,3 +231,8 @@ Packaging-time checks and environment limitations are documented in `VALIDATION.
 
 ## Route & analytics architecture (v0.9.0)
 Main product areas now use real Next.js routes instead of dashboard-only state. Booking funnel stages also have stable routes so refresh, deep links, browser history and funnel analysis work predictably. Analytics call sites emit only generic product/navigation metadata; sensitive health/profile content is intentionally excluded. A collector can be connected later through `NEXT_PUBLIC_NINIBU_ANALYTICS_ENDPOINT` without changing feature components.
+
+
+## Mobile care map (v0.23.4)
+
+The native app uses OpenStreetMap + Leaflet inside `react-native-webview`; Google Maps API keys are no longer required. Override tiles with `EXPO_PUBLIC_NINIBU_MAP_TILE_URL` when moving beyond light test traffic.

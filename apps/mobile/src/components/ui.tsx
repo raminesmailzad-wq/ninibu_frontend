@@ -38,6 +38,7 @@ export function Screen({
       keyboardShouldPersistTaps="handled"
       keyboardDismissMode="on-drag"
       showsVerticalScrollIndicator={false}
+      nestedScrollEnabled
       contentInsetAdjustmentBehavior="automatic"
       contentContainerStyle={[s.screenContent, contentStyle]}
       refreshControl={onRefresh ? <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} /> : undefined}

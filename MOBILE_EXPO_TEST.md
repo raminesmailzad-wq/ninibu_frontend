@@ -1,44 +1,43 @@
-# تست موبایل نینیبو v0.21.2 با Expo Go
+# تست موبایل نینیبو v0.23.4 با Expo Go
 
-## نصب dependencyها
-این نسخه دو dependency جدید موبایل دارد: `expo-font` و `expo-location`. بعد از جایگزینی نسخه یک بار اجرا کنید:
+## 1. همگام‌سازی dependencyها
+
+این نسخه نقشه native گوگل را حذف کرده و `react-native-webview` را جایگزین کرده است. همچنین `expo-linking` و `expo-system-ui` برای build مستقل SDK 54 در dependencies حضور دارند.
+
+چون ZIP مبنای v0.23.2 شامل `pnpm-lock.yaml` نبود، در repository فعلی فقط یک بار اجرا کنید:
 
 ```bash
 cd /home/ramin/projects/ninibu/ninibu_frontend
 pnpm install --no-frozen-lockfile --prefer-offline
 ```
 
-بعد از همگام‌شدن lockfile، نصب‌های بعدی می‌توانند frozen باشند.
+بعد از آن نصب‌های بعدی باید با `--frozen-lockfile` انجام شوند.
 
-## فونت YekanBakh FaNum
-فایل‌های دارای مجوز را طبق `apps/mobile/assets/fonts/README.txt` قرار دهید، سپس:
+## 2. فونت YekanBakh FaNum
+
+فایل‌های دارای مجوز خودتان را در `apps/mobile/assets/fonts` حفظ کنید. Regular و Bold الزامی هستند؛ اگر Medium موجود نباشد، پروژه به Regular fallback می‌کند.
 
 ```bash
 pnpm mobile:prepare-font
 ```
 
-## بررسی
+## 3. کنترل موبایل
 
 ```bash
 pnpm --filter @ninibu/mobile typecheck
+pnpm mobile:apk-check
 ```
 
-pretypecheck به‌صورت خودکار این auditها را هم اجرا می‌کند:
-- preflight Expo
-- Hook order
-- Web/mobile user parity markers
-- shared font-family audit
-
-## اجرا روی گوشی
+## 4. اجرا روی گوشی
 
 ```bash
 pnpm dev:mobile:lan
 ```
 
-Metro روی 8082 اجرا می‌شود. گوشی و سیستم باید روی یک شبکه باشند. در صورت نیاز:
+Metro روی 8082 اجرا می‌شود. Backend پیش‌فرض `https://ninibu.com` است.
 
-```bash
-pnpm dev:mobile:tunnel
+در بخش «کشف → مراکز»، نقشه باید با OpenStreetMap باز شود و دیگر هیچ Google Maps API Key لازم نیست. برای tile endpoint سفارشی:
+
+```env
+EXPO_PUBLIC_NINIBU_MAP_TILE_URL=https://your-provider.example/{z}/{x}/{y}.png
 ```
-
-Backend پیش‌فرض موبایل `https://ninibu.com` است.

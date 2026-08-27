@@ -1,3 +1,20 @@
+# v0.23.4 — Mobile Care Map GPS & Performance
+
+- Hardened «نزدیک من»: high-accuracy request, location-service checks, last-known fallback and Persian handled errors instead of unhandled promise rejection.
+- Mobile care results are sorted by `distance_km` when a live location is active.
+- Added accuracy feedback and an accuracy circle around the user's position.
+- Reworked the Leaflet WebView bridge so location/data changes update in place instead of reloading the entire map HTML.
+- Enabled hardware WebView rendering and nested scrolling, disabled expensive Leaflet animations, and tuned raster tile buffering for smoother pan/zoom.
+- Mobile care markers now match the Web marker language: white-bordered purple pin; selected marker is larger and green.
+
+# v0.23.3 — 2026-08-27
+
+- Replaced Mobile `react-native-maps` / Google Maps SDK with OpenStreetMap + Leaflet inside `react-native-webview`.
+- Removed Google Maps API-key injection and the native map crash path (`com.google.android.geo.API_KEY`).
+- Added graceful map-loading fallback so the care-location list remains usable even if tiles/scripts are unavailable.
+- Added `expo-linking` and `expo-system-ui` required by the Expo SDK 54 standalone build checks.
+- Added EAS owner/projectId to Expo config and bumped Android/iOS build numbers to 31.
+
 # v0.23.2 — MapLibre v6 production build fix
 
 ## v0.23.2 — 2026-08-27

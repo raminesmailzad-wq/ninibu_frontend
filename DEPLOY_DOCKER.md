@@ -19,10 +19,10 @@ sudo docker compose ps
 sudo docker compose logs --tail=100 frontend
 ```
 
-The default image tag is `ninibu-frontend:0.23.2`. Override it when needed:
+The default image tag is `ninibu-frontend:0.23.3`. Override it when needed:
 
 ```bash
-NINIBU_FRONTEND_IMAGE=registry.example/ninibu-frontend:0.23.2 docker compose up -d
+NINIBU_FRONTEND_IMAGE=registry.example/ninibu-frontend:0.23.3 docker compose up -d
 ```
 
 If Compose reports that external network `ninibu-backend_ninibu_backend` does not exist, start the backend first and verify:

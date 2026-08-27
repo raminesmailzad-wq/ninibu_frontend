@@ -26,7 +26,7 @@ if (!Number.isInteger(app.android?.versionCode) || app.android.versionCode < 1) 
 if (eas?.build?.preview?.android?.buildType !== 'apk') problems.push('EAS preview باید android.buildType=apk داشته باشد');
 if (eas?.build?.preview?.env?.EXPO_PUBLIC_NINIBU_BACKEND_URL !== 'https://ninibu.com') problems.push('Backend URL پروفایل preview باید https://ninibu.com باشد');
 
-for (const dependency of ['expo', 'expo-router', 'expo-font', 'expo-secure-store', 'expo-splash-screen', 'expo-location', 'react', 'react-native']) {
+for (const dependency of ['expo', 'expo-router', 'expo-font', 'expo-secure-store', 'expo-splash-screen', 'expo-location', 'expo-linking', 'expo-system-ui', 'react-native-webview', 'react', 'react-native']) {
   if (!mobilePackage.dependencies?.[dependency]) problems.push(`dependency لازم وجود ندارد: ${dependency}`);
 }
 
@@ -47,11 +47,26 @@ if (!fs.existsSync(mediumFont)) {
 
 const lockPath = path.join(root, 'pnpm-lock.yaml');
 if (!fs.existsSync(lockPath)) {
-  problems.push('pnpm-lock.yaml وجود ندارد؛ lockfile فعلی سرور را حفظ کنید و قبل از APK دوباره mobile:apk-check را اجرا کنید');
+  warnings.push('pnpm-lock.yaml داخل بسته مبنا نبود؛ پس از جایگزینی پروژه، pnpm install --no-frozen-lockfile را یک بار اجرا کنید');
 } else {
   const lock = fs.readFileSync(lockPath, 'utf8');
   if (!/\n  apps\/mobile:\n/.test(lock)) problems.push('pnpm-lock.yaml فاقد importer مربوط به apps/mobile است؛ pnpm install --no-frozen-lockfile را یک بار اجرا کنید');
-  for (const specifier of ['expo-font', 'expo-location']) if (!lock.includes(`${specifier}:`)) problems.push(`pnpm-lock.yaml هنوز ${specifier} را ثبت نکرده است`);
+  for (const specifier of ['expo-font', 'expo-location', 'expo-linking', 'expo-system-ui', 'react-native-webview']) if (!lock.includes(`${specifier}:`)) problems.push(`pnpm-lock.yaml هنوز ${specifier} را ثبت نکرده است`);
+  if (lock.includes('react-native-maps:')) problems.push('pnpm-lock.yaml هنوز react-native-maps را دارد؛ pnpm install --no-frozen-lockfile را اجرا کنید');
+}
+
+
+if (mobilePackage.dependencies?.['react-native-maps']) problems.push('react-native-maps باید از اپ موبایل حذف شده باشد');
+const appConfigPath = path.join(mobile, 'app.config.js');
+if (fs.existsSync(appConfigPath)) {
+  const appConfig = fs.readFileSync(appConfigPath, 'utf8');
+  if (/GOOGLE_MAPS|googleMapsApiKey|androidGoogleMapsApiKey|googleMaps\s*:/.test(appConfig)) problems.push('تنظیمات Google Maps هنوز در app.config.js باقی مانده است');
+}
+const discoverPath = path.join(mobile, 'app/(app)/(tabs)/discover.tsx');
+if (fs.existsSync(discoverPath)) {
+  const discover = fs.readFileSync(discoverPath, 'utf8');
+  if (!discover.includes('OpenStreetMap')) problems.push('صفحه مراکز باید از OpenStreetMap component استفاده کند');
+  if (discover.includes('react-native-maps')) problems.push('صفحه مراکز هنوز react-native-maps را import می‌کند');
 }
 
 for (const legacy of ['app-example', 'app/(auth)/index.tsx', 'app/index.tsx', 'app/(app)/maternal-health.tsx']) {

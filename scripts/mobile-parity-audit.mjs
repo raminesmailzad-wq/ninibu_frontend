@@ -14,7 +14,7 @@ const checks = [
   ['جامعه', 'app/(app)/(tabs)/community.tsx', ['communityFeed', 'communityGroups', 'communityProfile', 'SponsoredSlot']],
   ['گروه جامعه', 'app/(app)/community/groups/[groupId].tsx', ['communityGroupJoin', 'communityGroupLeave', 'communityGroupPosts']],
   ['پست/دیدگاه جامعه', 'app/(app)/community/posts/[postId].tsx', ['communityPostComments', 'communityPostReactions', 'communityPostReaction', 'communityCommentReactions', 'communityCommentReaction', 'communityReports']],
-  ['کشف و محتوا', 'app/(app)/(tabs)/discover.tsx', ['personalizationFeed', 'personalizationFeedback', 'contentCategories', 'contentBookmarks', 'contentBookmark', 'contentDetail', 'searchSuggestions', 'searchTrending', 'searchHistory', 'searchEvents', 'careLocationDiscover', 'requestForegroundPermissionsAsync', 'SponsoredSlot']],
+  ['کشف و محتوا', 'app/(app)/(tabs)/discover.tsx', ['personalizationFeed', 'personalizationFeedback', 'contentCategories', 'contentBookmarks', 'contentBookmark', 'contentDetail', 'searchSuggestions', 'searchTrending', 'searchHistory', 'searchEvents', 'careLocationDiscover', 'requestForegroundPermissionsAsync', 'OpenStreetMap', 'SponsoredSlot']],
   ['خدمات و رزرو', 'app/(app)/services.tsx', ['commerceServices', 'serviceAvailability', 'bookings', 'bookingCancel', 'bookingReschedule', 'orderPayments', 'sandboxPaymentSucceed', 'sandboxPaymentFail']],
   ['مشاوره', 'app/(app)/services.tsx', ['consultationCategories', 'consultationQuestions', 'consultationPublicQuestions', 'consultationQuestionAnswers', 'consultationAnswerAccept', 'consultationQuestionClose', 'consultationQuestionReopen']],
   ['فروشگاه', 'app/(app)/shop.tsx', ['commerceProducts', 'commerceProduct', 'commerceCart', 'commerceCartItems', 'commerceCheckoutPreview', 'commerceOrders', 'commerceOrder', 'commerceOrderCancel', 'orderPayments', 'sandboxPaymentSucceed', 'sandboxPaymentFail']],
@@ -69,6 +69,8 @@ walk(path.join(mobile, 'app'));
 walk(path.join(mobile, 'src'));
 const allMobile = allFiles.map((file) => fs.readFileSync(file, 'utf8')).join('\n');
 if (/kicker|eyebrow|section-kicker/i.test(allMobile)) problems.push('UI: تیتر ریز بالای تیتر اصلی (kicker/eyebrow) هنوز در سورس موبایل وجود دارد');
+if (allMobile.includes("from 'react-native-maps'") || allMobile.includes('from "react-native-maps"')) problems.push('Map: react-native-maps هنوز در سورس موبایل استفاده می‌شود');
+if (!allMobile.includes('react-native-webview')) problems.push('Map: react-native-webview برای نقشه OpenStreetMap پیدا نشد');
 
 const forbiddenLegacy = ['app-example', 'app/(auth)/index.tsx', 'app/index.tsx', 'app/(app)/maternal-health.tsx'];
 for (const relative of forbiddenLegacy) {

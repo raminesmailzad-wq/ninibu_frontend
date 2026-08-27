@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
-import { Linking, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useEffect, useMemo, useState } from 'react';
+import { Linking, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import * as Location from 'expo-location';
-import MapView, { Marker } from 'react-native-maps';
+import { OpenStreetMap } from '@/components/map/OpenStreetMap';
 import type { CareLocation, CareLocationListResponse, KnowledgeCategory, KnowledgeContent, KnowledgeContentListResponse, KnowledgeDetail, PersonalizationFeedResponse, SearchHistory, SearchResponse, SearchSuggestionsResponse, SearchTrend } from '@ninibu/types';
 import { formatJalaliShortDate, formatRelativeFa, toPersianDigits } from '@ninibu/datetime';
 import { api, apiPaths } from '@/lib/api';
@@ -39,14 +39,173 @@ function Knowledge({ data, categories, bookmarks, onOpen }: { data?: KnowledgeCo
 
 function SearchPanel({ onOpen, onOpenCare }: { onOpen: (slug: string) => void; onOpenCare: (title: string) => void }) { const [q, setQ] = useState(''); const [search, setSearch] = useState<SearchResponse>(); const [suggestions, setSuggestions] = useState<string[]>([]); const [trends, setTrends] = useState<SearchTrend[]>([]); const [history, setHistory] = useState<SearchHistory[]>([]); const [busy, setBusy] = useState(false); const [error, setError] = useState(''); async function loadMeta() { const [t, h] = await Promise.all([api<SearchTrend[] | { items: SearchTrend[] }>(`${apiPaths.searchTrending}?limit=8`).catch(() => []), api<SearchHistory[] | { items: SearchHistory[] }>(`${apiPaths.searchHistory}?limit=10`).catch(() => [])]); setTrends(Array.isArray(t) ? t : t.items); setHistory(Array.isArray(h) ? h : h.items); } useEffect(() => { void loadMeta(); }, []); useEffect(() => { if (q.trim().length < 2) return setSuggestions([]); const timer = setTimeout(() => { api<SearchSuggestionsResponse>(`${apiPaths.searchSuggestions}?q=${encodeURIComponent(q.trim())}&limit=6`).then((r) => setSuggestions(r.suggestions)).catch(() => setSuggestions([])); }, 300); return () => clearTimeout(timer); }, [q]); async function run(value = q) { const query = value.trim(); if (!query) return; setBusy(true); setError(''); try { const r = await api<SearchResponse>(`${apiPaths.search}?q=${encodeURIComponent(query)}&limit=30`); setSearch(r); setQ(query); await api(apiPaths.searchEvents, { method: 'POST', body: JSON.stringify({ event_type: 'search', query: r.query || query, result_count: r.total, request_id: `mobile-${Date.now()}` }) }).catch(() => undefined); await loadMeta(); } catch (cause) { setError(cause instanceof Error ? cause.message : 'جست‌وجو انجام نشد.'); } finally { setBusy(false); } } async function clearHistory() { await api(apiPaths.searchHistory, { method: 'DELETE' }); await loadMeta(); } return <><View style={s.search}><Pressable onPress={() => void run()} style={s.searchBtn}><Ionicons name="search" size={20} color="#fff" /></Pressable><TextInput returnKeyType="search" onSubmitEditing={() => void run()} value={q} onChangeText={setQ} placeholder="در نینیبو جست‌وجو کنید…" placeholderTextColor="#A39CAB" textAlign="right" style={s.input} /></View>{error ? <Text style={s.error}>{error}</Text> : null}{busy ? <Loading label="در حال جست‌وجو…" /> : search ? <><SectionTitle title={`${toPersianDigits(search.total)} نتیجه`} />{search.results.length ? search.results.map((r, i) => <Pressable key={`${r.type}-${r.id}-${i}`} onPress={() => { const slug = r.metadata?.slug; if (r.type === 'knowledge_content' && typeof slug === 'string') onOpen(slug); if (r.type === 'care_location') onOpenCare(r.title); }}><Card><Badge tone={r.type === 'care_location' ? 'green' : 'gray'}>{typeLabel(r.type)}</Badge><Text style={s.title}>{r.title}</Text>{r.summary ? <Text style={s.copy}>{r.summary}</Text> : null}</Card></Pressable>) : <EmptyState title="نتیجه‌ای پیدا نشد" />}<Button title="جست‌وجوی جدید" variant="ghost" onPress={() => { setSearch(undefined); setQ(''); }} /></> : <><SectionTitle title="پیشنهادهای جست‌وجو" />{suggestions.length ? <View style={s.chips}>{suggestions.map((x) => <Pressable key={x} style={s.chip} onPress={() => void run(x)}><Text style={s.chipText}>{x}</Text></Pressable>)}</View> : null}<Card><View style={s.metaHead}><Text style={s.metaTitle}>پرطرفدار</Text></View>{trends.slice(0, 6).map((x) => <Pressable key={x.id} onPress={() => void run(x.query)} style={s.metaRow}><Text style={s.metaRowText}>{x.query}</Text><Text style={s.date}>{toPersianDigits(x.search_count)} جست‌وجو</Text></Pressable>)}</Card><Card><View style={s.metaHead}><Text style={s.metaTitle}>جست‌وجوهای اخیر</Text>{history.length ? <Pressable onPress={() => void clearHistory()}><Text style={s.clear}>پاک کردن همه</Text></Pressable> : null}</View>{history.length ? history.map((x) => <Pressable key={x.id} onPress={() => void run(x.query)} style={s.metaRow}><Text style={s.metaRowText}>{x.query}</Text><Text style={s.date}>{formatRelativeFa(x.created_at)}</Text></Pressable>) : <Text style={s.copy}>هنوز جست‌وجویی ثبت نشده است.</Text>}</Card></>}</>; }
 
-function CarePanel({ cityId, cityName, initialSearch = '' }: { cityId?: number; cityName?: string; initialSearch?: string }) { const [coords, setCoords] = useState<{ lat: number; lng: number }>(); const [kind, setKind] = useState(careKinds[0]); const [kindOpen, setKindOpen] = useState(false); const [q, setQ] = useState(initialSearch); const [submitted, setSubmitted] = useState(initialSearch); const [data, setData] = useState<CareLocationListResponse>(); const [selected, setSelected] = useState<CareLocation>(); const [loading, setLoading] = useState(false); const [error, setError] = useState(''); async function load(target = coords, targetKind = kind.value, search = submitted) { if (!target && !cityId && !search) { setData(undefined); return; } setLoading(true); setError(''); try { const params = new URLSearchParams({ page: '1', limit: '100' }); if (target) { params.set('lat', String(target.lat)); params.set('lng', String(target.lng)); params.set('radius_km', '25'); } else if (cityId) params.set('city_id', String(cityId)); if (targetKind) params.set('type', targetKind); if (search) params.set('q', search); setData(await api<CareLocationListResponse>(`${apiPaths.careLocationDiscover}?${params.toString()}`)); } catch (cause) { setError(cause instanceof Error ? cause.message : 'مراکز درمانی دریافت نشدند.'); } finally { setLoading(false); } } useEffect(() => { void load(coords, kind.value, submitted); }, [cityId, kind.value, submitted]); async function nearMe() { setError(''); const permission = await Location.requestForegroundPermissionsAsync(); if (permission.status !== 'granted') return setError('برای نمایش مراکز نزدیک، اجازه موقعیت را فقط هنگام استفاده از برنامه فعال کنید.'); const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }); const next = { lat: pos.coords.latitude, lng: pos.coords.longitude }; setCoords(next); await load(next); } const mappable = (data?.items ?? []).filter((item) => typeof item.latitude === 'number' && typeof item.longitude === 'number'); const center = mappable[0] ? { latitude: mappable[0].latitude!, longitude: mappable[0].longitude!, latitudeDelta: 0.18, longitudeDelta: 0.18 } : { latitude: coords?.lat ?? 35.6892, longitude: coords?.lng ?? 51.389, latitudeDelta: 0.28, longitudeDelta: 0.28 }; return <><SectionTitle title="مراکز درمانی تأییدشده" /><View style={s.search}><Pressable onPress={() => { setSubmitted(q.trim()); void load(coords, kind.value, q.trim()); }} style={s.searchBtn}><Ionicons name="search" size={20} color="#fff" /></Pressable><TextInput returnKeyType="search" onSubmitEditing={() => { setSubmitted(q.trim()); void load(coords, kind.value, q.trim()); }} value={q} onChangeText={setQ} placeholder="نام مرکز، اطفال، NICU…" placeholderTextColor="#A39CAB" textAlign="right" style={s.input} /></View><Card><Text style={s.copy}>{coords ? 'نتایج بر اساس موقعیت لحظه‌ای گوشی هستند و مختصات در پروفایل ذخیره نمی‌شوند.' : cityId ? `نمایش مراکز در ${cityName || 'شهر محل سکونت'}.` : submitted ? 'جست‌وجوی متنی در دایرکتوری عمومی.' : 'شهر محل سکونت ثبت نشده؛ می‌توانید از گزینه نزدیک من استفاده کنید.'}</Text><View style={s.careActions}><View style={{ flex: 1 }}><Button title={kind.label} variant="secondary" onPress={() => setKindOpen(true)} /></View><View style={{ flex: 1 }}><Button title="نزدیک من" icon="locate-outline" onPress={() => void nearMe()} /></View></View>{coords ? <Button title="بازگشت به شهر من" variant="ghost" onPress={() => { setCoords(undefined); void load(undefined); }} /> : null}</Card>{error ? <ErrorState message={error} onRetry={() => load()} /> : loading ? <Loading /> : data?.items.length ? <>{mappable.length ? <MapView style={s.careMap} initialRegion={center} key={`${center.latitude}-${center.longitude}-${mappable.length}`}>{mappable.map((item) => <Marker key={item.id} coordinate={{ latitude: item.latitude!, longitude: item.longitude! }} title={item.name} description={item.address || item.city} onPress={() => setSelected(item)} />)}</MapView> : null}{selected ? <Card><View style={s.itemTop}><Badge tone="green">{careLabel(selected.type)}</Badge>{selected.emergency ? <Badge tone="pink">اورژانس</Badge> : null}</View><Text style={s.title}>{selected.name}</Text><Text style={s.copy}>{selected.address || selected.city || ''}</Text><View style={s.careActions}>{selected.phone ? <View style={{ flex: 1 }}><Button compact title="تماس" variant="secondary" onPress={() => void Linking.openURL(`tel:${selected.phone}`)} /></View> : null}{typeof selected.latitude === 'number' && typeof selected.longitude === 'number' ? <View style={{ flex: 1 }}><Button compact title="مسیریابی" variant="secondary" onPress={() => void Linking.openURL(`https://www.openstreetmap.org/?mlat=${selected.latitude}&mlon=${selected.longitude}#map=16/${selected.latitude}/${selected.longitude}`)} /></View> : null}</View></Card> : null}{data.items.map((item) => <Pressable key={item.id} onPress={() => setSelected(item)}><Card><View style={s.itemTop}><Badge tone="green">{careLabel(item.type)}</Badge>{typeof item.distance_km === 'number' ? <Text style={s.date}>{toPersianDigits(item.distance_km.toFixed(1))} کیلومتر</Text> : null}</View><Text style={s.title}>{item.name}</Text><Text style={s.copy}>{item.address || [item.city, item.province].filter(Boolean).join('، ') || 'نشانی عمومی مرکز'}</Text>{item.specialties?.length ? <Text style={s.date}>{item.specialties.slice(0, 3).join('، ')}</Text> : null}</Card></Pressable>)}</> : <EmptyState title="مرکز تأییدشده‌ای پیدا نشد" />}<ChoiceModal visible={kindOpen} title="نوع مرکز" items={careKinds} label={(item) => item.label} onChoose={(item) => setKind(item)} onClose={() => setKindOpen(false)} /></>; }
+function CarePanel({ cityId, cityName, initialSearch = '' }: { cityId?: number; cityName?: string; initialSearch?: string }) {
+  const [coords, setCoords] = useState<{ lat: number; lng: number }>();
+  const [locationAccuracy, setLocationAccuracy] = useState<number>();
+  const [locationNotice, setLocationNotice] = useState('');
+  const [locating, setLocating] = useState(false);
+  const [kind, setKind] = useState(careKinds[0]);
+  const [kindOpen, setKindOpen] = useState(false);
+  const [q, setQ] = useState(initialSearch);
+  const [submitted, setSubmitted] = useState(initialSearch);
+  const [data, setData] = useState<CareLocationListResponse>();
+  const [selected, setSelected] = useState<CareLocation>();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [locationError, setLocationError] = useState('');
+
+  async function load(target = coords, targetKind = kind.value, search = submitted) {
+    if (!target && !cityId && !search) {
+      setData(undefined);
+      return;
+    }
+    setLoading(true);
+    setError('');
+    try {
+      const params = new URLSearchParams({ page: '1', limit: '100' });
+      if (target) {
+        params.set('lat', String(target.lat));
+        params.set('lng', String(target.lng));
+        params.set('radius_km', '25');
+      } else if (cityId) {
+        params.set('city_id', String(cityId));
+      }
+      if (targetKind) params.set('type', targetKind);
+      if (search) params.set('q', search);
+      setData(await api<CareLocationListResponse>(`${apiPaths.careLocationDiscover}?${params.toString()}`));
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'مراکز درمانی دریافت نشدند.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => { void load(coords, kind.value, submitted); }, [cityId, kind.value, submitted]);
+
+  async function resolvePosition() {
+    const permission = await Location.requestForegroundPermissionsAsync();
+    if (permission.status !== 'granted') {
+      throw new Error('برای نمایش مراکز نزدیک، دسترسی موقعیت را هنگام استفاده از برنامه فعال کنید.');
+    }
+
+    let servicesEnabled = await Location.hasServicesEnabledAsync();
+    if (!servicesEnabled && Platform.OS === 'android') {
+      try {
+        await Location.enableNetworkProviderAsync();
+        servicesEnabled = await Location.hasServicesEnabledAsync();
+      } catch {
+        // The user may dismiss Android's high-accuracy dialog.
+      }
+    }
+    if (!servicesEnabled) {
+      throw new Error('سرویس موقعیت گوشی خاموش است. GPS/Location را روشن کنید و دوباره «نزدیک من» را بزنید.');
+    }
+
+    const approximate = Platform.OS === 'android' && permission.android?.accuracy === 'coarse';
+    let position: Location.LocationObject | null = null;
+    let usedLastKnown = false;
+
+    try {
+      const currentFix = Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.High,
+        mayShowUserSettingsDialog: true,
+      });
+      position = await Promise.race([
+        currentFix,
+        new Promise<null>((resolve) => setTimeout(() => resolve(null), 12000)),
+      ]);
+    } catch {
+      position = null;
+    }
+    if (!position) {
+      position = await Location.getLastKnownPositionAsync({ maxAge: 2 * 60 * 1000, requiredAccuracy: 500 });
+      usedLastKnown = !!position;
+    }
+
+    if (!position) {
+      throw new Error('موقعیت فعلی پیدا نشد. چند ثانیه در فضای باز یا کنار پنجره صبر کنید و دوباره تلاش کنید.');
+    }
+
+    const accuracy = typeof position.coords.accuracy === 'number' ? Math.round(position.coords.accuracy) : undefined;
+    if (usedLastKnown) {
+      setLocationNotice(`GPS موقعیت تازه نداد؛ از آخرین موقعیت معتبر گوشی${accuracy ? ` با دقت حدود ${toPersianDigits(accuracy)} متر` : ''} استفاده شد.`);
+    } else if (approximate) {
+      setLocationNotice(`دسترسی موقعیت روی حالت تقریبی است${accuracy ? ` (حدود ±${toPersianDigits(accuracy)} متر)` : ''}. برای نتیجه دقیق‌تر، Precise location را از تنظیمات برنامه فعال کنید.`);
+    } else if (accuracy && accuracy > 80) {
+      setLocationNotice(`موقعیت دریافت شد اما دقت GPS حدود ±${toPersianDigits(accuracy)} متر است؛ برای دقت بیشتر چند ثانیه صبر کنید و دوباره بزنید.`);
+    } else {
+      setLocationNotice(accuracy ? `موقعیت با دقت حدود ±${toPersianDigits(accuracy)} متر دریافت شد.` : 'موقعیت فعلی گوشی دریافت شد.');
+    }
+
+    return position;
+  }
+
+  async function nearMe() {
+    if (locating) return;
+    setLocating(true);
+    setLocationError('');
+    setLocationNotice('');
+    try {
+      const pos = await resolvePosition();
+      const next = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+      setCoords(next);
+      setLocationAccuracy(typeof pos.coords.accuracy === 'number' ? pos.coords.accuracy : undefined);
+      setSelected(undefined);
+      await load(next);
+    } catch (cause) {
+      setLocationError(cause instanceof Error ? cause.message : 'موقعیت فعلی گوشی دریافت نشد.');
+    } finally {
+      setLocating(false);
+    }
+  }
+
+  const orderedItems = useMemo(() => {
+    const items = data?.items ?? [];
+    if (!coords) return items;
+    return [...items].sort((a, b) => (a.distance_km ?? Number.POSITIVE_INFINITY) - (b.distance_km ?? Number.POSITIVE_INFINITY));
+  }, [data?.items, coords]);
+  const mappable = useMemo(() => orderedItems.filter((item) => typeof item.latitude === 'number' && typeof item.longitude === 'number'), [orderedItems]);
+  const mapPoints = useMemo(() => mappable.map((item) => ({ id: item.id, latitude: item.latitude!, longitude: item.longitude!, title: item.name, subtitle: item.address || item.city || '' })), [mappable]);
+  const center = coords ? { latitude: coords.lat, longitude: coords.lng } : mappable[0] ? { latitude: mappable[0].latitude!, longitude: mappable[0].longitude! } : { latitude: 35.6892, longitude: 51.389 };
+
+  return <>
+    <SectionTitle title="مراکز درمانی تأییدشده" />
+    <View style={s.search}>
+      <Pressable onPress={() => { setSubmitted(q.trim()); void load(coords, kind.value, q.trim()); }} style={s.searchBtn}><Ionicons name="search" size={20} color="#fff" /></Pressable>
+      <TextInput returnKeyType="search" onSubmitEditing={() => { setSubmitted(q.trim()); void load(coords, kind.value, q.trim()); }} value={q} onChangeText={setQ} placeholder="نام مرکز، اطفال، NICU…" placeholderTextColor="#A39CAB" textAlign="right" style={s.input} />
+    </View>
+    <Card>
+      <Text style={s.copy}>{coords ? 'نتایج بر اساس موقعیت لحظه‌ای گوشی مرتب شده‌اند و مختصات در پروفایل ذخیره نمی‌شوند.' : cityId ? `نمایش مراکز در ${cityName || 'شهر محل سکونت'}.` : submitted ? 'جست‌وجوی متنی در دایرکتوری عمومی.' : 'شهر محل سکونت ثبت نشده؛ می‌توانید از گزینه نزدیک من استفاده کنید.'}</Text>
+      {locationNotice ? <Text style={s.locationHint}>{locationNotice}</Text> : null}
+      <View style={s.careActions}>
+        <View style={{ flex: 1 }}><Button title={kind.label} variant="secondary" onPress={() => setKindOpen(true)} /></View>
+        <View style={{ flex: 1 }}><Button title="نزدیک من" icon="locate-outline" loading={locating} disabled={locating} onPress={() => void nearMe()} /></View>
+      </View>
+      {coords ? <Button title="بازگشت به شهر من" variant="ghost" onPress={() => { setCoords(undefined); setLocationAccuracy(undefined); setLocationNotice(''); setLocationError(''); setSelected(undefined); void load(undefined); }} /> : null}
+    </Card>
+    {locationError ? <ErrorState message={locationError} onRetry={() => void nearMe()} /> : error ? <ErrorState message={error} onRetry={() => void load()} /> : loading ? <Loading /> : orderedItems.length ? <>
+      {mappable.length ? <OpenStreetMap
+        points={mapPoints}
+        center={center}
+        userLocation={coords ? { latitude: coords.lat, longitude: coords.lng } : undefined}
+        userAccuracy={locationAccuracy}
+        focusUser={!!coords}
+        selectedId={selected?.id}
+        onSelect={(id) => { const item = mappable.find((entry) => String(entry.id) === id); if (item) setSelected(item); }}
+      /> : null}
+      {selected ? <Card><View style={s.itemTop}><Badge tone="green">{careLabel(selected.type)}</Badge>{selected.emergency ? <Badge tone="pink">اورژانس</Badge> : null}</View><Text style={s.title}>{selected.name}</Text><Text style={s.copy}>{selected.address || selected.city || ''}</Text><View style={s.careActions}>{selected.phone ? <View style={{ flex: 1 }}><Button compact title="تماس" variant="secondary" onPress={() => void Linking.openURL(`tel:${selected.phone}`)} /></View> : null}{typeof selected.latitude === 'number' && typeof selected.longitude === 'number' ? <View style={{ flex: 1 }}><Button compact title="مسیریابی" variant="secondary" onPress={() => void Linking.openURL(`https://www.openstreetmap.org/?mlat=${selected.latitude}&mlon=${selected.longitude}#map=16/${selected.latitude}/${selected.longitude}`)} /></View> : null}</View></Card> : null}
+      {orderedItems.map((item) => <Pressable key={item.id} onPress={() => setSelected(item)}><Card><View style={s.itemTop}><Badge tone="green">{careLabel(item.type)}</Badge>{typeof item.distance_km === 'number' ? <Text style={s.date}>{toPersianDigits(item.distance_km.toFixed(1))} کیلومتر</Text> : null}</View><Text style={s.title}>{item.name}</Text><Text style={s.copy}>{item.address || [item.city, item.province].filter(Boolean).join('، ') || 'نشانی عمومی مرکز'}</Text>{item.specialties?.length ? <Text style={s.date}>{item.specialties.slice(0, 3).join('، ')}</Text> : null}</Card></Pressable>)}
+    </> : <EmptyState title="مرکز تأییدشده‌ای پیدا نشد" />}
+    <ChoiceModal visible={kindOpen} title="نوع مرکز" items={careKinds} label={(item) => item.label} onChoose={(item) => setKind(item)} onClose={() => setKindOpen(false)} />
+  </>;
+}
 
 function KnowledgeDetailModal({ slug, bookmarks, onClose, onBookmarkChanged }: { slug?: string; bookmarks: KnowledgeContent[]; onClose: () => void; onBookmarkChanged: () => Promise<void> }) { const [detail, setDetail] = useState<KnowledgeDetail>(); const [loading, setLoading] = useState(false); const [error, setError] = useState(''); const [busy, setBusy] = useState(false); useEffect(() => { if (!slug) return; setLoading(true); setError(''); api<KnowledgeDetail>(apiPaths.contentDetail(slug)).then(setDetail).catch((cause) => setError(cause instanceof Error ? cause.message : 'مطلب دریافت نشد.')).finally(() => setLoading(false)); }, [slug]); const bookmarked = detail ? bookmarks.some((x) => x.id === detail.content.id) : false; async function toggle() { if (!detail) return; setBusy(true); try { await api(apiPaths.contentBookmark(detail.content.id), { method: bookmarked ? 'DELETE' : 'POST' }); await onBookmarkChanged(); } finally { setBusy(false); } } return <FormModal visible={!!slug} title={detail?.content.title || 'جزئیات مطلب'} onClose={onClose}>{loading ? <Loading /> : error ? <ErrorState message={error} /> : detail ? <><View style={s.itemTop}><Badge tone={detail.content.medical_review_required ? 'pink' : 'gray'}>{contentType(detail.content.content_type)}</Badge><Button compact title={bookmarked ? 'حذف ذخیره' : 'ذخیره'} variant="secondary" loading={busy} onPress={() => void toggle()} /></View>{detail.content.summary ? <Text style={s.copy}>{detail.content.summary}</Text> : null}<Text style={s.articleBody}>{richTextToPlain(detail.revision.body)}</Text>{detail.disclaimers.map((x) => <Text key={x.id} style={s.review}>{x.text}</Text>)}{detail.faqs.length ? <><SectionTitle title="پرسش‌های رایج" />{detail.faqs.map((x) => <Card key={x.id}><Text style={s.title}>{x.question}</Text><Text style={s.copy}>{x.answer}</Text></Card>)}</> : null}{detail.sources.length ? <><SectionTitle title="منابع" />{detail.sources.map((x) => <Text key={x.id} style={s.source}>• {x.title}{x.publisher ? ` — ${x.publisher}` : ''}</Text>)}</> : null}</> : null}</FormModal>; }
 
 const contentType = (v: string) => ({ article: 'مقاله', guide: 'راهنما', faq: 'پرسش و پاسخ', educational: 'آموزشی', checklist: 'چک‌لیست', reference: 'مرجع', announcement: 'اطلاعیه' } as Record<string, string>)[v] || v;
 const typeLabel = (v: string) => ({ knowledge_content: 'محتوا', community_post: 'پست', community_group: 'گروه', clinician: 'متخصص', service: 'خدمت', product: 'محصول', seller: 'فروشنده', care_location: 'مرکز درمانی' } as Record<string, string>)[v] || v;
 const careLabel = (v: string) => ({ health_center: 'مرکز سلامت', doctor_office: 'مطب پزشک', clinic: 'کلینیک', hospital: 'بیمارستان', laboratory: 'آزمایشگاه', pharmacy: 'داروخانه', imaging_center: 'تصویربرداری', dental_clinic: 'دندانپزشکی', rehabilitation_center: 'توانبخشی', mental_health_center: 'سلامت روان کودک', maternity_hospital: 'زنان و زایمان' } as Record<string, string>)[v] || 'مرکز درمانی';
-const s = StyleSheet.create({ search: { flexDirection: 'row-reverse', gap: 8 }, input: { fontFamily: typography.regular, flex: 1, minHeight: 49, borderRadius: 16, backgroundColor: '#fff', borderWidth: 1, borderColor: colors.border, paddingHorizontal: 14, color: colors.foreground, writingDirection: 'rtl' }, searchBtn: { width: 49, height: 49, borderRadius: 16, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' }, itemTop: { flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'center', gap: 8 }, title: { fontFamily: typography.bold, fontSize: 14.5, fontWeight: '900', textAlign: 'right', writingDirection: 'rtl', marginTop: 10 }, copy: { fontFamily: typography.regular, fontSize: 11.5, lineHeight: 20, color: colors.muted, textAlign: 'right', writingDirection: 'rtl', marginTop: 5 }, date: { fontFamily: typography.regular, fontSize: 9.5, color: colors.muted }, review: { fontFamily: typography.regular, fontSize: 10, color: colors.warning, backgroundColor: colors.warningSoft, padding: 10, borderRadius: 12, lineHeight: 18, textAlign: 'right', writingDirection: 'rtl', marginTop: 8 }, clear: { fontFamily: typography.bold, color: colors.primary, textAlign: 'center', fontWeight: '900', fontSize: 11, writingDirection: 'rtl' }, error: { fontFamily: typography.regular, color: colors.danger, textAlign: 'right', writingDirection: 'rtl' }, actions: { flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 }, feedback: { flexDirection: 'row-reverse', gap: 18 }, chips: { flexDirection: 'row-reverse', flexWrap: 'wrap', gap: 7 }, chip: { paddingHorizontal: 11, paddingVertical: 8, borderRadius: 999, borderWidth: 1, borderColor: colors.border, backgroundColor: '#fff' }, chipActive: { backgroundColor: colors.primarySoft, borderColor: '#D2C6F4' }, chipText: { fontFamily: typography.regular, fontSize: 10.5, color: colors.primaryStrong, writingDirection: 'rtl' }, metaHead: { flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'center' }, metaTitle: { fontFamily: typography.bold, fontSize: 13.5, fontWeight: '900', writingDirection: 'rtl' }, metaRow: { flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 11, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border }, metaRowText: { fontFamily: typography.regular, fontSize: 11.5, color: colors.foreground, writingDirection: 'rtl' }, careActions: { flexDirection: 'row-reverse', gap: 8, marginTop: 12 }, careMap: { width: '100%', height: 330, borderRadius: 18, overflow: 'hidden', marginTop: 8, marginBottom: 8 }, articleBody: { fontFamily: typography.regular, fontSize: 13, lineHeight: 25, color: colors.foreground, textAlign: 'right', writingDirection: 'rtl' }, source: { fontFamily: typography.regular, fontSize: 10.5, lineHeight: 19, color: colors.muted, textAlign: 'right', writingDirection: 'rtl' } });
+const s = StyleSheet.create({ search: { flexDirection: 'row-reverse', gap: 8 }, input: { fontFamily: typography.regular, flex: 1, minHeight: 49, borderRadius: 16, backgroundColor: '#fff', borderWidth: 1, borderColor: colors.border, paddingHorizontal: 14, color: colors.foreground, writingDirection: 'rtl' }, searchBtn: { width: 49, height: 49, borderRadius: 16, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' }, itemTop: { flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'center', gap: 8 }, title: { fontFamily: typography.bold, fontSize: 14.5, fontWeight: '900', textAlign: 'right', writingDirection: 'rtl', marginTop: 10 }, copy: { fontFamily: typography.regular, fontSize: 11.5, lineHeight: 20, color: colors.muted, textAlign: 'right', writingDirection: 'rtl', marginTop: 5 }, date: { fontFamily: typography.regular, fontSize: 9.5, color: colors.muted }, review: { fontFamily: typography.regular, fontSize: 10, color: colors.warning, backgroundColor: colors.warningSoft, padding: 10, borderRadius: 12, lineHeight: 18, textAlign: 'right', writingDirection: 'rtl', marginTop: 8 }, clear: { fontFamily: typography.bold, color: colors.primary, textAlign: 'center', fontWeight: '900', fontSize: 11, writingDirection: 'rtl' }, error: { fontFamily: typography.regular, color: colors.danger, textAlign: 'right', writingDirection: 'rtl' }, actions: { flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 }, feedback: { flexDirection: 'row-reverse', gap: 18 }, chips: { flexDirection: 'row-reverse', flexWrap: 'wrap', gap: 7 }, chip: { paddingHorizontal: 11, paddingVertical: 8, borderRadius: 999, borderWidth: 1, borderColor: colors.border, backgroundColor: '#fff' }, chipActive: { backgroundColor: colors.primarySoft, borderColor: '#D2C6F4' }, chipText: { fontFamily: typography.regular, fontSize: 10.5, color: colors.primaryStrong, writingDirection: 'rtl' }, metaHead: { flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'center' }, metaTitle: { fontFamily: typography.bold, fontSize: 13.5, fontWeight: '900', writingDirection: 'rtl' }, metaRow: { flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 11, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border }, metaRowText: { fontFamily: typography.regular, fontSize: 11.5, color: colors.foreground, writingDirection: 'rtl' }, careActions: { flexDirection: 'row-reverse', gap: 8, marginTop: 12 }, locationHint: { fontFamily: typography.regular, fontSize: 10.5, lineHeight: 19, color: colors.primaryStrong, textAlign: 'right', writingDirection: 'rtl', backgroundColor: colors.primarySoft, borderRadius: 12, paddingHorizontal: 11, paddingVertical: 9, marginTop: 9 }, articleBody: { fontFamily: typography.regular, fontSize: 13, lineHeight: 25, color: colors.foreground, textAlign: 'right', writingDirection: 'rtl' }, source: { fontFamily: typography.regular, fontSize: 10.5, lineHeight: 19, color: colors.muted, textAlign: 'right', writingDirection: 'rtl' } });
 
 function richTextToPlain(value: string) {
   return value.replace(/<br\s*\/?\s*>/gi, "\n").replace(/<\/(?:p|h2|h3|h4|li|blockquote|figcaption)>/gi, "\n").replace(/<li[^>]*>/gi, "• ").replace(/<[^>]+>/g, "").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/\n{3,}/g, "\n\n").trim();
