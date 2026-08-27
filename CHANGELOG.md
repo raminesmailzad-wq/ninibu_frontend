@@ -1,3 +1,9 @@
+# v0.23.1 — MapLibre v6 production build fix
+
+- Fixed Next.js 16 Turbopack build failure caused by the removed MapLibre GL JS v6 default export.
+- Care Map now imports `Map`, `Marker`, `LngLatBounds`, `NavigationControl` and `AttributionControl` as ESM named exports.
+- Frontend/Expo release metadata bumped to 0.23.1 (Android/iOS build 29).
+
 # v0.23.0 — Admin CMS, Media Library and Care Directory
 
 - Completed Admin CMS CRUD for content metadata, categories and tags while preserving revision/review/publish workflow.

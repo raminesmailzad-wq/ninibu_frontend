@@ -2,7 +2,7 @@
 
 Frontend monorepo for Ninibu. Web remains available alongside the native Expo/React Native parent app.
 
-## v0.23.0 scope — Website + Admin Panel + Expo App
+## v0.23.1 scope — Website + Admin Panel + Expo App
 
 - Public/user website remains under `apps/web` and keeps the existing authenticated/user-facing routes.
 - Web Admin Control Center remains an isolated `/admin` surface with Admin/Super Admin access.
@@ -32,7 +32,7 @@ Frontend monorepo for Ninibu. Web remains available alongside the native Expo/Re
 - Covers dashboard KPIs, knowledge content workflow, advertising, unified provider verification, community moderation, user access, commission reporting, feature flags, settings and audit history.
 - `super_admin` is the only role allowed to change management roles and global System Settings; regular Admin keeps day-to-day operational access.
 - Admin forms use centered viewport modals and never expose secret configuration in the browser.
-- Administration remains intentionally Web-only; the parent mobile app is v0.23.0.
+- Administration remains intentionally Web-only; the parent mobile app is v0.23.1.
 - Requires Ninibu Backend v0.26.1.
 
 ## v0.16.0 scope — Native Expo Mobile App
