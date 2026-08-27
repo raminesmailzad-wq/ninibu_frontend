@@ -1,3 +1,18 @@
+# v0.23.0 — Admin CMS, Media Library and Care Directory
+
+- Completed Admin CMS CRUD for content metadata, categories and tags while preserving revision/review/publish workflow.
+- Added sanitized Rich Text editing with approved media insertion.
+- Added Media Library with multipart image/file upload, rights/licence metadata, preview, edit and delete.
+- Added full Care Location CRUD with searchable table + map, verification workflow, services/specialties and source metadata.
+- Added binary-safe upload/public-media BFF routes and web rendering for rich HTML.
+- Kept the public website and native Expo app in the same monorepo; mobile is 0.23.0 / Android versionCode 28.
+- Requires Ninibu Backend v0.29.0.
+
+# v0.22.0 — Care Map + Unified Search
+
+- Added MapLibre-based care map on Web and react-native-maps on Mobile.
+- Added care-location filtering, nearby discovery and unified Search navigation into the map.
+
 # v0.21.2 — Expo Android APK readiness and final user parity
 
 - Fixed the final TypeScript nullability errors in service booking and SponsoredSlot.

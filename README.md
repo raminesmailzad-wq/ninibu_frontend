@@ -2,6 +2,15 @@
 
 Frontend monorepo for Ninibu. Web remains available alongside the native Expo/React Native parent app.
 
+## v0.23.0 scope — Website + Admin Panel + Expo App
+
+- Public/user website remains under `apps/web` and keeps the existing authenticated/user-facing routes.
+- Web Admin Control Center remains an isolated `/admin` surface with Admin/Super Admin access.
+- Native parent application remains under `apps/mobile` (Expo/React Native), version 0.23.0 / Android versionCode 28.
+- Admin now includes CMS content/category/tag CRUD, Rich Text editing, Media Library/upload and Care Location/Map CRUD.
+- Public Discover includes the Care Map and unified Search integration introduced in v0.22.0.
+- Requires Ninibu Backend v0.29.0.
+
 ## v0.21.2 scope — Mobile user parity + Expo APK readiness
 
 - Brings the normal-user mobile app to feature parity with the user-facing web panel across Home, child health, maternal health, community, discovery, services/consultations, shop, notifications and profile.
@@ -23,7 +32,7 @@ Frontend monorepo for Ninibu. Web remains available alongside the native Expo/Re
 - Covers dashboard KPIs, knowledge content workflow, advertising, unified provider verification, community moderation, user access, commission reporting, feature flags, settings and audit history.
 - `super_admin` is the only role allowed to change management roles and global System Settings; regular Admin keeps day-to-day operational access.
 - Admin forms use centered viewport modals and never expose secret configuration in the browser.
-- Administration remains intentionally Web-only; the parent mobile app is v0.21.2.
+- Administration remains intentionally Web-only; the parent mobile app is v0.23.0.
 - Requires Ninibu Backend v0.26.1.
 
 ## v0.16.0 scope — Native Expo Mobile App

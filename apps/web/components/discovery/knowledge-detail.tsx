@@ -41,7 +41,7 @@ export function KnowledgeDetailDrawer({ slug, onClose }: { slug: string; onClose
         <div className="knowledge-title-row"><div><span className="eyebrow">{contentTypeLabels[detail.data.content.content_type] || "محتوا"}</span><h1>{detail.data.revision.title || detail.data.content.title}</h1>{detail.data.revision.summary && <p>{detail.data.revision.summary}</p>}</div>{detail.data.content.medical_review_required && <span className="medical-reviewed"><ShieldCheck size={16} /> بازبینی پزشکی</span>}</div>
         <div className="knowledge-meta"><span>انتشار: {formatJalaliDate(detail.data.revision.published_at || detail.data.content.published_at)}</span><span>ویرایش: {formatJalaliDate(detail.data.revision.updated_at)}</span></div>
         {detail.data.disclaimers.length > 0 && <div className="knowledge-disclaimer"><ShieldCheck size={18} /><div>{detail.data.disclaimers.map((item) => <p key={item.id}>{item.text}</p>)}</div></div>}
-        <article className="knowledge-body">{detail.data.revision.body}</article>
+        {looksLikeRichHTML(detail.data.revision.body) ? <article className="knowledge-body rich-html" dangerouslySetInnerHTML={{ __html: webRichHTML(detail.data.revision.body) }} /> : <article className="knowledge-body">{detail.data.revision.body}</article>}
         {detail.data.faqs.length > 0 && <section className="knowledge-section"><h2>پرسش‌های پرتکرار</h2>{detail.data.faqs.map((faq) => <details key={faq.id}><summary>{faq.question}</summary><p>{faq.answer}</p></details>)}</section>}
         {detail.data.sources.length > 0 && <section className="knowledge-section"><h2>منابع</h2><div className="knowledge-sources">{detail.data.sources.map((source) => <article key={source.id}><div><FileText size={16} /><div><strong>{source.title}</strong><small>{source.publisher || source.source_type}{source.publication_date ? ` · ${formatJalaliDate(source.publication_date)}` : ""}</small></div></div>{source.url && <a href={source.url} target="_blank" rel="noreferrer"><ExternalLink size={15} /> منبع</a>}</article>)}</div></section>}
         <section className="knowledge-feedback"><div><strong>این مطلب مفید بود؟</strong><small>بازخورد شما برای بهترشدن پیشنهادها استفاده می‌شود.</small></div><div><button className={feedback === "helpful" ? "is-active" : ""} disabled={feedbackMutation.isPending} onClick={() => feedbackMutation.mutate("helpful")}><ThumbsUp size={16} /> بله</button><button className={feedback === "not_helpful" ? "is-active" : ""} disabled={feedbackMutation.isPending} onClick={() => feedbackMutation.mutate("not_helpful")}><ThumbsDown size={16} /> نه</button></div></section>
@@ -50,3 +50,6 @@ export function KnowledgeDetailDrawer({ slug, onClose }: { slug: string; onClose
     </aside>
   </div>;
 }
+
+function looksLikeRichHTML(value: string) { return /<(?:p|h2|h3|h4|ul|ol|li|strong|em|blockquote|figure|img|a|br)\b/i.test(value); }
+function webRichHTML(value: string) { return value.replaceAll('src="/api/v1/media/', 'src="/api/ninibu/media/'); }

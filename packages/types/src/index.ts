@@ -734,6 +734,26 @@ export type KnowledgeSource = {
 
 export type KnowledgeFAQ = { id: number; question: string; answer: string; sort_order: number };
 export type KnowledgeDisclaimer = { id: number; code: string; text: string };
+export type KnowledgeMediaAsset = {
+  id: number;
+  content_id?: number;
+  media_type: "image" | "video" | "audio" | "infographic" | string;
+  title: string;
+  alt_text?: string;
+  asset_url?: string;
+  thumbnail_url?: string;
+  source_name?: string;
+  source_url?: string;
+  author?: string;
+  license_code?: string;
+  license_url?: string;
+  attribution_text?: string;
+  commercial_use_allowed: boolean;
+  derivative_allowed: boolean;
+  review_status: string;
+  verified_at?: string;
+  metadata?: Record<string, unknown>;
+};
 export type KnowledgeDetail = {
   content: KnowledgeContent;
   revision: KnowledgeRevision;
@@ -742,9 +762,11 @@ export type KnowledgeDetail = {
   sources: KnowledgeSource[];
   faqs: KnowledgeFAQ[];
   disclaimers: KnowledgeDisclaimer[];
+  media: KnowledgeMediaAsset[];
+  audience?: { id?: number; content_id?: number; min_child_age_days?: number; max_child_age_days?: number; audience_type?: string } | null;
 };
 
-export type SearchEntityType = "knowledge_content" | "community_post" | "community_group" | "clinician" | "service" | "product" | "seller" | string;
+export type SearchEntityType = "knowledge_content" | "community_post" | "community_group" | "clinician" | "service" | "product" | "seller" | "care_location" | string;
 export type SearchItem = {
   type: SearchEntityType;
   id: number;
@@ -773,7 +795,7 @@ export type SearchTrend = { id: number; query: string; search_count: number; uni
 export type CareLocation = {
   id: number;
   name: string;
-  type: "health_center" | "doctor_office" | "clinic" | "hospital" | "laboratory" | "home" | "other" | string;
+  type: "health_center" | "doctor_office" | "clinic" | "hospital" | "laboratory" | "pharmacy" | "imaging_center" | "dental_clinic" | "rehabilitation_center" | "mental_health_center" | "maternity_hospital" | "home" | "other" | string;
   country_id?: number;
   province_id?: number;
   city_id?: number;
@@ -785,6 +807,21 @@ export type CareLocation = {
   address?: string;
   postal_code?: string;
   phone?: string;
+  website?: string;
+  email?: string;
+  specialties?: string[];
+  services?: string[];
+  search_aliases?: string[];
+  emergency?: boolean;
+  accepts_children?: boolean;
+  min_child_age_days?: number;
+  max_child_age_days?: number;
+  notes?: string;
+  source_name?: string;
+  source_external_id?: string;
+  source_url?: string;
+  source_license?: string;
+  last_verified_at?: string;
   directory_status: string;
   is_active: boolean;
   created_at: string;
@@ -902,6 +939,19 @@ export type AdminKnowledgeContent = {
   published_at?: string; archived_at?: string; created_at: string; updated_at: string;
 };
 export type AdminKnowledgeList = { items: AdminKnowledgeContent[]; pagination: { page: number; limit: number; total: number } };
+
+export type AdminKnowledgeCategory = KnowledgeCategory;
+export type AdminKnowledgeTag = KnowledgeTag;
+export type AdminMediaAsset = {
+  id: number; content_id?: number; media_type: string; title: string; alt_text?: string; asset_url?: string; thumbnail_url?: string;
+  storage_key?: string; original_file_name?: string; mime_type?: string; size_bytes?: number; uploaded_by_user_id?: number;
+  source_name?: string; source_url?: string; author?: string; license_code?: string; license_url?: string; attribution_text?: string;
+  commercial_use_allowed: boolean; derivative_allowed: boolean; review_status: string; verified_at?: string; metadata?: Record<string, unknown>;
+  created_at: string; updated_at: string;
+};
+export type AdminMediaList = { items: AdminMediaAsset[]; pagination: Pagination };
+export type AdminCareLocation = CareLocation;
+export type AdminCareLocationList = CareLocationListResponse;
 
 export type AdminAdvertiser = {
   id: number; name: string; legal_name?: string; contact_name: string; contact_mobile: string; contact_email?: string;

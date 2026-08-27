@@ -18,7 +18,7 @@ export function AdminCard({ children, className = "" }: { children: ReactNode; c
 export function AdminStatus({ value }: { value?: string | boolean }) {
   const raw = String(value ?? "unknown").toLowerCase();
   const good = ["active", "verified", "published", "approved", "resolved", "paid", "completed", "true"].includes(raw);
-  const warn = ["pending", "draft", "in_review", "under_review", "processing", "waiting_for_parent"].includes(raw);
+  const warn = ["pending", "draft", "in_review", "under_review", "processing", "waiting_for_parent", "source_review_required", "file_license_review_required", "reference_only", "private"].includes(raw);
   const bad = ["inactive", "rejected", "suspended", "hidden", "failed", "cancelled", "false"].includes(raw);
   const tone = good ? "good" : warn ? "warn" : bad ? "bad" : "neutral";
   return <span className={`admin-status ${tone}`}>{statusLabel(raw)}</span>;
@@ -29,7 +29,7 @@ function statusLabel(value: string) {
     active: "فعال", inactive: "غیرفعال", verified: "تأییدشده", pending: "در انتظار", rejected: "ردشده", suspended: "تعلیق",
     published: "منتشرشده", draft: "پیش‌نویس", in_review: "در بررسی", under_review: "در بررسی", approved: "تأییدشده",
     archived: "آرشیو", resolved: "رسیدگی‌شده", dismissed: "مختومه", paid: "پرداخت‌شده", completed: "تکمیل‌شده",
-    processing: "در حال پردازش", failed: "ناموفق", cancelled: "لغوشده", true: "فعال", false: "غیرفعال", unknown: "نامشخص"
+    processing: "در حال پردازش", private: "خصوصی", source_review_required: "نیازمند بررسی منبع", file_license_review_required: "نیازمند بررسی مجوز", reference_only: "فقط مرجع", failed: "ناموفق", cancelled: "لغوشده", true: "فعال", false: "غیرفعال", unknown: "نامشخص"
   };
   return map[value] ?? value;
 }

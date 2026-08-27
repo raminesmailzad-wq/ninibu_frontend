@@ -1,6 +1,6 @@
 "use client";
 
-import { useDeferredValue, useMemo, useState, type ReactNode } from "react";
+import { useDeferredValue, useMemo, useState, type FormEvent, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   BookOpen,
@@ -20,6 +20,7 @@ import {
   X
 } from "lucide-react";
 import type {
+  CareLocation,
   CareLocationListResponse,
   Child,
   KnowledgeCategory,
@@ -39,6 +40,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { KnowledgeDetailDrawer } from "./knowledge-detail";
+import { CareMap } from "./care-map";
 import { careLocationTypeLabels, contentTypeLabels, recommendationReasonLabels, searchTypeLabels } from "./discovery-data";
 import { trackEvent } from "@/lib/analytics";
 
@@ -61,6 +63,7 @@ function itemsOf<T>(value: T[] | { items?: T[] } | undefined): T[] {
 export function DiscoverHub({ child, profile }: { child: Child; profile?: Profile }) {
   const [tab, setTab] = useState<DiscoverTab>("smart");
   const [selectedSlug, setSelectedSlug] = useState("");
+  const [careSearchSeed, setCareSearchSeed] = useState("");
 
   function changeTab(next: DiscoverTab, source = "tab") {
     if (next === tab) return;
@@ -92,8 +95,8 @@ export function DiscoverHub({ child, profile }: { child: Child; profile?: Profil
 
     {tab === "smart" && <SmartFeed child={child} onOpenKnowledge={(slug) => openKnowledge(slug, "smart_feed")} onJump={(next) => changeTab(next, "shortcut")} />}
     {tab === "knowledge" && <KnowledgeLibrary child={child} onOpen={(slug) => openKnowledge(slug, "knowledge_library")} />}
-    {tab === "search" && <UnifiedSearch onOpenKnowledge={(slug) => openKnowledge(slug, "search_result")} />}
-    {tab === "care" && <CareDiscovery profile={profile} />}
+    {tab === "search" && <UnifiedSearch onOpenKnowledge={(slug) => openKnowledge(slug, "search_result")} onOpenCare={(title) => { setCareSearchSeed(title); changeTab("care", "search_result"); }} />}
+    {tab === "care" && <CareDiscovery profile={profile} initialSearch={careSearchSeed} />}
 
     {selectedSlug && <KnowledgeDetailDrawer slug={selectedSlug} onClose={() => setSelectedSlug("")} />}
   </section>;
@@ -174,7 +177,7 @@ function KnowledgeLibrary({ child, onOpen }: { child: Child; onOpen: (slug: stri
   </section>;
 }
 
-function UnifiedSearch({ onOpenKnowledge }: { onOpenKnowledge: (slug: string) => void }) {
+function UnifiedSearch({ onOpenKnowledge, onOpenCare }: { onOpenKnowledge: (slug: string) => void; onOpenCare: (title: string) => void }) {
   const queryClient = useQueryClient();
   const [input, setInput] = useState("");
   const [submitted, setSubmitted] = useState("");
@@ -224,6 +227,7 @@ function UnifiedSearch({ onOpenKnowledge }: { onOpenKnowledge: (slug: string) =>
     }
     const slug = typeof item.metadata?.slug === "string" ? item.metadata.slug : "";
     if (item.type === "knowledge_content" && slug) onOpenKnowledge(slug);
+    if (item.type === "care_location") onOpenCare(item.title);
   }
 
   return <section className="discover-section search-section">
@@ -242,29 +246,40 @@ function UnifiedSearch({ onOpenKnowledge }: { onOpenKnowledge: (slug: string) =>
     </div> : results.isLoading ? <DiscoveryState>در حال جست‌وجو…</DiscoveryState> : results.isError ? <DiscoveryState error>جست‌وجو انجام نشد.</DiscoveryState> : <div className="search-results">
       <div className="search-results-head"><strong>{faNumber.format(results.data?.total ?? 0)} نتیجه برای «{submitted}»</strong><button className="text-action" onClick={() => { setSubmitted(""); setInput(""); }}>جست‌وجوی جدید</button></div>
       {results.data?.results.length ? results.data.results.map((item, index) => <button className="search-result-card" key={`${item.type}-${item.id}`} onClick={() => clickResult(item, index + 1)}>
-        <span className="search-result-icon">{item.type === "clinician" ? <Stethoscope size={18}/> : item.type === "community_group" ? <Building2 size={18}/> : <BookOpen size={18}/>}</span>
+        <span className="search-result-icon">{item.type === "clinician" ? <Stethoscope size={18}/> : item.type === "community_group" || item.type === "care_location" ? <Building2 size={18}/> : <BookOpen size={18}/>}</span>
         <div><small>{searchTypeLabels[item.type] || item.type}</small><strong>{item.title}</strong><p>{item.summary || ""}</p><footer>{item.published_at && <span>{formatJalaliDate(item.published_at)}</span>}{item.tags?.slice(0, 3).map((tag) => <em key={tag}>{tag}</em>)}</footer></div><ChevronLeft size={17}/>
       </button>) : <DiscoveryState>نتیجه‌ای پیدا نشد.</DiscoveryState>}
     </div>}
   </section>;
 }
 
-function CareDiscovery({ profile }: { profile?: Profile }) {
+function CareDiscovery({ profile, initialSearch = "" }: { profile?: Profile; initialSearch?: string }) {
   const [coords, setCoords] = useState<Coordinates>();
   const [kind, setKind] = useState("");
+  const [searchText, setSearchText] = useState(initialSearch);
+  const [submittedSearch, setSubmittedSearch] = useState(initialSearch);
+  const [specialty, setSpecialty] = useState("");
+  const [childrenOnly, setChildrenOnly] = useState(false);
+  const [selectedId, setSelectedId] = useState<number>();
   const [locationError, setLocationError] = useState("");
   const [locating, setLocating] = useState(false);
   const cityId = profile?.city?.id;
-  const params = new URLSearchParams({ page: "1", limit: "20" });
+  const params = new URLSearchParams({ page: "1", limit: "100" });
   if (coords) {
-    params.set("lat", String(coords.lat)); params.set("lng", String(coords.lng)); params.set("radius_km", "15");
+    params.set("lat", String(coords.lat)); params.set("lng", String(coords.lng)); params.set("radius_km", "25");
   } else if (cityId) params.set("city_id", String(cityId));
   if (kind) params.set("type", kind);
+  if (submittedSearch) params.set("q", submittedSearch);
+  if (specialty) params.set("specialty", specialty);
+  if (childrenOnly) params.set("accepts_children", "true");
   const care = useQuery({
-    queryKey: ["care-locations", coords?.lat, coords?.lng, cityId, kind],
+    queryKey: ["care-locations", coords?.lat, coords?.lng, cityId, kind, submittedSearch, specialty, childrenOnly],
     queryFn: () => clientApi<CareLocationListResponse>(`/api/ninibu/care-locations/discover?${params.toString()}`),
-    enabled: Boolean(coords || cityId)
+    enabled: Boolean(coords || cityId || submittedSearch)
   });
+  const locations = care.data?.items ?? [];
+  const mappable = locations.filter((item) => typeof item.latitude === "number" && typeof item.longitude === "number");
+  const selected = locations.find((item) => item.id === selectedId);
 
   function locate() {
     setLocationError("");
@@ -286,21 +301,51 @@ function CareDiscovery({ profile }: { profile?: Profile }) {
     );
   }
 
+  function submitCareSearch(event: FormEvent) {
+    event.preventDefault();
+    setSubmittedSearch(searchText.trim());
+    setSelectedId(undefined);
+    trackEvent("care_search_submitted", { has_query: Boolean(searchText.trim()), type: kind || "all" });
+  }
+
   return <section className="discover-section">
-    <div className="section-heading"><div><span className="section-kicker">دایرکتوری سلامت</span><h2>مراکز درمانی تأییدشده</h2></div><small>موقعیت دقیق شما ذخیره نمی‌شود</small></div>
+    <div className="section-heading"><div><span className="section-kicker">دایرکتوری سلامت + نقشه</span><h2>مراکز درمانی تأییدشده</h2></div><small>یک منبع داده برای نقشه و جست‌وجوی نینیبو</small></div>
+    <form className="care-searchbar" onSubmit={submitCareSearch}>
+      <Search size={17}/><Input value={searchText} onChange={(event) => setSearchText(event.target.value)} placeholder="نام مرکز، اطفال، NICU، گفتاردرمانی…" />
+      <Button type="submit">جست‌وجو</Button>
+    </form>
     <div className="care-toolbar">
       <Select value={kind} onChange={(event) => { setKind(event.target.value); trackEvent("care_filter_changed", { category: event.target.value || "all" }); }} aria-label="نوع مرکز"><option value="">همه مراکز</option>{Object.entries(careLocationTypeLabels).filter(([key]) => !["home", "other"].includes(key)).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</Select>
+      <Select value={specialty} onChange={(event) => setSpecialty(event.target.value)} aria-label="تخصص"><option value="">همه تخصص‌ها</option><option value="pediatrics">اطفال</option><option value="neonatology">نوزادان</option><option value="obstetrics">زنان و زایمان</option><option value="gynecology">زنان</option><option value="speech_therapy">گفتاردرمانی</option><option value="occupational_therapy">کاردرمانی</option></Select>
+      <label className="care-check"><input type="checkbox" checked={childrenOnly} onChange={(event) => setChildrenOnly(event.target.checked)}/><span>پذیرش کودک</span></label>
       <Button variant="outline" disabled={locating} onClick={locate}><LocateFixed size={17}/>{locating ? "در حال دریافت…" : "نزدیک من"}</Button>
-      {coords && <button className="text-action" onClick={() => setCoords(undefined)}>بازگشت به شهر محل سکونت</button>}
+      {coords && <button type="button" className="text-action" onClick={() => setCoords(undefined)}>بازگشت به شهر محل سکونت</button>}
     </div>
-    <div className="care-context"><Crosshair size={16}/><span>{coords ? "نتایج بر اساس موقعیت لحظه‌ای دستگاه نمایش داده می‌شوند و این مختصات در پروفایل ذخیره نمی‌شوند." : cityId ? `نمایش مراکز تأییدشده در ${profile?.city?.local_name || profile?.city?.name || "شهر محل سکونت"}.` : "برای نمایش مراکز، شهر محل سکونت را در پروفایل ثبت کنید یا گزینه «نزدیک من» را بزنید."}</span></div>
+    <div className="care-context"><Crosshair size={16}/><span>{coords ? "نتایج بر اساس موقعیت لحظه‌ای دستگاه نمایش داده می‌شوند و این مختصات در پروفایل ذخیره نمی‌شوند." : cityId ? `نمایش مراکز تأییدشده در ${profile?.city?.local_name || profile?.city?.name || "شهر محل سکونت"}.` : submittedSearch ? "جست‌وجوی متنی در دایرکتوری عمومی انجام می‌شود." : "برای نمایش نزدیک‌ترین مراکز، شهر محل سکونت را ثبت کنید یا گزینه «نزدیک من» را بزنید."}</span></div>
     {locationError && <p className="care-error">{locationError}</p>}
-    {!coords && !cityId ? <DiscoveryState>شهر محل سکونت ثبت نشده است؛ می‌توانید فقط برای همین جست‌وجو اجازه موقعیت بدهید.</DiscoveryState> : care.isLoading ? <DiscoveryState>در حال دریافت مراکز…</DiscoveryState> : care.isError ? <DiscoveryState error>مراکز درمانی دریافت نشدند.</DiscoveryState> : care.data?.items.length ? <div className="care-grid">
-      {care.data.items.map((item) => <article className="care-card" key={item.id}>
-        <div className="care-card-icon"><Building2 size={20}/></div><div className="care-card-copy"><small>{careLocationTypeLabels[item.type] || "مرکز درمانی"}</small><h3>{item.name}</h3><p>{item.address || [item.city, item.province].filter(Boolean).join("، ") || "نشانی عمومی مرکز"}</p><footer>{typeof item.distance_km === "number" && <span><MapPin size={14}/>{faNumber.format(item.distance_km)} کیلومتر</span>}{typeof item.latitude === "number" && typeof item.longitude === "number" && <a href={`https://www.openstreetmap.org/?mlat=${item.latitude}&mlon=${item.longitude}#map=16/${item.latitude}/${item.longitude}`} target="_blank" rel="noreferrer">نمایش روی نقشه</a>}</footer></div>
-      </article>)}
-    </div> : <DiscoveryState>مرکز تأییدشده‌ای با این فیلتر پیدا نشد.</DiscoveryState>}
+    {care.isLoading ? <DiscoveryState>در حال دریافت مراکز…</DiscoveryState> : care.isError ? <DiscoveryState error>مراکز درمانی دریافت نشدند.</DiscoveryState> : locations.length ? <div className="care-map-layout">
+      <div className="care-map-panel">
+        {mappable.length ? <CareMap locations={mappable} selectedId={selectedId} onSelect={setSelectedId}/> : <DiscoveryState>برای نتایج فعلی مختصات قابل نمایش روی نقشه وجود ندارد.</DiscoveryState>}
+        {selected && <SelectedCareLocation item={selected}/>} 
+      </div>
+      <div className="care-list-panel">
+        <div className="care-results-count"><strong>{faNumber.format(locations.length)} مرکز</strong><small>{mappable.length ? `${faNumber.format(mappable.length)} مورد روی نقشه` : "بدون نقطه نقشه"}</small></div>
+        <div className="care-grid">
+          {locations.map((item) => <button type="button" className={`care-card${selectedId === item.id ? " is-selected" : ""}`} key={item.id} onClick={() => setSelectedId(item.id)}>
+            <div className="care-card-icon"><Building2 size={20}/></div><div className="care-card-copy"><small>{careLocationTypeLabels[item.type] || "مرکز درمانی"}{item.emergency ? " • اورژانس" : ""}</small><h3>{item.name}</h3><p>{item.address || [item.city, item.province].filter(Boolean).join("، ") || "نشانی عمومی مرکز"}</p><footer>{typeof item.distance_km === "number" && <span><MapPin size={14}/>{faNumber.format(Number(item.distance_km.toFixed(1)))} کیلومتر</span>}<span>{item.specialties?.slice(0, 2).join("، ") || (item.accepts_children ? "پذیرش کودک" : "")}</span></footer></div>
+          </button>)}
+        </div>
+      </div>
+    </div> : (!coords && !cityId && !submittedSearch) ? <DiscoveryState>برای شروع یک عبارت جست‌وجو کنید یا «نزدیک من» را بزنید.</DiscoveryState> : <DiscoveryState>مرکز تأییدشده‌ای با این فیلتر پیدا نشد.</DiscoveryState>}
   </section>;
+}
+
+function SelectedCareLocation({ item }: { item: CareLocation }) {
+  return <article className="care-selected-card">
+    <div><small>{careLocationTypeLabels[item.type] || "مرکز درمانی"}</small><strong>{item.name}</strong><p>{item.address || item.city || ""}</p></div>
+    <div>{item.phone && <a href={`tel:${item.phone}`}>تماس</a>}{item.website && <a href={item.website} target="_blank" rel="noreferrer">وب‌سایت</a>}{typeof item.latitude === "number" && typeof item.longitude === "number" && <a href={`https://www.openstreetmap.org/?mlat=${item.latitude}&mlon=${item.longitude}#map=16/${item.latitude}/${item.longitude}`} target="_blank" rel="noreferrer">مسیریابی</a>}</div>
+    {item.source_name && <small className="care-source">منبع: {item.source_name}{item.source_license ? ` • ${item.source_license}` : ""}</small>}
+  </article>;
 }
 
 function DiscoveryState({ children, error = false }: { children: ReactNode; error?: boolean }) {

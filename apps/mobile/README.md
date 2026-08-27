@@ -1,4 +1,4 @@
-# Ninibu Mobile — Expo / React Native v0.21.2
+# Ninibu Mobile — Expo / React Native v0.23.0
 
 اپ موبایل بومی نینیبو بر پایه Expo Router / React Native و Expo SDK 54.
 

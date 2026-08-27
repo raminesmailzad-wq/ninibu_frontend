@@ -72,10 +72,11 @@ export function toApiError(failure?: ApiFailure, status = 500, fallback = "خط�
 export async function clientApi<T>(url: string, init?: RequestInit): Promise<T> {
   let response: Response;
   try {
+    const isFormData = typeof FormData !== "undefined" && init?.body instanceof FormData;
     response = await fetch(url, {
       ...init,
       headers: {
-        ...(init?.body ? { "content-type": "application/json" } : {}),
+        ...(init?.body && !isFormData ? { "content-type": "application/json" } : {}),
         ...(init?.headers ?? {})
       },
       cache: "no-store"

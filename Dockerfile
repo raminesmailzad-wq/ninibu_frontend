@@ -13,7 +13,7 @@ RUN corepack enable && corepack prepare pnpm@10.15.0 --activate \
 WORKDIR /app
 
 FROM base AS deps
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json tsconfig.base.json ./
+COPY package.json pnpm-workspace.yaml turbo.json tsconfig.base.json ./
 COPY apps/web/package.json apps/web/package.json
 COPY packages/api/package.json packages/api/package.json
 COPY packages/datetime/package.json packages/datetime/package.json
@@ -21,7 +21,7 @@ COPY packages/design/package.json packages/design/package.json
 COPY packages/types/package.json packages/types/package.json
 COPY packages/validation/package.json packages/validation/package.json
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store,sharing=locked \
-    pnpm install --frozen-lockfile --prefer-offline
+    pnpm install --no-frozen-lockfile --prefer-offline
 
 FROM base AS builder
 COPY --from=deps /app/ ./

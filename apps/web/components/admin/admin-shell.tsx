@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { BarChart3, BookOpenText, CircleDollarSign, LayoutDashboard, LogOut, Megaphone, MessageSquareWarning, Settings2, ShieldCheck, Store, UsersRound } from "lucide-react";
+import { BarChart3, BookOpenText, CircleDollarSign, FileImage, LayoutDashboard, LogOut, MapPinned, Megaphone, MessageSquareWarning, Settings2, ShieldCheck, Store, UsersRound } from "lucide-react";
 import type { AuthSession, User } from "@ninibu/types";
 import { AdminLogin } from "@/components/admin/admin-login";
 import { Button } from "@/components/ui/button";
@@ -15,13 +15,17 @@ import { AdminCommunityPanel } from "@/components/admin/community-panel";
 import { AdminUsersPanel } from "@/components/admin/users-panel";
 import { AdminFinancePanel } from "@/components/admin/finance-panel";
 import { AdminSystemPanel } from "@/components/admin/system-panel";
+import { AdminMediaPanel } from "@/components/admin/media-panel";
+import { AdminCareLocationsPanel } from "@/components/admin/care-locations-panel";
 
-type Section = "dashboard" | "content" | "advertising" | "providers" | "community" | "users" | "finance" | "system";
+type Section = "dashboard" | "content" | "media" | "care-locations" | "advertising" | "providers" | "community" | "users" | "finance" | "system";
 type Phase = "loading" | "login" | "forbidden" | "ready";
 
 const nav: Array<{ key: Section; label: string; icon: typeof LayoutDashboard }> = [
   { key: "dashboard", label: "نمای کلی", icon: LayoutDashboard },
   { key: "content", label: "محتوا", icon: BookOpenText },
+  { key: "media", label: "رسانه و فایل", icon: FileImage },
+  { key: "care-locations", label: "مراکز و نقشه", icon: MapPinned },
   { key: "advertising", label: "تبلیغات", icon: Megaphone },
   { key: "providers", label: "ارائه‌دهندگان", icon: Store },
   { key: "community", label: "جامعه و گزارش‌ها", icon: MessageSquareWarning },
@@ -74,6 +78,8 @@ export function AdminShell() {
     <main className="admin-main">
       {section === "dashboard" && <AdminDashboardPanel onNavigate={(key) => router.push(`/admin/${key}`)} />}
       {section === "content" && <AdminContentPanel />}
+      {section === "media" && <AdminMediaPanel />}
+      {section === "care-locations" && <AdminCareLocationsPanel />}
       {section === "advertising" && <AdminAdvertisingPanel />}
       {section === "providers" && <AdminProvidersPanel />}
       {section === "community" && <AdminCommunityPanel />}
