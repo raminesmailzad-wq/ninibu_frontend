@@ -39,7 +39,7 @@ export function BookletImportModal({ childId, childName, open, onClose }: { chil
     }
   }, [open]);
 
-  const selectedPage = useMemo(() => pages.find((p) => p.value === pageType) ?? pages[0], [pageType]);
+  const selectedPage = useMemo(() => pages.find((p) => p.value === pageType) ?? pages[0]!, [pageType]);
   if (!open) return null;
 
   async function analyze() {
