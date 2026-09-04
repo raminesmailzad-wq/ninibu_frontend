@@ -33,6 +33,14 @@ export function resolveApiErrorMessage(failure?: ApiFailure, status = 500, fallb
     OTP_HOURLY_LIMIT: "تعداد درخواست کد زیاد بوده است. کمی بعد دوباره تلاش کنید.",
     TOO_MANY_REQUESTS: "تعداد درخواست‌ها زیاد بوده است. کمی بعد دوباره تلاش کنید.",
     RATE_LIMITED: "تعداد درخواست‌ها زیاد بوده است. کمی بعد دوباره تلاش کنید.",
+    DOCUMENT_SCAN_TOO_LARGE: "حجم عکس زیاد است. عکس کم‌حجم‌تری انتخاب کنید.",
+    DOCUMENT_SCAN_UNSUPPORTED_IMAGE: "فرمت عکس پشتیبانی نمی‌شود. از JPEG یا PNG استفاده کنید.",
+    DOCUMENT_SCAN_CHART_NOT_FOUND: "نمودار در تصویر پیدا نشد. کل نمودار را صاف و واضح داخل کادر قرار دهید.",
+    DOCUMENT_SCAN_NO_INK: "مسیر دست‌نویس آبی یا سرمه‌ای روی نمودار تشخیص داده نشد.",
+    DOCUMENT_SCAN_ANALYSIS_FAILED: "تحلیل تصویر کامل نشد. عکس واضح‌تری بگیرید و دوباره تلاش کنید.",
+    GROWTH_MEASUREMENT_CONFLICT: "برای این تاریخ مقدار متفاوتی در پرونده وجود دارد. تاریخ را اصلاح یا این ردیف را رد کنید.",
+    DOCUMENT_IMPORT_ALREADY_CONFIRMED: "این انتقال قبلاً تأیید و ثبت شده است.",
+    DOCUMENT_IMPORT_NOT_REVIEWABLE: "این انتقال دیگر در وضعیت قابل بررسی نیست.",
   };
   if (code && codeMap[code]) return codeMap[code];
 

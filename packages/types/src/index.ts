@@ -68,9 +68,49 @@ export type GrowthMeasurement = {
   head_circumference_millimeters?: number;
   head_circumference_cm?: number;
   notes?: string;
+  source_type?: string;
+  source_ref?: string;
+  extraction_confidence?: number;
+  confirmed_by_user_id?: number;
   created_at?: string;
   updated_at?: string;
 };
+
+export type DocumentImportPageType = "weight_for_age" | "height_for_age" | "head_circumference_for_age";
+export type DocumentImportMetric = "weight_kg" | "height_cm" | "head_circumference_cm";
+export type DocumentImportItem = {
+  id: number;
+  metric: DocumentImportMetric;
+  age_months: number;
+  suggested_measured_at: string;
+  suggested_value: number;
+  unit: string;
+  confidence: number;
+  x_normalized: number;
+  y_normalized: number;
+  warning?: string;
+  status: "proposed" | "accepted" | "rejected" | string;
+  confirmed_measured_at?: string;
+  confirmed_value?: number;
+  growth_measurement_id?: number;
+};
+export type DocumentImport = {
+  id: number;
+  child_id: number;
+  kind: "growth_chart" | string;
+  template_code: string;
+  page_type: DocumentImportPageType | string;
+  status: "processing" | "review" | "confirmed" | "failed" | "cancelled" | string;
+  analyzer_version: string;
+  overall_confidence: number;
+  image_width: number;
+  image_height: number;
+  items: DocumentImportItem[];
+  privacy_note?: string;
+  created_at: string;
+  confirmed_at?: string;
+};
+export type ConfirmDocumentImportResponse = { import: DocumentImport; growth_measurement_ids: number[] };
 
 export type GrowthChartPoint = { measurement_id: number; measured_at: string; value: number };
 export type GrowthAssessmentPoint = {

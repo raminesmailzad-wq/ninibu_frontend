@@ -1,3 +1,14 @@
+# v0.24.0 — Smart Booklet Growth Import
+
+- Added Smart Booklet Import to child Growth on Web and native Expo Mobile.
+- Added camera/photo selection on Mobile with `expo-image-picker`, JPEG/PNG-aware UX and privacy permission copy.
+- Added Web multipart BFF routes plus Mobile direct multipart upload to Backend v0.31.0.
+- Added review-before-write flow with per-point confidence, warnings, reject/accept controls, editable value and nested Jalali date selection.
+- Added shared API paths/types for document imports and growth-measurement provenance.
+- Multipart API helpers no longer force `Content-Type: application/json`, allowing runtime-generated multipart boundaries.
+- Version alignment: root/Web/Mobile/shared packages `0.24.0`, Android versionCode/iOS buildNumber `33`, Docker image default `ninibu-frontend:0.24.0`.
+- Requires Backend v0.31.0 for the booklet import endpoints.
+
 # v0.23.4 — Mobile Care Map GPS & Performance
 
 - Hardened «نزدیک من»: high-accuracy request, location-service checks, last-known fallback and Persian handled errors instead of unhandled promise rejection.

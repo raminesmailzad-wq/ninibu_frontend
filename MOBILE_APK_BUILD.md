@@ -1,4 +1,4 @@
-# ساخت APK اندروید نینیبو با Expo / EAS — v0.23.4
+# ساخت APK اندروید نینیبو با Expo / EAS — v0.24.0
 
 ## قبل از Build
 
@@ -44,7 +44,7 @@ Project config این نسخه از قبل شامل موارد زیر است:
 - owner: `raminesi`
 - projectId: `e614fc0c-d8b4-4521-8916-e4558762fa94`
 - package: `com.ninibu.app`
-- version: `0.23.4`
+- version: `0.24.0`
 - Android versionCode: `31`
 - preview buildType: `apk`
 
@@ -65,18 +65,18 @@ eas build \
   -p android \
   --profile preview \
   --local \
-  --output ./ninibu-v0.23.4-preview.apk
+  --output ./ninibu-v0.24.0-preview.apk
 ```
 
 ## نصب و تشخیص خطای نصب
 
 ```bash
-adb install -r ./ninibu-v0.23.4-preview.apk
+adb install -r ./ninibu-v0.24.0-preview.apk
 ```
 
 اگر نسخه‌ای با امضای متفاوت روی گوشی نصب است، ابتدا با آگاهی از پاک‌شدن داده محلی آن را حذف کنید:
 
 ```bash
 adb uninstall com.ninibu.app
-adb install ./ninibu-v0.23.4-preview.apk
+adb install ./ninibu-v0.24.0-preview.apk
 ```

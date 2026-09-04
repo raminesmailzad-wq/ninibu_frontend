@@ -1,9 +1,8 @@
 {
   "expo": {
-     "owner": "raminesi",
     "name": "نینیبو",
     "slug": "ninibu-mobile",
-    "version": "0.23.4",
+    "version": "0.24.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "scheme": "ninibu",
@@ -15,7 +14,7 @@
       "config": {
         "usesNonExemptEncryption": false
       },
-      "buildNumber": "32"
+      "buildNumber": "33"
     },
     "android": {
       "package": "com.ninibu.app",
@@ -25,7 +24,7 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": true,
-      "versionCode": 32
+      "versionCode": 33
     },
     "plugins": [
       "expo-router",
@@ -48,6 +47,14 @@
         "expo-location",
         {
           "locationWhenInUsePermission": "نینیبو فقط هنگام درخواست شما از موقعیت فعلی برای نمایش مراکز درمانی نزدیک استفاده می‌کند و آن را در پروفایل ذخیره نمی‌کند."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "نینیبو فقط با انتخاب شما به عکس دفترچه سلامت دسترسی می‌گیرد تا داده‌های رشد را استخراج کند.",
+          "cameraPermission": "نینیبو برای عکس گرفتن از صفحات دفترچه سلامت به دوربین دسترسی نیاز دارد.",
+          "microphonePermission": false
         }
       ]
     ],

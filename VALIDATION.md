@@ -1,3 +1,29 @@
+# Validation — Ninibu Frontend v0.24.0
+
+Validated in the packaging environment on 2026-09-04.
+
+## Smart Booklet Import checks
+
+- Web integration is present in `HealthDashboard` and opens a centered `ModalPortal`; the nested Jalali Date Picker remains a second modal layer.
+- Mobile integration is present in the Health/Growth tab and uses the existing centered `FormModal` + `JalaliDateModalInput` flow.
+- Shared `@ninibu/api` includes analyze/get/confirm document-import paths.
+- Shared `@ninibu/types` includes `DocumentImport`, item/page types, confirm response and growth provenance fields.
+- Web BFF and browser API helper detect `FormData` and do not set JSON content-type on multipart requests.
+- Mobile API helper detects `FormData` and lets React Native generate the multipart boundary.
+- Mobile Expo config includes `expo-image-picker` camera/photos permission descriptions.
+- Root/Web/Mobile/shared package versions are `0.24.0`; Expo version is `0.24.0`, Android versionCode `33`, iOS buildNumber `33`.
+- TypeScript/TSX sources were parsed with the locally available TypeScript compiler API; syntax diagnostics are zero.
+- All JSON manifests parse successfully.
+- Full dependency-aware `pnpm typecheck/build` cannot run in this packaging environment because the release ZIP has no `node_modules`/`pnpm-lock.yaml` and outbound npm registry access is blocked. Run `pnpm install --no-frozen-lockfile` once in the repository environment, commit the generated lockfile, then run `pnpm typecheck && pnpm build`.
+
+## Backend contract
+
+Smart Booklet Import requires Backend v0.31.0. The first MVP supports weight-for-age (first-year template panel), height-for-age and head-circumference-for-age. Weight-for-height and vaccination/screening handwriting are intentionally not exposed as import options yet.
+
+---
+
+## Historical validation notes
+
 # Validation — Ninibu Frontend v0.23.4
 
 Validated in the packaging environment:

@@ -17,6 +17,7 @@ import { api, apiPaths } from '@/lib/api';
 import { useChild } from '@/providers/ChildProvider';
 import { Badge, Button, Card, EmptyState, ErrorState, Field, FormModal, Header, JalaliDateModalInput, Loading, Screen, SectionTitle, SegmentedControl } from '@/components/ui';
 import { ChildSwitcher } from '@/components/ChildSwitcher';
+import { BookletImportModal } from '@/components/BookletImportModal';
 import { GrowthMiniChart } from '@/components/GrowthMiniChart';
 import { colors, typography } from '@/theme';
 
@@ -28,6 +29,7 @@ export default function Health() {
   const params = useLocalSearchParams<{ action?: string }>();
   const [tab, setTab] = useState<Tab>('growth');
   const [action, setAction] = useState<Action>(null);
+  const [bookletImportOpen, setBookletImportOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [growth, setGrowth] = useState<ListGrowthMeasurementsResponse>();
@@ -95,19 +97,20 @@ export default function Health() {
       ]}
     />
 
-    {error ? <ErrorState message={error} onRetry={load} /> : loading ? <Loading /> : tab === 'growth' ? <GrowthView data={growth} chart={chart} onAdd={() => setAction('growth')} /> : tab === 'vaccines' ? <VaccinesView data={vaccines} onAdd={() => setAction('vaccine')} /> : tab === 'visits' ? <VisitsView data={visits} onAdd={() => setAction('visit')} /> : tab === 'allergies' ? <AllergiesView data={allergies} /> : <MedsView data={meds} />}
+    {error ? <ErrorState message={error} onRetry={load} /> : loading ? <Loading /> : tab === 'growth' ? <GrowthView data={growth} chart={chart} onAdd={() => setAction('growth')} onImport={() => setBookletImportOpen(true)} /> : tab === 'vaccines' ? <VaccinesView data={vaccines} onAdd={() => setAction('vaccine')} /> : tab === 'visits' ? <VisitsView data={visits} onAdd={() => setAction('visit')} /> : tab === 'allergies' ? <AllergiesView data={allergies} /> : <MedsView data={meds} />}
 
     <NutritionRecommendationsView data={nutrition} />
     <HealthTimelineView data={timeline} />
     <QuickForm action={action} childId={selected.id} onClose={() => setAction(null)} onSaved={async () => { setAction(null); await load(); }} />
+    <BookletImportModal visible={bookletImportOpen} childId={selected.id} childName={selected.first_name} onClose={() => setBookletImportOpen(false)} onSaved={load} />
   </Screen>;
 }
 
-function GrowthView({ data, chart, onAdd }: { data?: ListGrowthMeasurementsResponse; chart?: GrowthChart; onAdd: () => void }) {
+function GrowthView({ data, chart, onAdd, onImport }: { data?: ListGrowthMeasurementsResponse; chart?: GrowthChart; onAdd: () => void; onImport: () => void }) {
   const latest = data?.items[0];
   const indicator = chart?.indicators?.weight_for_age;
   return <>
-    <SectionTitle title="روند رشد" action={<Button compact title="ثبت رشد" icon="add" onPress={onAdd} />} />
+    <SectionTitle title="روند رشد" action={<View style={styles.growthActions}><Button compact title="از دفترچه" icon="scan-outline" variant="secondary" onPress={onImport} /><Button compact title="ثبت رشد" icon="add" onPress={onAdd} /></View>} />
     <Card>
       <View style={styles.cardHead}>
         <Text style={styles.cardTitle}>روند وزن</Text>
@@ -270,6 +273,7 @@ function allergyTypeLabel(value: string) { return ({ food: 'غذایی', medicat
 function statusLabel(value: string) { return ({ stopped: 'قطع‌شده', completed: 'تکمیل‌شده', inactive: 'غیرفعال' } as Record<string, string>)[value] || value; }
 
 const styles = StyleSheet.create({
+  growthActions: { flexDirection: 'row-reverse', gap: 6, flexWrap: 'wrap' },
   cardHead: { flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'center', gap: 10 },
   cardTitle: { fontFamily: typography.bold, fontSize: 14.5, fontWeight: '900', writingDirection: 'rtl', textAlign: 'right' },
   metricRow: { flexDirection: 'row-reverse', gap: 7, marginTop: 10 },

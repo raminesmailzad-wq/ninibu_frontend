@@ -7,9 +7,10 @@ const REFRESH_COOKIE = "ninibu_refresh";
 const backendURL = () => process.env.NINIBU_BACKEND_URL ?? "http://localhost:8081";
 
 export async function rawBackend<T>(path: string, init: RequestInit = {}): Promise<{status:number; body: ApiEnvelope<T>}> {
+  const isFormData = typeof FormData !== "undefined" && init.body instanceof FormData;
   const response = await fetch(`${backendURL()}${path}`, {
     ...init,
-    headers: { "content-type": "application/json", ...(init.headers ?? {}) },
+    headers: { ...(init.body && !isFormData ? { "content-type": "application/json" } : {}), ...(init.headers ?? {}) },
     cache: "no-store"
   });
   if (response.status === 204) {

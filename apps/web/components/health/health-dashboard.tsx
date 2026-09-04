@@ -1,8 +1,8 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Activity, CalendarHeart, ChartNoAxesColumnIncreasing, HeartPulse, Pill, ShieldAlert, Syringe, Stethoscope } from "lucide-react";
+import { Activity, CalendarHeart, ChartNoAxesColumnIncreasing, HeartPulse, Pill, ScanLine, ShieldAlert, Syringe, Stethoscope } from "lucide-react";
 import type { Child, GrowthChart, HealthTimelineResponse, ListAllergiesResponse, ListChildMedicationsResponse, ListGrowthMeasurementsResponse, ListMedicalVisitsResponse, ListVaccinationsResponse } from "@ninibu/types";
 import { clientApi } from "@/lib/client-api";
 import { formatDate, formatNumber, timelineTypeLabel, visitTypeLabel } from "@/lib/format";
@@ -10,8 +10,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import type { QuickAction } from "@/components/quick-actions/quick-action-dialog";
 import { GrowthStandardChart } from "@/components/health/growth-standard-chart";
 import { NutritionRecommendations } from "@/components/health/nutrition-recommendations";
+import { BookletImportModal } from "@/components/health/booklet-import-modal";
 
 export function HealthDashboard({ child, onQuickAction }: { child: Child; onQuickAction: (action: QuickAction) => void }) {
+  const [bookletImportOpen, setBookletImportOpen] = useState(false);
   const growth = useQuery({ queryKey: ["child", child.id, "growth", "health"], queryFn: () => clientApi<ListGrowthMeasurementsResponse>(`/api/ninibu/children/${child.id}/growth-measurements?limit=6`) });
   const growthChart = useQuery({ queryKey: ["child", child.id, "growth-chart", "who"], queryFn: () => clientApi<GrowthChart>(`/api/ninibu/children/${child.id}/growth-chart`) });
   const vaccinations = useQuery({ queryKey: ["child", child.id, "vaccinations", "health"], queryFn: () => clientApi<ListVaccinationsResponse>(`/api/ninibu/children/${child.id}/vaccinations?limit=1`) });
@@ -28,6 +30,7 @@ export function HealthDashboard({ child, onQuickAction }: { child: Child; onQuic
       <div><span className="section-kicker">پرونده خصوصی {child.first_name}</span><h1>سلامت و رشد فرزند</h1><p>روند رشد، واکسن‌ها، حساسیت‌ها، داروها و ویزیت‌ها در یک نمای واحد.</p></div>
       <div className="health-page-actions">
         <button onClick={() => onQuickAction("growth")}><ChartNoAxesColumnIncreasing size={18} /> ثبت رشد</button>
+        <button onClick={() => setBookletImportOpen(true)}><ScanLine size={18} /> انتقال از دفترچه</button>
         <button onClick={() => onQuickAction("vaccination")}><Syringe size={18} /> واکسن</button>
         <button onClick={() => onQuickAction("visit")}><Stethoscope size={18} /> ویزیت</button>
       </div>
@@ -77,6 +80,8 @@ export function HealthDashboard({ child, onQuickAction }: { child: Child; onQuic
     </section>
 
     {growthChart.isLoading ? <section className="surface-card who-growth-card"><Skeleton className="who-growth-loading" /></section> : growthChart.data ? <GrowthStandardChart chart={growthChart.data} childName={child.first_name} /> : <section className="surface-card who-growth-card"><div className="mini-error">نمودار رشد در حال حاضر در دسترس نیست.</div></section>}
+
+    <BookletImportModal childId={child.id} childName={child.first_name} open={bookletImportOpen} onClose={() => setBookletImportOpen(false)} />
 
     <section className="surface-card timeline-card">
       <div className="card-heading"><div><span className="card-icon subtle"><Activity size={20} /></span><div><small>تاریخچه یکپارچه</small><h3>خط زمانی سلامت</h3></div></div></div>

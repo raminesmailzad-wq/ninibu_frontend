@@ -56,6 +56,14 @@ export function resolveApiMessage(failure?: ApiFailure, status = 0, fallback = '
     TOO_MANY_REQUESTS: 'تعداد درخواست‌ها زیاد بوده است. کمی بعد دوباره تلاش کنید.',
     INVALID_RESPONSE: 'پاسخ دریافتی از سرور قابل خواندن نیست.',
     NETWORK_ERROR: 'اتصال به سرور برقرار نشد. اینترنت گوشی را بررسی کنید.',
+    DOCUMENT_SCAN_TOO_LARGE: 'حجم عکس زیاد است. عکس کم‌حجم‌تری بگیرید و دوباره تلاش کنید.',
+    DOCUMENT_SCAN_UNSUPPORTED_IMAGE: 'فرمت عکس پشتیبانی نمی‌شود. از دوربین نینیبو عکس جدید بگیرید.',
+    DOCUMENT_SCAN_CHART_NOT_FOUND: 'نمودار در تصویر پیدا نشد. کل نمودار را صاف و واضح داخل کادر قرار دهید.',
+    DOCUMENT_SCAN_NO_INK: 'مسیر دست‌نویس آبی یا سرمه‌ای روی نمودار تشخیص داده نشد.',
+    DOCUMENT_SCAN_ANALYSIS_FAILED: 'تحلیل تصویر کامل نشد. عکس واضح‌تری بگیرید و دوباره تلاش کنید.',
+    GROWTH_MEASUREMENT_CONFLICT: 'برای این تاریخ مقدار متفاوتی در پرونده وجود دارد. تاریخ را اصلاح یا این ردیف را رد کنید.',
+    DOCUMENT_IMPORT_ALREADY_CONFIRMED: 'این انتقال قبلاً تأیید و ثبت شده است.',
+    DOCUMENT_IMPORT_NOT_REVIEWABLE: 'این انتقال دیگر در وضعیت قابل بررسی نیست.',
   };
   if (codeMap[code]) return codeMap[code];
 
@@ -139,9 +147,10 @@ async function refreshAccessToken() {
 export async function api<T>(path: string, init: RequestInit & { auth?: boolean } = {}): Promise<T> {
   const auth = init.auth !== false;
   const method = init.method || 'GET';
+  const isFormData = typeof FormData !== 'undefined' && init.body instanceof FormData;
   const headers: Record<string, string> = {
     accept: 'application/json',
-    ...(init.body ? { 'content-type': 'application/json' } : {}),
+    ...(init.body && !isFormData ? { 'content-type': 'application/json' } : {}),
     ...(init.headers as Record<string, string> || {}),
   };
   let hadAccessToken = false;
