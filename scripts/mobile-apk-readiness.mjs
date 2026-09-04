@@ -26,7 +26,7 @@ if (!Number.isInteger(app.android?.versionCode) || app.android.versionCode < 1) 
 if (eas?.build?.preview?.android?.buildType !== 'apk') problems.push('EAS preview باید android.buildType=apk داشته باشد');
 if (eas?.build?.preview?.env?.EXPO_PUBLIC_NINIBU_BACKEND_URL !== 'https://ninibu.com') problems.push('Backend URL پروفایل preview باید https://ninibu.com باشد');
 
-for (const dependency of ['expo', 'expo-router', 'expo-font', 'expo-secure-store', 'expo-splash-screen', 'expo-location', 'expo-linking', 'expo-system-ui', 'react-native-webview', 'react', 'react-native']) {
+for (const dependency of ['expo', 'expo-router', 'expo-font', 'expo-secure-store', 'expo-splash-screen', 'expo-location', 'expo-linking', 'expo-system-ui', 'expo-image-picker', 'expo-camera', 'react-native-webview', 'react', 'react-native']) {
   if (!mobilePackage.dependencies?.[dependency]) problems.push(`dependency لازم وجود ندارد: ${dependency}`);
 }
 
@@ -51,7 +51,7 @@ if (!fs.existsSync(lockPath)) {
 } else {
   const lock = fs.readFileSync(lockPath, 'utf8');
   if (!/\n  apps\/mobile:\n/.test(lock)) problems.push('pnpm-lock.yaml فاقد importer مربوط به apps/mobile است؛ pnpm install --no-frozen-lockfile را یک بار اجرا کنید');
-  for (const specifier of ['expo-font', 'expo-location', 'expo-linking', 'expo-system-ui', 'react-native-webview']) if (!lock.includes(`${specifier}:`)) problems.push(`pnpm-lock.yaml هنوز ${specifier} را ثبت نکرده است`);
+  for (const specifier of ['expo-font', 'expo-location', 'expo-linking', 'expo-system-ui', 'expo-image-picker', 'expo-camera', 'react-native-webview']) if (!lock.includes(`${specifier}:`)) problems.push(`pnpm-lock.yaml هنوز ${specifier} را ثبت نکرده است`);
   if (lock.includes('react-native-maps:')) problems.push('pnpm-lock.yaml هنوز react-native-maps را دارد؛ pnpm install --no-frozen-lockfile را اجرا کنید');
 }
 

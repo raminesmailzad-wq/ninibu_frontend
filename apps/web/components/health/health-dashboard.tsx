@@ -81,7 +81,7 @@ export function HealthDashboard({ child, onQuickAction }: { child: Child; onQuic
 
     {growthChart.isLoading ? <section className="surface-card who-growth-card"><Skeleton className="who-growth-loading" /></section> : growthChart.data ? <GrowthStandardChart chart={growthChart.data} childName={child.first_name} /> : <section className="surface-card who-growth-card"><div className="mini-error">نمودار رشد در حال حاضر در دسترس نیست.</div></section>}
 
-    <BookletImportModal childId={child.id} childName={child.first_name} open={bookletImportOpen} onClose={() => setBookletImportOpen(false)} />
+    <BookletImportModal childId={child.id} childName={child.first_name} birthDate={child.birth_date} open={bookletImportOpen} onClose={() => setBookletImportOpen(false)} />
 
     <section className="surface-card timeline-card">
       <div className="card-heading"><div><span className="card-icon subtle"><Activity size={20} /></span><div><small>تاریخچه یکپارچه</small><h3>خط زمانی سلامت</h3></div></div></div>

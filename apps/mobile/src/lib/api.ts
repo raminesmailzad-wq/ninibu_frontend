@@ -60,6 +60,7 @@ export function resolveApiMessage(failure?: ApiFailure, status = 0, fallback = '
     DOCUMENT_SCAN_UNSUPPORTED_IMAGE: 'فرمت عکس پشتیبانی نمی‌شود. از دوربین نینیبو عکس جدید بگیرید.',
     DOCUMENT_SCAN_CHART_NOT_FOUND: 'نمودار در تصویر پیدا نشد. کل نمودار را صاف و واضح داخل کادر قرار دهید.',
     DOCUMENT_SCAN_NO_INK: 'مسیر دست‌نویس آبی یا سرمه‌ای روی نمودار تشخیص داده نشد.',
+    DOCUMENT_SCAN_LOW_CONFIDENCE: 'از این عکس مقدار قابل‌اعتمادی استخراج نشد. گوشی و دفترچه را عمودی نگه دارید و کل صفحه را صاف داخل کادر بگیرید.',
     DOCUMENT_SCAN_ANALYSIS_FAILED: 'تحلیل تصویر کامل نشد. عکس واضح‌تری بگیرید و دوباره تلاش کنید.',
     GROWTH_MEASUREMENT_CONFLICT: 'برای این تاریخ مقدار متفاوتی در پرونده وجود دارد. تاریخ را اصلاح یا این ردیف را رد کنید.',
     DOCUMENT_IMPORT_ALREADY_CONFIRMED: 'این انتقال قبلاً تأیید و ثبت شده است.',

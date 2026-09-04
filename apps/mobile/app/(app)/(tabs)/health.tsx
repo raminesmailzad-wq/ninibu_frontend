@@ -102,7 +102,7 @@ export default function Health() {
     <NutritionRecommendationsView data={nutrition} />
     <HealthTimelineView data={timeline} />
     <QuickForm action={action} childId={selected.id} onClose={() => setAction(null)} onSaved={async () => { setAction(null); await load(); }} />
-    <BookletImportModal visible={bookletImportOpen} childId={selected.id} childName={selected.first_name} onClose={() => setBookletImportOpen(false)} onSaved={load} />
+    <BookletImportModal visible={bookletImportOpen} childId={selected.id} childName={selected.first_name} birthDate={selected.birth_date} onClose={() => setBookletImportOpen(false)} onSaved={load} />
   </Screen>;
 }
 

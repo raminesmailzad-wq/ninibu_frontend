@@ -1,6 +1,8 @@
-# تست موبایل نینیبو v0.24.0 با Expo Go
+# تست موبایل نینیبو v0.24.2 با Expo Go
 
 ## 1. همگام‌سازی dependencyها
+
+Smart Booklet v0.24.2 علاوه بر `expo-image-picker` از `expo-camera ~17.0.10` برای دوربین دارای کادر افقی استفاده می‌کند.
 
 این نسخه نقشه native گوگل را حذف کرده و `react-native-webview` را جایگزین کرده است. همچنین `expo-linking` و `expo-system-ui` برای build مستقل SDK 54 در dependencies حضور دارند.
 

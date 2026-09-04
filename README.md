@@ -2,16 +2,18 @@
 
 Frontend monorepo for Ninibu. Web remains available alongside the native Expo/React Native parent app.
 
-## v0.24.0 scope — Smart Booklet Import on Web + Mobile
+## v0.24.2 scope — Smart Booklet capture + DOB age hardening
 
-- Adds a user-facing **«انتقال از دفترچه»** action to child Growth on both the Next.js website and native Expo app.
-- Supports the v0.31.0 backend Smart Booklet MVP for `weight_for_age`, `height_for_age` and `head_circumference_for_age`.
-- Web and Mobile both let the parent capture/select a supported image, review extracted candidates, see confidence/warnings, reject uncertain rows, correct date/value and explicitly confirm before data enters the growth record.
-- Mobile adds `expo-image-picker` and camera/photo permission copy; photos are sent directly to the backend as multipart data.
-- Web keeps the existing BFF + HttpOnly-cookie session model and forwards multipart bodies without forcing a JSON content type.
-- Shared API/types expose document-import routes and provenance fields.
-- Root, Web, Mobile and shared workspace package versions are aligned to `0.24.0`; Android versionCode/iOS buildNumber are `33`.
-- Requires **Ninibu Backend v0.31.0** for Smart Booklet Import.
+- Keeps Smart Booklet Import on Web + native Expo Mobile and pairs with Backend v0.31.2.
+- Native Mobile now opens a dedicated camera preview with a portrait document frame and explicit instruction to keep both phone and booklet vertical.
+- Camera guidance requires a single complete page, all four page corners visible, minimal perspective and no glare.
+- Gallery selection keeps the original image geometry (`allowsEditing=false`) instead of applying an arbitrary crop.
+- Review rows use completed calendar months and derive the suggested measurement date from the child's stored birth date, with month-end clamping.
+- Future/impossible ages and low-confidence extraction rows are filtered before review; weak rows are never auto-selected.
+- Web applies the same DOB/month rules and shows portrait capture guidance.
+- Mobile uses `expo-camera ~17.0.10` plus the existing `expo-image-picker`.
+- Root, Web, Mobile and shared packages are `0.24.2`; Android versionCode/iOS buildNumber are `35`.
+- Requires **Ninibu Backend v0.31.2** for the hardened `booklet-cv-v2` analyzer.
 
 ## v0.21.2 scope — Mobile user parity + Expo APK readiness
 
@@ -34,7 +36,7 @@ Frontend monorepo for Ninibu. Web remains available alongside the native Expo/Re
 - Covers dashboard KPIs, knowledge content workflow, advertising, unified provider verification, community moderation, user access, commission reporting, feature flags, settings and audit history.
 - `super_admin` is the only role allowed to change management roles and global System Settings; regular Admin keeps day-to-day operational access.
 - Admin forms use centered viewport modals and never expose secret configuration in the browser.
-- Administration remains intentionally Web-only; the parent mobile app is v0.24.0.
+- Administration remains intentionally Web-only; the parent mobile app is v0.24.2.
 - Requires Ninibu Backend v0.26.1.
 
 ## v0.16.0 scope — Native Expo Mobile App

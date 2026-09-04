@@ -1,24 +1,30 @@
-# Validation — Ninibu Frontend v0.24.0
+# Validation — Ninibu Frontend v0.24.2
 
 Validated in the packaging environment on 2026-09-04.
 
-## Smart Booklet Import checks
+## Smart Booklet capture / DOB-age hardening
 
-- Web integration is present in `HealthDashboard` and opens a centered `ModalPortal`; the nested Jalali Date Picker remains a second modal layer.
-- Mobile integration is present in the Health/Growth tab and uses the existing centered `FormModal` + `JalaliDateModalInput` flow.
-- Shared `@ninibu/api` includes analyze/get/confirm document-import paths.
-- Shared `@ninibu/types` includes `DocumentImport`, item/page types, confirm response and growth provenance fields.
-- Web BFF and browser API helper detect `FormData` and do not set JSON content-type on multipart requests.
-- Mobile API helper detects `FormData` and lets React Native generate the multipart boundary.
-- Mobile Expo config includes `expo-image-picker` camera/photos permission descriptions.
-- Root/Web/Mobile/shared package versions are `0.24.0`; Expo version is `0.24.0`, Android versionCode `33`, iOS buildNumber `33`.
-- TypeScript/TSX sources were parsed with the locally available TypeScript compiler API; syntax diagnostics are zero.
+- Native Mobile includes a dedicated `expo-camera` full-screen capture component with a portrait page frame and four-corner visual guide.
+- The capture copy explicitly requires phone vertical + booklet vertical, one complete page, minimal perspective, and no glare.
+- Gallery import uses `allowsEditing=false` so the OS picker does not distort/crop the chart template.
+- Mobile and Web derive suggested dates with shared `addCalendarMonthsDateOnly(child.birth_date, age_month)`, not fractional average-day offsets.
+- `completedAgeMonths` filters points beyond the child's current completed calendar age.
+- Client review filters confidence below 0.55; only >=0.72 without a warning is auto-selected.
+- `DOCUMENT_SCAN_LOW_CONFIDENCE` is localized on Web and Mobile.
+- Root/Web/Mobile/shared versions are `0.24.2`; Expo version `0.24.2`; Android versionCode `35`; iOS buildNumber `35`.
+- `expo-camera` is pinned to `~17.0.10`, the Expo SDK 54 recommended line.
+- Updated `mobile-apk-readiness.mjs` checks both `expo-camera` and `expo-image-picker`.
+
+## Static checks
+
+- Changed TS/TSX sources parse with zero TypeScript syntax diagnostics using the locally available compiler.
+- `packages/datetime/src/index.ts` passes standalone strict TypeScript checking.
 - All JSON manifests parse successfully.
-- Full dependency-aware `pnpm typecheck/build` cannot run in this packaging environment because the release ZIP has no `node_modules`/`pnpm-lock.yaml` and outbound npm registry access is blocked. Run `pnpm install --no-frozen-lockfile` once in the repository environment, commit the generated lockfile, then run `pnpm typecheck && pnpm build`.
+- Dependency-aware `pnpm typecheck` / `next build` cannot run in this packaging environment because registry access is blocked and the supplied baseline has no lockfile/node_modules. Run `pnpm install --no-frozen-lockfile`, then `pnpm typecheck && pnpm build` in the repository environment.
 
-## Backend contract
+## Backend pairing
 
-Smart Booklet Import requires Backend v0.31.0. The first MVP supports weight-for-age (first-year template panel), height-for-age and head-circumference-for-age. Weight-for-height and vaccination/screening handwriting are intentionally not exposed as import options yet.
+Use Backend v0.31.2. Its `booklet-cv-v2` returns whole calendar-month ages, DOB-anchored non-future dates, stricter WHO plausibility filtering and `DOCUMENT_SCAN_LOW_CONFIDENCE` when no reliable candidate remains.
 
 ---
 

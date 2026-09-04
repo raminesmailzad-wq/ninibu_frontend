@@ -193,3 +193,32 @@ export function isValidBackendClock(value: string): boolean {
   if (!value) return true;
   return /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(normalizeBackendClock(value));
 }
+
+/**
+ * Add completed calendar months to a Gregorian date-only value, clamping the
+ * day to the last valid day of the target month (Jan 31 + 1 month => Feb 28/29).
+ * This is intentionally date-only and timezone-independent.
+ */
+export function addCalendarMonthsDateOnly(value: string, months: number): string | null {
+  const parsed = parseDateOnly(value);
+  if (!parsed || !Number.isFinite(months)) return null;
+  const wholeMonths = Math.max(0, Math.round(months));
+  const absoluteMonth = (parsed.year * 12) + (parsed.month - 1) + wholeMonths;
+  const year = Math.floor(absoluteMonth / 12);
+  const monthIndex = absoluteMonth % 12;
+  const lastDay = new Date(Date.UTC(year, monthIndex + 1, 0)).getUTCDate();
+  const day = Math.min(parsed.day, lastDay);
+  return `${year}-${pad(monthIndex + 1)}-${pad(day)}`;
+}
+
+/** Return the number of completed calendar months between two date-only values. */
+export function completedAgeMonths(birthDate: string, atDate = todayGregorianDate()): number | null {
+  const birth = parseDateOnly(birthDate);
+  const at = parseDateOnly(atDate);
+  if (!birth || !at) return null;
+  if (at.year < birth.year || (at.year === birth.year && (at.month < birth.month || (at.month === birth.month && at.day < birth.day)))) return null;
+  let months = (at.year - birth.year) * 12 + (at.month - birth.month);
+  const anniversary = addCalendarMonthsDateOnly(birthDate, months);
+  if (anniversary && anniversary > atDate) months -= 1;
+  return Math.max(0, months);
+}

@@ -1,6 +1,9 @@
-# ساخت APK اندروید نینیبو با Expo / EAS — v0.24.0
+# ساخت APK اندروید نینیبو با Expo / EAS — v0.24.2
 
 ## قبل از Build
+
+Smart Booklet v0.24.2 همچنین `expo-camera` دارد؛ پس بعد از جایگزینی ZIP حتماً dependencyها را دوباره با `pnpm install --no-frozen-lockfile` همگام کنید و APK جدید بسازید. دوربین جدید داخل خود اپ کادر افقی دفترچه را نمایش می‌دهد.
+
 
 - فایل‌های مجاز YekanBakh FaNum خودتان در `apps/mobile/assets/fonts` باقی بمانند.
 - `react-native-maps` و Google Maps API Key دیگر استفاده نمی‌شوند.
@@ -44,8 +47,8 @@ Project config این نسخه از قبل شامل موارد زیر است:
 - owner: `raminesi`
 - projectId: `e614fc0c-d8b4-4521-8916-e4558762fa94`
 - package: `com.ninibu.app`
-- version: `0.24.0`
-- Android versionCode: `31`
+- version: `0.24.2`
+- Android versionCode: `34`
 - preview buildType: `apk`
 
 ## Cloud build

@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { gregorianToJalali, gregorianToJalaliInput, jalaliInputToGregorian, jalaliToGregorian, toPersianDigits } from "./index";
+import { describe, expect, it, test } from "vitest";
+import { addCalendarMonthsDateOnly, completedAgeMonths, gregorianToJalali, gregorianToJalaliInput, jalaliInputToGregorian, jalaliToGregorian, toPersianDigits } from "./index";
 
 describe("Jalali/Gregorian boundary", () => {
   it("converts Nowruz 1405", () => {
@@ -18,4 +18,15 @@ describe("Jalali/Gregorian boundary", () => {
   it("renders Persian digits", () => {
     expect(toPersianDigits("1405/05/21")).toBe("۱۴۰۵/۰۵/۲۱");
   });
+});
+
+test("addCalendarMonthsDateOnly clamps month-end birthdays", () => {
+  expect(addCalendarMonthsDateOnly("2024-01-31", 1)).toBe("2024-02-29");
+  expect(addCalendarMonthsDateOnly("2023-01-31", 1)).toBe("2023-02-28");
+});
+
+test("completedAgeMonths uses calendar anniversaries", () => {
+  expect(completedAgeMonths("2024-01-31", "2024-02-28")).toBe(0);
+  expect(completedAgeMonths("2024-01-31", "2024-02-29")).toBe(1);
+  expect(completedAgeMonths("2024-01-31", "2024-03-31")).toBe(2);
 });

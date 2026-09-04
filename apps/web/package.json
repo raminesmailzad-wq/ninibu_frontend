@@ -1,6 +1,6 @@
 {
   "name": "@ninibu/web",
-  "version": "0.24.0",
+  "version": "0.24.2",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -26,7 +26,8 @@
     "react-hook-form": "^7.62.0",
     "tailwind-merge": "^3.3.0",
     "zod": "^4.1.0",
-    "maplibre-gl": "^6.6.0"
+    "maplibre-gl": "^6.6.0",
+    "@ninibu/datetime": "workspace:*"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.0",
