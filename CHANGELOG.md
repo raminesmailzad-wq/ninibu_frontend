@@ -1,23 +1,12 @@
-# v0.24.2 — Smart Booklet framing + month review fix
+# v0.24.2 — Smart Booklet camera + DOB accuracy fix
 
-- Changed the Smart Booklet capture guide to the actual growth-chart orientation: **landscape page**, printed text upright/readable, all four corners visible, camera parallel to the page.
-- Mobile camera overlay is now a wide landscape page frame; portrait gallery/camera photos show a warning instead of being presented as the preferred capture.
-- Web upload guidance was aligned with the same landscape framing instructions.
-- Review continues to show only whole month indices and rebuilds every suggested date from the child DOB; impossible/future months are hidden.
-- Requires Backend v0.31.2 for rotation-aware chart detection and stricter chart-confidence rejection.
-- Version aligned to 0.24.2; Android versionCode/iOS buildNumber 35.
-
-# v0.24.1 — Smart Booklet capture/age hardening
-
-- Added a dedicated native `expo-camera` capture screen with a portrait physical-page frame, corner guides and explicit Persian instructions: phone vertical, the full booklet page inside the frame, blue chart title on the right, minimal perspective and glare.
-- Gallery photos are no longer rejected/warned merely for being landscape; Backend v0.31.1 scores right-angle orientations and accepts already-rotated readable chart photos.
-- Gallery selection no longer enables arbitrary crop/editing that could distort the chart template.
-- Smart Booklet review now derives each suggested date from the child DOB + completed calendar month; fractional month labels are normalized away and impossible/future ages are filtered.
-- Low-confidence candidates (<55%) are hidden; only strong candidates (>=72% without warning) are preselected for registration.
-- Added client handling for `DOCUMENT_SCAN_LOW_CONFIDENCE` from Backend v0.31.1.
-- Added shared calendar-month helpers with month-end clamping, plus Web parity for DOB-derived review dates and portrait capture guidance.
-- Added `expo-camera ~17.0.10`; version aligned to 0.24.1, Android versionCode/iOS buildNumber 34.
-- Requires Backend v0.31.1 for the hardened analyzer behavior.
+- Added a dedicated native Expo camera screen with an explicit wide booklet-page frame. The phone stays portrait while the physical growth-chart page is placed landscape inside the guide.
+- Added four-corner, parallel-camera, no-glare guidance and kept gallery images un-cropped so the backend can normalize rotation itself.
+- Review rows now use whole calendar months and rebuild the proposed measurement date from the child's stored birth date. Future/impossible ages and candidates below the review confidence floor are hidden.
+- Rows are preselected only at high confidence; lower-confidence values always require an explicit parent choice.
+- Added `DOCUMENT_SCAN_LOW_CONFIDENCE` Persian UX and Web guidance parity.
+- Added `expo-camera`; aligned Root/Web/Mobile/shared packages to `0.24.2`, Android versionCode `35`, iOS buildNumber `35`, Docker image default `ninibu-frontend:0.24.2`.
+- Requires Backend v0.31.2.
 
 # v0.24.0 — Smart Booklet Growth Import
 

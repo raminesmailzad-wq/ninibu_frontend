@@ -3,7 +3,7 @@
 This package targets the current Ninibu server topology:
 
 - Ubuntu host Nginx terminates HTTPS for `ninibu.com`.
-- Backend v0.31.2 is running on Docker network `ninibu-backend_ninibu_backend`.
+- Backend v0.31.0 is running on Docker network `ninibu-backend_ninibu_backend`.
 - MySQL runs directly on the host machine; the frontend never connects to MySQL.
 - Backend API is reachable from the frontend container as `http://api:8081`.
 - Frontend is exposed only on host loopback at `127.0.0.1:3000`.

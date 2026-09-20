@@ -19,7 +19,7 @@ const pages: Array<{ value: DocumentImportPageType; title: string; hint: string 
 ];
 
 const MIN_REVIEW_CONFIDENCE = 0.55;
-const AUTO_ACCEPT_CONFIDENCE = 0.72;
+const AUTO_ACCEPT_CONFIDENCE = 0.80;
 
 export function BookletImportModal({ visible, childId, childName, birthDate, onClose, onSaved }: { visible: boolean; childId: number; childName: string; birthDate: string; onClose: () => void; onSaved: () => Promise<void> }) {
   const [pageType, setPageType] = useState<DocumentImportPageType>('weight_for_age');
@@ -47,10 +47,7 @@ export function BookletImportModal({ visible, childId, childName, birthDate, onC
   function useCapturedPhoto(photo: { uri: string; width?: number; height?: number }) {
     setCameraOpen(false);
     setAsset({ uri: photo.uri, fileName: `ninibu-booklet-${Date.now()}.jpg`, mimeType: 'image/jpeg', width: photo.width, height: photo.height });
-    setResult(null); setRows([]); setError('');
-    setPhotoWarning(photo.width && photo.height && photo.height > photo.width
-      ? 'این عکس عمودی است. برای نمودارهای رشد، بهترین نتیجه وقتی است که صفحه افقی و نوشته‌های چاپی در جهت خواندن باشند و چهار گوشه صفحه داخل کادر دیده شوند.'
-      : '');
+    setResult(null); setRows([]); setError(''); setPhotoWarning('');
   }
 
   async function choosePhoto() {
@@ -64,7 +61,7 @@ export function BookletImportModal({ visible, childId, childName, birthDate, onC
         return;
       }
       setAsset({ uri: pickedAsset.uri, fileName: pickedAsset.fileName, mimeType: mime || 'image/jpeg', width: pickedAsset.width, height: pickedAsset.height });
-      if (pickedAsset.height > pickedAsset.width) setPhotoWarning('این عکس عمودی است. برای نمودارهای رشد، عکس افقی با صفحه کامل دقت بیشتری دارد.');
+      // Pixel orientation is not an error; Backend v0.31.2 evaluates all right-angle rotations.
       setResult(null); setRows([]);
     }
   }
@@ -76,16 +73,7 @@ export function BookletImportModal({ visible, childId, childName, birthDate, onC
       const derivedDate = addCalendarMonthsDateOnly(birthDate, ageMonth);
       const ageIsPossible = ageMonth >= 0 && (currentAge === null || ageMonth <= currentAge);
       if (!derivedDate || !ageIsPossible || item.confidence < MIN_REVIEW_CONFIDENCE) return [];
-      return [{
-        itemId: item.id,
-        accepted: item.confidence >= AUTO_ACCEPT_CONFIDENCE && !item.warning,
-        measuredAt: derivedDate,
-        value: String(item.suggested_value),
-        confidence: item.confidence,
-        warning: item.warning,
-        unit: item.unit,
-        ageMonths: ageMonth,
-      }];
+      return [{ itemId: item.id, accepted: item.confidence >= AUTO_ACCEPT_CONFIDENCE && !item.warning, measuredAt: derivedDate, value: String(item.suggested_value), confidence: item.confidence, warning: item.warning, unit: item.unit, ageMonths: ageMonth }];
     });
   }
 
@@ -102,7 +90,7 @@ export function BookletImportModal({ visible, childId, childName, birthDate, onC
       if (!nextRows.length) {
         try { await api(apiPaths.childDocumentImport(childId, data.id), { method: 'DELETE' }); } catch { /* best-effort cleanup */ }
         setResult(null); setRows([]);
-        setError('از این عکس مقدار قابل‌اعتمادی پیدا نشد. صفحه نمودار را افقی، صاف، با نوشته‌های خوانا و چهار گوشه کامل داخل کادر بگیرید و دوباره تلاش کنید.');
+        setError('از این عکس مقدار قابل‌اعتمادی پیدا نشد. صفحه را افقی، صاف، با نوشته‌های خوانا و کامل داخل تصویر بگیرید و دوباره تلاش کنید.');
         return;
       }
       setResult(data);
@@ -132,45 +120,45 @@ export function BookletImportModal({ visible, childId, childName, birthDate, onC
 
   return <>
     <FormModal visible={visible} title={`انتقال رشد ${childName} از دفترچه`} subtitle="عکس فقط برای تحلیل پردازش می‌شود و در نینیبو نگهداری نمی‌شود. ثبت نهایی پس از تأیید شماست." onClose={busy ? () => undefined : onClose}>
-      {!result ? <>
-        <View style={s.privacyBox}>
-          <Ionicons name="shield-checkmark-outline" size={21} color={colors.primary} />
-          <View style={{ flex: 1 }}><Text style={s.privacyTitle}>قالب دفترچه سلامت کودک</Text><Text style={s.help}>نوع نمودار را انتخاب کنید؛ سن هر نقطه پس از تحلیل به ماه کامل تبدیل و تاریخ پیشنهادی مستقیماً از تاریخ تولد {childName} محاسبه می‌شود.</Text></View>
+    {!result ? <>
+      <View style={s.privacyBox}>
+        <Ionicons name="shield-checkmark-outline" size={21} color={colors.primary} />
+        <View style={{ flex: 1 }}><Text style={s.privacyTitle}>قالب دفترچه سلامت کودک</Text><Text style={s.help}>نوع نمودار را انتخاب کنید؛ سن هر نقطه پس از تحلیل به ماه کامل تبدیل و تاریخ پیشنهادی مستقیماً از تاریخ تولد {childName} محاسبه می‌شود.</Text></View>
+      </View>
+      <Text style={s.label}>نوع نمودار</Text>
+      <View style={s.pageList}>{pages.map((page) => <Pressable key={page.value} onPress={() => { setPageType(page.value); resetPhoto(); }} style={[s.pageOption, pageType === page.value && s.pageOptionActive]}>
+        <Ionicons name={pageType === page.value ? 'radio-button-on' : 'radio-button-off'} size={19} color={pageType === page.value ? colors.primary : colors.muted} />
+        <View style={{ flex: 1 }}><Text style={s.pageTitle}>{page.title}</Text><Text style={s.pageHint}>{page.hint}</Text></View>
+      </Pressable>)}</View>
+      {asset ? <View style={s.previewWrap}><Image source={{ uri: asset.uri }} style={s.preview} resizeMode="contain" /><View style={s.previewBadge}><Ionicons name="checkmark-circle" size={17} color={colors.success} /><Text style={s.previewText}>عکس آماده تحلیل است</Text></View></View> : <View style={s.captureGuide}>
+        <View style={s.phoneGuide}><Ionicons name="phone-portrait-outline" size={22} color={colors.primary} /><View style={s.pageGuide}><Ionicons name="scan-outline" size={30} color={colors.primary} /></View></View>
+        <Text style={s.captureTitle}>گوشی عمودی؛ صفحه نمودار افقی</Text>
+        <Text style={s.help}>گوشی را عمودی نگه دارید و صفحه نمودار را افقی داخل کادر پهن قرار دهید. فقط یک صفحه را بگیرید، چهار گوشه کامل دیده شود و دوربین موازی صفحه بماند؛ نمودار نباید بریده، تار یا براق باشد.</Text>
+      </View>}
+      {photoWarning ? <Text style={s.warning}>{photoWarning}</Text> : null}
+      <View style={s.actionRow}><View style={{ flex: 1 }}><Button title="عکس با دوربین" icon="camera-outline" onPress={() => setCameraOpen(true)} disabled={busy} /></View><View style={{ flex: 1 }}><Button title="انتخاب عکس" icon="images-outline" variant="secondary" onPress={choosePhoto} disabled={busy} /></View></View>
+      {error ? <Text style={s.error}>{error}</Text> : null}
+      <Button title={busy ? 'در حال تحلیل تصویر…' : 'تحلیل و استخراج مقادیر'} icon="sparkles-outline" onPress={analyze} loading={busy} disabled={!asset} />
+    </> : <>
+      <View style={s.summary}>
+        <View><Text style={s.summaryValue}>{new Intl.NumberFormat('fa-IR').format(rows.length)}</Text><Text style={s.summaryLabel}>نقطه قابل بررسی</Text></View>
+        <View><Text style={s.summaryValue}>{new Intl.NumberFormat('fa-IR', { style: 'percent', maximumFractionDigits: 0 }).format(result.overall_confidence)}</Text><Text style={s.summaryLabel}>اطمینان تحلیل</Text></View>
+      </View>
+      <Text style={s.helpStrong}>سن‌ها به «ماه کامل» تبدیل شده‌اند و تاریخ هر ردیف از تاریخ تولد {childName} ساخته شده است. مقدار را با دفترچه تطبیق دهید؛ موارد کم‌اطمینان خودکار برای ثبت انتخاب نمی‌شوند.</Text>
+      {rows.map((row, index) => <View key={row.itemId} style={[s.reviewCard, !row.accepted && s.reviewCardOff]}>
+        <View style={s.reviewHead}>
+          <Pressable style={s.acceptToggle} onPress={() => setRows((old) => old.map((r, i) => i === index ? { ...r, accepted: !r.accepted } : r))}><Ionicons name={row.accepted ? 'checkbox' : 'square-outline'} size={23} color={row.accepted ? colors.primary : colors.muted} /><Text style={s.acceptText}>{row.accepted ? 'ثبت شود' : 'رد شود'}</Text></Pressable>
+          <Badge tone={row.confidence < .80 ? 'warning' : 'green'}>{`${new Intl.NumberFormat('fa-IR', { style: 'percent', maximumFractionDigits: 0 }).format(row.confidence)} اطمینان`}</Badge>
         </View>
-        <Text style={s.label}>نوع نمودار</Text>
-        <View style={s.pageList}>{pages.map((page) => <Pressable key={page.value} onPress={() => { setPageType(page.value); resetPhoto(); }} style={[s.pageOption, pageType === page.value && s.pageOptionActive]}>
-          <Ionicons name={pageType === page.value ? 'radio-button-on' : 'radio-button-off'} size={19} color={pageType === page.value ? colors.primary : colors.muted} />
-          <View style={{ flex: 1 }}><Text style={s.pageTitle}>{page.title}</Text><Text style={s.pageHint}>{page.hint}</Text></View>
-        </Pressable>)}</View>
-        {asset ? <View style={s.previewWrap}><Image source={{ uri: asset.uri }} style={s.preview} resizeMode="contain" /><View style={s.previewBadge}><Ionicons name="checkmark-circle" size={17} color={colors.success} /><Text style={s.previewText}>عکس آماده تحلیل است</Text></View></View> : <View style={s.captureGuide}>
-          <View style={s.phoneGuide}><Ionicons name="phone-portrait-outline" size={22} color={colors.primary} /><View style={s.pageGuide}><Ionicons name="scan-outline" size={30} color={colors.primary} /></View></View>
-          <Text style={s.captureTitle}>صفحه نمودار را افقی بگیرید</Text>
-          <Text style={s.help}>نوشته‌های چاپی صفحه باید در جهت خواندن باشند. فقط یک صفحه را بگیرید، چهار گوشه کامل داخل کادر باشد و دوربین تقریباً موازی صفحه بماند؛ نمودار نباید بریده، تار یا براق باشد.</Text>
-        </View>}
-        {photoWarning ? <Text style={s.warning}>{photoWarning}</Text> : null}
-        <View style={s.actionRow}><View style={{ flex: 1 }}><Button title="عکس با دوربین" icon="camera-outline" onPress={() => setCameraOpen(true)} disabled={busy} /></View><View style={{ flex: 1 }}><Button title="انتخاب عکس" icon="images-outline" variant="secondary" onPress={choosePhoto} disabled={busy} /></View></View>
-        {error ? <Text style={s.error}>{error}</Text> : null}
-        <Button title={busy ? 'در حال تحلیل تصویر…' : 'تحلیل و استخراج مقادیر'} icon="sparkles-outline" onPress={analyze} loading={busy} disabled={!asset} />
-      </> : <>
-        <View style={s.summary}>
-          <View><Text style={s.summaryValue}>{new Intl.NumberFormat('fa-IR').format(rows.length)}</Text><Text style={s.summaryLabel}>نقطه قابل بررسی</Text></View>
-          <View><Text style={s.summaryValue}>{new Intl.NumberFormat('fa-IR', { style: 'percent', maximumFractionDigits: 0 }).format(result.overall_confidence)}</Text><Text style={s.summaryLabel}>اطمینان تحلیل</Text></View>
-        </View>
-        <Text style={s.helpStrong}>سن‌ها به «ماه کامل» گرد شده‌اند و تاریخ هر ردیف از تاریخ تولد {childName} ساخته شده است. مقدار را با دفترچه تطبیق دهید؛ موارد کم‌اطمینان خودکار برای ثبت انتخاب نمی‌شوند.</Text>
-        {rows.map((row, index) => <View key={row.itemId} style={[s.reviewCard, !row.accepted && s.reviewCardOff]}>
-          <View style={s.reviewHead}>
-            <Pressable style={s.acceptToggle} onPress={() => setRows((old) => old.map((r, i) => i === index ? { ...r, accepted: !r.accepted } : r))}><Ionicons name={row.accepted ? 'checkbox' : 'square-outline'} size={23} color={row.accepted ? colors.primary : colors.muted} /><Text style={s.acceptText}>{row.accepted ? 'ثبت شود' : 'رد شود'}</Text></Pressable>
-            <Badge tone={row.confidence < .72 ? 'warning' : 'green'}>{`${new Intl.NumberFormat('fa-IR', { style: 'percent', maximumFractionDigits: 0 }).format(row.confidence)} اطمینان`}</Badge>
-          </View>
-          <Text style={s.ageText}>{`سن روی نمودار: ${new Intl.NumberFormat('fa-IR').format(row.ageMonths)} ماه کامل · تاریخ زیر از تاریخ تولد محاسبه شده`}</Text>
-          <JalaliDateModalInput label="تاریخ پیشنهادی اندازه‌گیری" value={row.measuredAt} onChange={(value) => setRows((old) => old.map((r, i) => i === index ? { ...r, measuredAt: value } : r))} required />
-          <Field label={`مقدار (${row.unit === 'kg' ? 'کیلوگرم' : 'سانتی‌متر'})`} value={row.value} onChangeText={(value) => setRows((old) => old.map((r, i) => i === index ? { ...r, value } : r))} keyboardType="decimal-pad" editable={row.accepted} />
-          {row.warning ? <Text style={s.warning}>{row.warning}</Text> : null}
-        </View>)}
-        {error ? <Text style={s.error}>{error}</Text> : null}
-        <Button title={busy ? 'در حال ثبت…' : 'تأیید و افزودن به پرونده'} icon="checkmark-circle-outline" onPress={confirm} loading={busy} />
-        <Button title="عکس دیگری بگیر" icon="camera-outline" variant="ghost" onPress={() => { setResult(null); setRows([]); setError(''); setAsset(null); }} disabled={busy} />
-      </>}
+        <Text style={s.ageText}>{`سن روی نمودار: ${new Intl.NumberFormat('fa-IR').format(row.ageMonths)} ماه کامل · تاریخ زیر از تاریخ تولد محاسبه شده`}</Text>
+        <JalaliDateModalInput label="تاریخ پیشنهادی اندازه‌گیری" value={row.measuredAt} onChange={(value) => setRows((old) => old.map((r, i) => i === index ? { ...r, measuredAt: value } : r))} required />
+        <Field label={`مقدار (${row.unit === 'kg' ? 'کیلوگرم' : 'سانتی‌متر'})`} value={row.value} onChangeText={(value) => setRows((old) => old.map((r, i) => i === index ? { ...r, value } : r))} keyboardType="decimal-pad" editable={row.accepted} />
+        {row.warning ? <Text style={s.warning}>{row.warning}</Text> : null}
+      </View>)}
+      {error ? <Text style={s.error}>{error}</Text> : null}
+      <Button title={busy ? 'در حال ثبت…' : 'تأیید و افزودن به پرونده'} icon="checkmark-circle-outline" onPress={confirm} loading={busy} />
+      <Button title="عکس دیگری بگیر" icon="camera-outline" variant="ghost" onPress={() => { setResult(null); setRows([]); setError(''); setAsset(null); }} disabled={busy} />
+    </>}
     </FormModal>
     <BookletCameraModal visible={visible && cameraOpen} pageTitle={selectedPage.title} onClose={() => setCameraOpen(false)} onCaptured={useCapturedPhoto} />
   </>;

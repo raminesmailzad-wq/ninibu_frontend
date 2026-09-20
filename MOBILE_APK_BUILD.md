@@ -2,9 +2,6 @@
 
 ## قبل از Build
 
-Smart Booklet v0.24.2 همچنین `expo-camera` دارد؛ پس بعد از جایگزینی ZIP حتماً dependencyها را دوباره با `pnpm install --no-frozen-lockfile` همگام کنید و APK جدید بسازید. دوربین جدید داخل خود اپ کادر افقی دفترچه را نمایش می‌دهد.
-
-
 - فایل‌های مجاز YekanBakh FaNum خودتان در `apps/mobile/assets/fonts` باقی بمانند.
 - `react-native-maps` و Google Maps API Key دیگر استفاده نمی‌شوند.
 - نقشه مراکز از OpenStreetMap + Leaflet داخل `react-native-webview` استفاده می‌کند.
@@ -48,7 +45,7 @@ Project config این نسخه از قبل شامل موارد زیر است:
 - projectId: `e614fc0c-d8b4-4521-8916-e4558762fa94`
 - package: `com.ninibu.app`
 - version: `0.24.2`
-- Android versionCode: `34`
+- Android versionCode: `31`
 - preview buildType: `apk`
 
 ## Cloud build
@@ -68,18 +65,18 @@ eas build \
   -p android \
   --profile preview \
   --local \
-  --output ./ninibu-v0.24.0-preview.apk
+  --output ./ninibu-v0.24.2-preview.apk
 ```
 
 ## نصب و تشخیص خطای نصب
 
 ```bash
-adb install -r ./ninibu-v0.24.0-preview.apk
+adb install -r ./ninibu-v0.24.2-preview.apk
 ```
 
 اگر نسخه‌ای با امضای متفاوت روی گوشی نصب است، ابتدا با آگاهی از پاک‌شدن داده محلی آن را حذف کنید:
 
 ```bash
 adb uninstall com.ninibu.app
-adb install ./ninibu-v0.24.0-preview.apk
+adb install ./ninibu-v0.24.2-preview.apk
 ```
