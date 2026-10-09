@@ -24,7 +24,7 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": true,
-      "versionCode": 36
+      "versionCode": 37
     },
     "plugins": [
       "expo-router",
