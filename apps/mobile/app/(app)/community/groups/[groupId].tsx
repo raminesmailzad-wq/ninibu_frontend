@@ -22,7 +22,11 @@ export default function GroupDetail() {
   const [actionError, setActionError] = useState('');
 
   const loadGroup = useCallback(async () => {
-    if (!id) return;
+    if (!Number.isFinite(id) || id <= 0) {
+      setGroupError('شناسه گروه معتبر نیست.');
+      setLoadingGroup(false);
+      return undefined;
+    }
     setLoadingGroup(true);
     setGroupError('');
     try {
@@ -37,12 +41,12 @@ export default function GroupDetail() {
     }
   }, [id]);
 
-  const loadPosts = useCallback(async (target?: CommunityGroup) => {
-    const current = target ?? group;
-    if (!id || !current) return;
-    if (current.visibility !== 'public' && current.membership_status !== 'active') {
+  const loadPosts = useCallback(async (target: CommunityGroup) => {
+    if (!Number.isFinite(id) || id <= 0) return;
+    if (target.visibility !== 'public' && target.membership_status !== 'active') {
       setPosts(undefined);
       setPostsError('');
+      setLoadingPosts(false);
       return;
     }
     setLoadingPosts(true);
@@ -54,7 +58,7 @@ export default function GroupDetail() {
     } finally {
       setLoadingPosts(false);
     }
-  }, [group, id]);
+  }, [id]);
 
   const refreshAll = useCallback(async () => {
     const next = await loadGroup();

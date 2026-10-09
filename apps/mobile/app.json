@@ -27,7 +27,8 @@
       "versionCode": 38,
       "blockedPermissions": [
         "android.permission.SYSTEM_ALERT_WINDOW"
-      ]
+      ],
+      "softwareKeyboardLayoutMode": "resize"
     },
     "plugins": [
       "expo-router",

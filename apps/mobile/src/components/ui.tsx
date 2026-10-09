@@ -36,7 +36,8 @@ export function Screen({
   const body = scroll ? (
     <ScrollView
       keyboardShouldPersistTaps="handled"
-      keyboardDismissMode="on-drag"
+      keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
+      automaticallyAdjustKeyboardInsets
       showsVerticalScrollIndicator={false}
       nestedScrollEnabled
       contentInsetAdjustmentBehavior="automatic"
@@ -287,7 +288,7 @@ export function JalaliDateModalInput({ label, value, onChange, required = false 
     <Modal visible={open} transparent statusBarTranslucent animationType="fade" onRequestClose={() => setOpen(false)}>
       <View style={s.modalRoot}>
         <Pressable style={s.scrim} onPress={() => setOpen(false)} />
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={s.dateModalWrap}>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={s.dateModalWrap}>
           <View style={s.dateModal}>
             <View style={s.sheetHead}>
               <View style={{ flex: 1 }}>
@@ -324,7 +325,7 @@ export function FormModal({ visible, title, subtitle, onClose, children }: { vis
   return <Modal visible={visible} transparent statusBarTranslucent animationType="fade" onRequestClose={onClose}>
     <View style={s.modalRoot}>
       <Pressable style={s.scrim} onPress={onClose} />
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={s.formModalKeyboard}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={s.formModalKeyboard}>
         <View style={[s.formModal, { paddingBottom: Math.max(18, insets.bottom + 8) }]}>
           <View style={s.formModalHead}>
             <View style={{ flex: 1 }}>
@@ -333,7 +334,13 @@ export function FormModal({ visible, title, subtitle, onClose, children }: { vis
             </View>
             <IconButton icon="close" onPress={onClose} label="بستن" />
           </View>
-          <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentContainerStyle={s.formModalBody}>
+          <ScrollView
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
+            automaticallyAdjustKeyboardInsets
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={s.formModalBody}
+          >
             {children}
           </ScrollView>
         </View>
