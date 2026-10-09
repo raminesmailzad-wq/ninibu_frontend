@@ -8,3 +8,6 @@ apps/mobile/app-example/
 .env.local
 *.log
 .DS_Store
+# EAS local credentials (never commit)
+apps/mobile/credentials.json
+apps/mobile/credentials/

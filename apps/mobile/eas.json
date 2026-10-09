@@ -34,6 +34,19 @@
         "NODE_ENV": "production",
         "EXPO_PUBLIC_NINIBU_MAP_TILE_URL": "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       }
+    },
+    "cafebazaar": {
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_NINIBU_BACKEND_URL": "https://ninibu.com",
+        "EXPO_PUBLIC_NINIBU_PAYMENT_PROVIDER": "disabled",
+        "NODE_ENV": "production",
+        "EXPO_PUBLIC_NINIBU_MAP_TILE_URL": "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+      },
+      "environment": "production"
     }
   }
 }
