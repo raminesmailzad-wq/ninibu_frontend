@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -254,15 +254,15 @@ export function JalaliDateModalInput({ label, value, onChange, required = false 
   const [error, setError] = useState('');
   const visual = useMemo(() => value ? gregorianToJalaliInput(value) : '', [value]);
 
-  function syncDraft() {
+  const syncDraft = useCallback(() => {
     const source = normalizeAsciiDigits(value ? gregorianToJalaliInput(value) : todayJalaliInput()).split('/');
     setYear(source[0] || '1405');
     setMonth(source[1] || '01');
     setDay(source[2] || '01');
     setError('');
-  }
+  }, [value]);
 
-  useEffect(() => { if (open) syncDraft(); }, [open, value]);
+  useEffect(() => { if (open) syncDraft(); }, [open, syncDraft]);
 
   function save() {
     const y = normalizeAsciiDigits(year).replace(/\D/g, '').slice(0, 4);

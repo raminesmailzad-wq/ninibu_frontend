@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { WebView, type WebViewMessageEvent } from 'react-native-webview';
 import { colors, typography } from '@/theme';
@@ -233,16 +233,16 @@ export function OpenStreetMap({ points, center, selectedId, userLocation, userAc
     userLocation: userLocation || null,
     userAccuracy: userAccuracy ?? null,
     focusUser,
-  }), [points, center.latitude, center.longitude, userLocation?.latitude, userLocation?.longitude, userAccuracy, focusUser]);
+  }), [points, center, userLocation, userAccuracy, focusUser]);
 
-  function pushState() {
+  const pushState = useCallback(() => {
     webView.current?.injectJavaScript(`window.NinibuMap && window.NinibuMap.update(${safeJson(statePayload)}); true;`);
-  }
+  }, [statePayload]);
 
   useEffect(() => {
     if (!mapReady) return;
     pushState();
-  }, [mapReady, statePayload]);
+  }, [mapReady, pushState]);
 
   useEffect(() => {
     if (!mapReady) return;

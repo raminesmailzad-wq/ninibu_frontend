@@ -1,5 +1,7 @@
 "use client";
 
+/* eslint-disable @next/next/no-img-element -- Booklet preview is a local blob/data URL selected by the user and should not pass through Next image optimization. */
+
 import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { BookOpenCheck, Camera, Check, FileImage, LoaderCircle, ShieldCheck, X } from "lucide-react";

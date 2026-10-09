@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Linking, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import * as Location from 'expo-location';
@@ -21,8 +21,8 @@ export default function Discover() {
   const { selected } = useChild(); const { profile } = useSession();
   const [tab, setTab] = useState<Tab>('smart'); const [personal, setPersonal] = useState<PersonalizationFeedResponse>(); const [contents, setContents] = useState<KnowledgeContentListResponse>(); const [categories, setCategories] = useState<KnowledgeCategory[]>([]); const [bookmarks, setBookmarks] = useState<KnowledgeContent[]>([]); const [loading, setLoading] = useState(true); const [error, setError] = useState(''); const [detailSlug, setDetailSlug] = useState<string>(); const [careSearchSeed, setCareSearchSeed] = useState('');
 
-  async function load() { setLoading(true); setError(''); try { const [p, c, cats, bm] = await Promise.all([selected ? api<PersonalizationFeedResponse>(`${apiPaths.personalizationFeed}?limit=12&child_id=${selected.id}`).catch(() => ({ items: [] })) : Promise.resolve({ items: [] } as PersonalizationFeedResponse), api<KnowledgeContentListResponse>(`${apiPaths.content}?limit=30`), api<KnowledgeCategory[] | { items: KnowledgeCategory[] }>(apiPaths.contentCategories).catch(() => []), api<KnowledgeContent[] | { items: KnowledgeContent[] }>(apiPaths.contentBookmarks).catch(() => [])]); setPersonal(p); setContents(c); setCategories(Array.isArray(cats) ? cats : cats.items); setBookmarks(Array.isArray(bm) ? bm : bm.items); } catch (cause) { setError(cause instanceof Error ? cause.message : 'اطلاعات بخش کشف دریافت نشد.'); } finally { setLoading(false); } }
-  useEffect(() => { void load(); }, [selected?.id]);
+  const load = useCallback(async () => { setLoading(true); setError(''); try { const [p, c, cats, bm] = await Promise.all([selected ? api<PersonalizationFeedResponse>(`${apiPaths.personalizationFeed}?limit=12&child_id=${selected.id}`).catch(() => ({ items: [] })) : Promise.resolve({ items: [] } as PersonalizationFeedResponse), api<KnowledgeContentListResponse>(`${apiPaths.content}?limit=30`), api<KnowledgeCategory[] | { items: KnowledgeCategory[] }>(apiPaths.contentCategories).catch(() => []), api<KnowledgeContent[] | { items: KnowledgeContent[] }>(apiPaths.contentBookmarks).catch(() => [])]); setPersonal(p); setContents(c); setCategories(Array.isArray(cats) ? cats : cats.items); setBookmarks(Array.isArray(bm) ? bm : bm.items); } catch (cause) { setError(cause instanceof Error ? cause.message : 'اطلاعات بخش کشف دریافت نشد.'); } finally { setLoading(false); } }, [selected]);
+  useEffect(() => { void load(); }, [load]);
 
   return <Screen refreshing={loading} onRefresh={load}>
     <Header title="کشف" subtitle="محتوا، جست‌وجو و مراکز درمانی" />
@@ -54,7 +54,7 @@ function CarePanel({ cityId, cityName, initialSearch = '' }: { cityId?: number; 
   const [error, setError] = useState('');
   const [locationError, setLocationError] = useState('');
 
-  async function load(target = coords, targetKind = kind.value, search = submitted) {
+  const load = useCallback(async (target = coords, targetKind = kind.value, search = submitted) => {
     if (!target && !cityId && !search) {
       setData(undefined);
       return;
@@ -78,9 +78,9 @@ function CarePanel({ cityId, cityName, initialSearch = '' }: { cityId?: number; 
     } finally {
       setLoading(false);
     }
-  }
+  }, [cityId, coords, kind.value, submitted]);
 
-  useEffect(() => { void load(coords, kind.value, submitted); }, [cityId, kind.value, submitted]);
+  useEffect(() => { void load(); }, [load]);
 
   async function resolvePosition() {
     const permission = await Location.requestForegroundPermissionsAsync();

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
@@ -42,7 +42,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  async function load() {
+  const load = useCallback(async () => {
     if (!selected) return;
     setLoading(true);
     setError('');
@@ -64,9 +64,9 @@ export default function Home() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [selected]);
 
-  useEffect(() => { void load(); }, [selected?.id]);
+  useEffect(() => { void load(); }, [load]);
 
   const latestGrowth = data.growth?.items[0];
   const latestVisit = data.visits?.items[0];

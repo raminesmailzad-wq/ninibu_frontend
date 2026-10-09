@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { href } from '@/lib/navigation';
@@ -21,7 +21,7 @@ export default function GroupDetail() {
   const [postsError, setPostsError] = useState('');
   const [actionError, setActionError] = useState('');
 
-  async function loadGroup() {
+  const loadGroup = useCallback(async () => {
     if (!id) return;
     setLoadingGroup(true);
     setGroupError('');
@@ -35,9 +35,9 @@ export default function GroupDetail() {
     } finally {
       setLoadingGroup(false);
     }
-  }
+  }, [id]);
 
-  async function loadPosts(target?: CommunityGroup) {
+  const loadPosts = useCallback(async (target?: CommunityGroup) => {
     const current = target ?? group;
     if (!id || !current) return;
     if (current.visibility !== 'public' && current.membership_status !== 'active') {
@@ -54,14 +54,14 @@ export default function GroupDetail() {
     } finally {
       setLoadingPosts(false);
     }
-  }
+  }, [group, id]);
 
-  async function refreshAll() {
+  const refreshAll = useCallback(async () => {
     const next = await loadGroup();
     if (next) await loadPosts(next);
-  }
+  }, [loadGroup, loadPosts]);
 
-  useEffect(() => { void refreshAll(); }, [id]);
+  useEffect(() => { void refreshAll(); }, [refreshAll]);
 
   async function toggleMembership() {
     if (!group) return;

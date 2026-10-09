@@ -1,5 +1,7 @@
 "use client";
 
+/* eslint-disable @next/next/no-img-element -- Admin media previews can be user-managed or storage-backed URLs that are not eligible for Next image optimization. */
+
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { File, FileImage, Link2, Pencil, RefreshCw, Trash2, UploadCloud } from "lucide-react";

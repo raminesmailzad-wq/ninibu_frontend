@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 import type { NotificationItem, NotificationListResponse, NotificationPreference, UpdateNotificationPreferencesRequest } from '@ninibu/types';
 import { formatJalaliDateTime } from '@ninibu/datetime';
@@ -10,8 +10,8 @@ type Mode='all'|'unread'|'settings';
 const categoryLabel:Record<string,string>={health:'سلامت',growth:'رشد',vaccination:'واکسن',consultation:'مشاوره',booking:'رزرو',commerce:'خرید',advertising:'پیشنهاد تجاری',system:'سیستم'};
 export default function Notifications(){
  const [mode,setMode]=useState<Mode>('all');const [items,setItems]=useState<NotificationItem[]>([]);const [prefs,setPrefs]=useState<NotificationPreference[]>([]);const [loading,setLoading]=useState(true);const [saving,setSaving]=useState(false);const [error,setError]=useState('');
- async function load(){setLoading(true);setError('');try{if(mode==='settings')setPrefs(await api<NotificationPreference[]>(notificationApiPaths.notificationPreferences));else{const r=await api<NotificationListResponse>(`${notificationApiPaths.notifications}?page=1&limit=50&unread_only=${mode==='unread'?'true':'false'}`);setItems(r.items)}}catch(e){setError(e instanceof Error?e.message:'خطا در دریافت اعلان‌ها')}finally{setLoading(false)}}
- useEffect(()=>{void load()},[mode]);
+ const load=useCallback(async()=>{setLoading(true);setError('');try{if(mode==='settings')setPrefs(await api<NotificationPreference[]>(notificationApiPaths.notificationPreferences));else{const r=await api<NotificationListResponse>(`${notificationApiPaths.notifications}?page=1&limit=50&unread_only=${mode==='unread'?'true':'false'}`);setItems(r.items)}}catch(e){setError(e instanceof Error?e.message:'خطا در دریافت اعلان‌ها')}finally{setLoading(false)}},[mode]);
+ useEffect(()=>{void load()},[load]);
  async function markRead(item:NotificationItem){if(item.status==='read')return;try{const next=await api<NotificationItem>(notificationApiPaths.notificationRead(item.id),{method:'POST'});setItems(x=>x.map(v=>v.id===item.id?next:v))}catch(e){setError(e instanceof Error?e.message:'ثبت وضعیت اعلان ناموفق بود')}}
  async function markAll(){setSaving(true);setError('');try{await api(notificationApiPaths.notificationsReadAll,{method:'POST'});await load()}catch(e){setError(e instanceof Error?e.message:'ثبت اعلان‌ها ناموفق بود')}finally{setSaving(false)}}
  async function savePrefs(){setSaving(true);setError('');try{const body:UpdateNotificationPreferencesRequest={items:prefs.map(x=>({category:x.category,in_app_enabled:x.in_app_enabled,quiet_hours_start:x.quiet_hours_start,quiet_hours_end:x.quiet_hours_end,timezone:x.timezone||'Asia/Tehran'}))};setPrefs(await api<NotificationPreference[]>(notificationApiPaths.notificationPreferences,{method:'PATCH',body:JSON.stringify(body)}))}catch(e){setError(e instanceof Error?e.message:'ذخیره تنظیمات ناموفق بود')}finally{setSaving(false)}}

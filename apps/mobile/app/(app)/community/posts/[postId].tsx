@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -19,10 +19,10 @@ export default function CommunityPostDetail() {
   const { postId } = useLocalSearchParams<{ postId: string }>(); const id = Number(postId);
   const [post, setPost] = useState<CommunityPost>(); const [comments, setComments] = useState<CommunityCommentListResponse>(); const [body, setBody] = useState(''); const [privacy, setPrivacy] = useState<CommunityPrivacyMode>('identified'); const [replyTo, setReplyTo] = useState<CommunityComment>(); const [loadingPost, setLoadingPost] = useState(true); const [loadingComments, setLoadingComments] = useState(true); const [sending, setSending] = useState(false); const [busyReaction, setBusyReaction] = useState(false); const [postError, setPostError] = useState(''); const [commentsError, setCommentsError] = useState(''); const [sendError, setSendError] = useState(''); const [reportTarget, setReportTarget] = useState<{ type: 'community_post' | 'community_comment'; id: number }>();
 
-  async function loadPost() { if (!id) return; setLoadingPost(true); setPostError(''); try { setPost(await api<CommunityPost>(apiPaths.communityPost(id))); } catch (cause) { setPostError(cause instanceof Error ? cause.message : 'پست دریافت نشد.'); } finally { setLoadingPost(false); } }
-  async function loadComments() { if (!id) return; setLoadingComments(true); setCommentsError(''); try { setComments(await api<CommunityCommentListResponse>(`${apiPaths.communityPostComments(id)}?limit=100`)); } catch (cause) { setCommentsError(cause instanceof Error ? cause.message : 'دیدگاه‌ها دریافت نشدند.'); } finally { setLoadingComments(false); } }
-  async function refreshAll() { await Promise.all([loadPost(), loadComments()]); }
-  useEffect(() => { void refreshAll(); }, [id]);
+  const loadPost = useCallback(async () => { if (!id) return; setLoadingPost(true); setPostError(''); try { setPost(await api<CommunityPost>(apiPaths.communityPost(id))); } catch (cause) { setPostError(cause instanceof Error ? cause.message : 'پست دریافت نشد.'); } finally { setLoadingPost(false); } }, [id]);
+  const loadComments = useCallback(async () => { if (!id) return; setLoadingComments(true); setCommentsError(''); try { setComments(await api<CommunityCommentListResponse>(`${apiPaths.communityPostComments(id)}?limit=100`)); } catch (cause) { setCommentsError(cause instanceof Error ? cause.message : 'دیدگاه‌ها دریافت نشدند.'); } finally { setLoadingComments(false); } }, [id]);
+  const refreshAll = useCallback(async () => { await Promise.all([loadPost(), loadComments()]); }, [loadPost, loadComments]);
+  useEffect(() => { void refreshAll(); }, [refreshAll]);
 
   async function send() { if (!body.trim() || !post) return; setSending(true); setSendError(''); try { await api(apiPaths.communityPostComments(post.id), { method: 'POST', body: JSON.stringify({ body: body.trim(), privacy_mode: privacy, parent_comment_id: replyTo?.id }) }); setBody(''); setReplyTo(undefined); await refreshAll(); } catch (cause) { setSendError(cause instanceof Error ? cause.message : 'ثبت دیدگاه انجام نشد.'); } finally { setSending(false); } }
   async function reactPost(type: CommunityReactionType) { if (!post) return; const active = post.reactions?.find((r) => r.reaction_type === type)?.reacted_by_me; setBusyReaction(true); try { if (active) await api(apiPaths.communityPostReaction(post.id, type), { method: 'DELETE' }); else await api(apiPaths.communityPostReactions(post.id), { method: 'POST', body: JSON.stringify({ reaction_type: type }) }); await loadPost(); } finally { setBusyReaction(false); } }

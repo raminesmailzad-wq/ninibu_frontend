@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -48,7 +48,7 @@ export default function Health() {
     }
   }, [params.action]);
 
-  async function load() {
+  const load = useCallback(async () => {
     if (!selected) return;
     setLoading(true);
     setError('');
@@ -76,9 +76,9 @@ export default function Health() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [selected]);
 
-  useEffect(() => { void load(); }, [selected?.id]);
+  useEffect(() => { void load(); }, [load]);
 
   if (!selected) return <Screen><Header title="سلامت فرزند" /><EmptyState title="فرزندی برای نمایش پرونده وجود ندارد" /></Screen>;
 
