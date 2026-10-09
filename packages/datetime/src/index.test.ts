@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { gregorianToJalali, gregorianToJalaliInput, jalaliInputToGregorian, jalaliToGregorian, toPersianDigits } from "./index";
+import { gregorianToJalali, gregorianToJalaliInput, jalaliInputToGregorian, jalaliToGregorian, parseLocalizedDecimal, toPersianDigits } from "./index";
 
 describe("Jalali/Gregorian boundary", () => {
   it("converts Nowruz 1405", () => {
@@ -17,5 +17,13 @@ describe("Jalali/Gregorian boundary", () => {
   });
   it("renders Persian digits", () => {
     expect(toPersianDigits("1405/05/21")).toBe("۱۴۰۵/۰۵/۲۱");
+  });
+  it("parses localized decimal input from Persian and Arabic keyboards", () => {
+    expect(parseLocalizedDecimal("۳.۸۰۰")).toBe(3.8);
+    expect(parseLocalizedDecimal("۳٫۸")).toBe(3.8);
+    expect(parseLocalizedDecimal("٣٫٨")).toBe(3.8);
+    expect(parseLocalizedDecimal(" ۵۲ ")).toBe(52);
+    expect(parseLocalizedDecimal("۳۷٫۵")).toBe(37.5);
+    expect(parseLocalizedDecimal("عدد")).toBeNull();
   });
 });

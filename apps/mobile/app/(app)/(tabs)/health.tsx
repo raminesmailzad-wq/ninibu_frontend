@@ -12,7 +12,8 @@ import type {
   ListMedicalVisitsResponse,
   ListVaccinationsResponse,
 } from '@ninibu/types';
-import { formatJalaliShortDate, toPersianDigits, todayGregorianDate } from '@ninibu/datetime';
+import { formatJalaliShortDate, parseLocalizedDecimal, toPersianDigits, todayGregorianDate } from '@ninibu/datetime';
+import { growthMeasurementSchema } from '@ninibu/validation';
 import { api, apiPaths } from '@/lib/api';
 import { useChild } from '@/providers/ChildProvider';
 import { Badge, Button, Card, EmptyState, ErrorState, Field, FormModal, Header, JalaliDateModalInput, Loading, Screen, SectionTitle, SegmentedControl } from '@/components/ui';
@@ -228,10 +229,27 @@ function QuickForm({ action, childId, onClose, onSaved }: { action: Action; chil
     setError('');
     try {
       if (action === 'growth') {
-        if (!weight && !height && !head) throw new Error('حداقل یک مقدار رشد وارد کنید.');
+        const parsed = growthMeasurementSchema.safeParse({
+          measured_at: date,
+          weight_kg: weight ? (parseLocalizedDecimal(weight) ?? Number.NaN) : '',
+          height_cm: height ? (parseLocalizedDecimal(height) ?? Number.NaN) : '',
+          head_circumference_cm: head ? (parseLocalizedDecimal(head) ?? Number.NaN) : '',
+        });
+        if (!parsed.success) throw new Error(parsed.error.issues[0]?.message || 'اطلاعات رشد معتبر نیست.');
+        const weightKg = parsed.data.weight_kg;
+        const heightCm = parsed.data.height_cm;
+        const headCm = parsed.data.head_circumference_cm;
         await api(apiPaths.childGrowthMeasurements(childId), {
           method: 'POST',
-          body: JSON.stringify({ measured_at: date, weight_kg: weight ? Number(weight) : undefined, height_cm: height ? Number(height) : undefined, head_circumference_cm: head ? Number(head) : undefined, notes: '' }),
+          body: JSON.stringify({
+            measured_at: date,
+            weight_grams: typeof weightKg === 'number' ? Math.round(weightKg * 1000) : null,
+            height_millimeters: typeof heightCm === 'number' ? Math.round(heightCm * 10) : null,
+            head_circumference_millimeters: typeof headCm === 'number' ? Math.round(headCm * 10) : null,
+            care_location_id: null,
+            location_name: '',
+            notes: '',
+          }),
         });
       } else if (action === 'vaccine') {
         if (!name.trim()) throw new Error('نام واکسن را وارد کنید.');

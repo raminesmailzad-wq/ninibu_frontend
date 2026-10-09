@@ -16,6 +16,17 @@ export function toPersianDigits(value: string | number): string {
   return String(value).replace(/\d/g, (digit) => PERSIAN_DIGITS[Number(digit)] ?? digit);
 }
 
+export function parseLocalizedDecimal(value: string): number | null {
+  const normalized = toLatinDigits(value)
+    .trim()
+    .replace(/\s+/g, "")
+    .replace(/٬/g, "")
+    .replace(/[٫,]/g, ".");
+  if (!normalized || !/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(normalized)) return null;
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 function div(a: number, b: number): number { return Math.floor(a / b); }
 
 export function gregorianToJalali(year: number, month: number, day: number): JalaliDate {
