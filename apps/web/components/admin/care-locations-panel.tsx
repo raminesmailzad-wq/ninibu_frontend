@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Hospital, MapPinned, Pencil, Plus, RefreshCw, ShieldCheck, Trash2 } from "lucide-react";
+import { MapPinned, Pencil, Plus, RefreshCw, ShieldCheck, Trash2 } from "lucide-react";
 import type { AdminCareLocation, AdminCareLocationList } from "@ninibu/types";
 import { clientApi } from "@/lib/client-api";
 import { Button } from "@/components/ui/button";

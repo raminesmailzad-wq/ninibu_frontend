@@ -57,7 +57,7 @@ export function AdminShell() {
     } catch { setPhase("login"); }
   }
 
-  useEffect(() => { void resolve(); }, []);
+  useEffect(() => { const id = window.setTimeout(() => { void resolve(); }, 0); return () => window.clearTimeout(id); }, []);
 
   async function logout() {
     await fetch("/api/ninibu/auth/logout", { method: "POST" });

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, BellRing, CalendarCheck2, CalendarHeart, ChartNoAxesColumnIncreasing, HeartHandshake, HeartPulse, MapPin, MessageCircleReply, MessagesSquare, Pill, Plus, ShieldCheck, Sparkles, Syringe, Stethoscope, X } from "lucide-react";
@@ -18,7 +18,8 @@ import { SponsoredSlot } from "@/components/advertising/sponsored-slot";
 
 export function Dashboard({ child, profile, unreadCount, onQuickAction, onOpenHealth, onOpenMaternalHealth, onOpenNotifications, onNavigate }: { child: Child; profile?: Profile; unreadCount: number; onQuickAction: (action: QuickAction) => void; onOpenHealth: () => void; onOpenMaternalHealth: () => void; onOpenNotifications: () => void; onNavigate: (section: "community" | "discover" | "services") => void }) {
   const router = useRouter();
-  const [bookingDrafts, setBookingDrafts] = useState<BookingDraftSummary[]>([]);
+  const [bookingDrafts, setBookingDrafts] = useState<BookingDraftSummary[]>(() => listBookingDraftSummaries());
+  const [now] = useState(() => Date.now());
   const growth = useQuery({ queryKey: ["child", child.id, "growth", "latest"], queryFn: () => clientApi<ListGrowthMeasurementsResponse>(`/api/ninibu/children/${child.id}/growth-measurements?limit=1`) });
   const vaccinations = useQuery({ queryKey: ["child", child.id, "vaccinations", "dashboard"], queryFn: () => clientApi<ListVaccinationsResponse>(`/api/ninibu/children/${child.id}/vaccinations?limit=50`) });
   const allergies = useQuery({ queryKey: ["child", child.id, "allergies", "active-count"], queryFn: () => clientApi<ListAllergiesResponse>(`/api/ninibu/children/${child.id}/allergies?limit=1&status=active`) });
@@ -28,7 +29,6 @@ export function Dashboard({ child, profile, unreadCount, onQuickAction, onOpenHe
   const bookings = useQuery({ queryKey: ["bookings", "dashboard-action-center"], queryFn: () => clientApi<BookingListResponse>("/api/ninibu/bookings?limit=20") });
   const consultations = useQuery({ queryKey: ["consultations", "dashboard-action-center"], queryFn: () => clientApi<ConsultationQuestionListResponse>("/api/ninibu/consultations/questions?limit=50") });
 
-  useEffect(() => { setBookingDrafts(listBookingDraftSummaries()); }, []);
 
   const latestGrowth = growth.data?.items[0];
   const latestVisit = visits.data?.items[0];
@@ -38,7 +38,7 @@ export function Dashboard({ child, profile, unreadCount, onQuickAction, onOpenHe
 
   const resumeDraft = bookingDrafts[0];
   const upcomingBooking = useMemo(() => dedupeBookings(bookings.data?.items ?? [])
-    .filter((item) => item.status === "confirmed" && Date.parse(item.starts_at) >= Date.now())
+    .filter((item) => item.status === "confirmed" && Date.parse(item.starts_at) >= now)
     .sort((a, b) => Date.parse(a.starts_at) - Date.parse(b.starts_at))[0], [bookings.data]);
   const consultationWaiting = useMemo(() => (consultations.data?.items ?? [])
     .filter((item) => item.status === "waiting_for_parent")
@@ -49,8 +49,8 @@ export function Dashboard({ child, profile, unreadCount, onQuickAction, onOpenHe
       .sort((a, b) => String(a.next_dose_due_at).localeCompare(String(b.next_dose_due_at)))[0];
     if (!candidate?.next_dose_due_at) return undefined;
     const due = Date.parse(`${candidate.next_dose_due_at}T12:00:00`);
-    return Number.isFinite(due) && due <= Date.now() + 30 * 24 * 60 * 60 * 1000 ? candidate : undefined;
-  }, [vaccinations.data]);
+    return Number.isFinite(due) && due <= now + 30 * 24 * 60 * 60 * 1000 ? candidate : undefined;
+  }, [vaccinations.data, now]);
 
   function openAction(target: string, action: string) {
     trackEvent("action_center_item_opened", { source: "dashboard", action, target_route: target });

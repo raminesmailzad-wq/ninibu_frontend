@@ -3,10 +3,13 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, typography } from '@/theme';
 
-const icon = (name: keyof typeof Ionicons.glyphMap, activeName?: keyof typeof Ionicons.glyphMap) =>
-  (props: { color: string; size: number; focused: boolean }) => (
-    <Ionicons name={props.focused && activeName ? activeName : name} size={props.size} color={props.color} />
-  );
+function icon(name: keyof typeof Ionicons.glyphMap, activeName?: keyof typeof Ionicons.glyphMap) {
+  function TabBarIcon(props: { color: string; size: number; focused: boolean }) {
+    return <Ionicons name={props.focused && activeName ? activeName : name} size={props.size} color={props.color} />;
+  }
+  TabBarIcon.displayName = `TabBarIcon(${name})`;
+  return TabBarIcon;
+}
 
 const TAB_CONTENT_HEIGHT = 61;
 const MIN_BOTTOM_PADDING = 8;

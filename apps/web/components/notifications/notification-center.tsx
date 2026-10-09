@@ -7,7 +7,6 @@ import type {
   NotificationItem,
   NotificationListResponse,
   NotificationPreference,
-  NotificationUnreadCount,
   UpdateNotificationPreferencesRequest
 } from "@ninibu/types";
 import { formatJalaliDateTime, formatRelativeFa, toPersianDigits } from "@/lib/datetime";
@@ -28,10 +27,11 @@ export function NotificationCenter({ unreadCount, openRequest = 0 }: { unreadCou
   const [page, setPage] = useState(1);
 
   useEffect(() => {
-    if (openRequest > 0) {
+    if (openRequest <= 0) return;
+    queueMicrotask(() => {
       setView("inbox");
       setOpen(true);
-    }
+    });
   }, [openRequest]);
 
   const inboxQuery = useQuery({

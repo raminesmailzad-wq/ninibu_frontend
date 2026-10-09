@@ -109,6 +109,8 @@ export function JalaliDateInput({ value = "", onChange, required, disabled, clas
 
   useEffect(() => {
     const next = gregorianToJalaliInput(value);
+    // Controlled Gregorian values may change externally; keep the editable Jalali text synchronized.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (next && next !== visual) setVisual(next);
     if (!value && visual === "") setInvalid(false);
     // Typed partial values must not be overwritten while the parent still holds the last valid Gregorian value.

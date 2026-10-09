@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Boxes, CheckCircle2, ChevronLeft, CreditCard, Minus, Package, Plus, Search, ShoppingBag, ShoppingCart, Trash2, X } from "lucide-react";
+import { ArrowLeft, Boxes, CheckCircle2, ChevronLeft, Minus, Package, Plus, Search, ShoppingBag, ShoppingCart, Trash2, X } from "lucide-react";
 import type { CheckoutPreview, CommerceCart, CommerceOrder, CommerceOrderListResponse, CommerceProduct, CommerceCategory, Payment, ProductListResponse, ProductVariant, Profile } from "@ninibu/types";
 import { clientApi, NinibuApiError } from "@/lib/client-api";
 import { shopRouteState } from "@/lib/routes";
@@ -271,10 +271,13 @@ function OrderDetail({ orderId }: { orderId: number }) {
     setBusy(true);
     try { await clientApi(`/api/ninibu/commerce/orders/${orderId}/cancel`, { method: "POST", body: JSON.stringify({}) }); trackEvent("commerce_order_cancelled", { order_id: orderId }); await queryClient.invalidateQueries({ queryKey: ["commerce", "order", orderId] }); await queryClient.invalidateQueries({ queryKey: ["commerce", "orders"] }); } finally { setBusy(false); }
   }
+  const paymentProvider = process.env.NEXT_PUBLIC_NINIBU_PAYMENT_PROVIDER?.trim() || "disabled";
+  const paidCheckoutAvailable = paymentProvider !== "disabled";
   async function startPayment() {
+    if (!paidCheckoutAvailable) return;
     setBusy(true);
     try {
-      const created = await clientApi<Payment>(`/api/ninibu/commerce/orders/${orderId}/payments`, { method: "POST", headers: { "Idempotency-Key": crypto.randomUUID() }, body: JSON.stringify({ provider: process.env.NEXT_PUBLIC_NINIBU_PAYMENT_PROVIDER?.trim() || "sandbox" }) });
+      const created = await clientApi<Payment>(`/api/ninibu/commerce/orders/${orderId}/payments`, { method: "POST", headers: { "Idempotency-Key": crypto.randomUUID() }, body: JSON.stringify({ provider: paymentProvider }) });
       setPayment(created); trackEvent("commerce_payment_started", { funnel: "commerce_checkout", order_id: orderId, provider: created.provider });
       advanceFunnel("commerce_checkout", "active_cart", "payment", { order_id: orderId, provider: created.provider });
       if (created.redirect_url && /^https?:\/\//.test(created.redirect_url)) window.location.assign(created.redirect_url);
@@ -298,7 +301,8 @@ function OrderDetail({ orderId }: { orderId: number }) {
     {data && <div className="order-detail-body"><div className="order-detail-status"><span><CheckCircle2 size={20} /></span><div><strong>{statusLabel(data.status)}</strong><small>{formatJalaliDateTime(data.created_at)}</small></div><b>{money(data.payable_amount ?? data.items_subtotal, data.currency)}</b></div>
       {data.items?.length ? <div className="order-items">{data.items.map((item, index) => <div key={item.id ?? index}><Package size={17} /><div><strong>{item.title_snapshot || "آیتم سفارش"}</strong><small>{new Intl.NumberFormat("fa-IR").format(item.quantity)} عدد</small></div><span>{money(item.line_total, data.currency)}</span></div>)}</div> : null}
       {payment && <div className="payment-result-box"><strong>پرداخت: {statusLabel(payment.status)}</strong>{payment.provider === "sandbox" && payment.status !== "paid" && <div><Button disabled={busy} onClick={() => sandbox(true)}>پرداخت آزمایشی موفق</Button><Button variant="outline" disabled={busy} onClick={() => sandbox(false)}>پرداخت آزمایشی ناموفق</Button></div>}</div>}
-      <div className="order-actions">{payable && <Button disabled={busy} onClick={startPayment}>{busy ? "در حال پردازش…" : "پرداخت سفارش"}</Button>}{payable && <Button variant="outline" disabled={busy} onClick={cancel}>لغو سفارش</Button>}</div>
+      {payable && !paidCheckoutAvailable ? <div className="shop-state">پرداخت آنلاین در حال آماده‌سازی است. سفارش را می‌توانید فعلاً لغو کنید.</div> : null}
+      <div className="order-actions">{payable && <Button disabled={busy || !paidCheckoutAvailable} onClick={startPayment}>{busy ? "در حال پردازش…" : "پرداخت سفارش"}</Button>}{payable && <Button variant="outline" disabled={busy} onClick={cancel}>لغو سفارش</Button>}</div>
     </div>}
   </div>;
 }

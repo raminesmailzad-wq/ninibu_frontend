@@ -24,24 +24,23 @@ export function BookletImportModal({ childId, childName, birthDate, open, onClos
   const queryClient = useQueryClient();
   const [pageType, setPageType] = useState<DocumentImportPageType>("weight_for_age");
   const [file, setFile] = useState<File | null>(null);
-  const [preview, setPreview] = useState("");
   const [result, setResult] = useState<DocumentImport | null>(null);
   const [rows, setRows] = useState<ReviewRow[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    if (!file) { setPreview(""); return; }
-    const url = URL.createObjectURL(file);
-    setPreview(url);
-    return () => URL.revokeObjectURL(url);
-  }, [file]);
+  const preview = useMemo(() => file ? URL.createObjectURL(file) : "", [file]);
+  useEffect(() => () => { if (preview) URL.revokeObjectURL(preview); }, [preview]);
 
-  useEffect(() => {
-    if (!open) {
-      setPageType("weight_for_age"); setFile(null); setResult(null); setRows([]); setBusy(false); setError("");
-    }
-  }, [open]);
+  function resetAndClose() {
+    setPageType("weight_for_age");
+    setFile(null);
+    setResult(null);
+    setRows([]);
+    setBusy(false);
+    setError("");
+    onClose();
+  }
 
   const selectedPage = useMemo(() => pages.find((p) => p.value === pageType) ?? pages[0]!, [pageType]);
   const childAgeMonths = useMemo(() => completedAgeMonths(birthDate), [birthDate]);
@@ -98,16 +97,16 @@ export function BookletImportModal({ childId, childName, birthDate, open, onClos
         queryClient.invalidateQueries({ queryKey: ["child", childId, "growth-chart"] }),
         queryClient.invalidateQueries({ queryKey: ["child", childId, "growth-chart", "who"] }),
       ]);
-      onClose();
+      resetAndClose();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "ثبت مقادیر استخراج‌شده انجام نشد.");
     } finally { setBusy(false); }
   }
 
-  return <ModalPortal ariaLabel="انتقال سوابق رشد از دفترچه سلامت" onClose={busy ? () => undefined : onClose} closeOnBackdrop={!busy} contentClassName="booklet-import-modal">
+  return <ModalPortal ariaLabel="انتقال سوابق رشد از دفترچه سلامت" onClose={busy ? () => undefined : resetAndClose} closeOnBackdrop={!busy} contentClassName="booklet-import-modal">
     <header className="booklet-import-head">
       <div><span className="section-kicker">Smart Booklet Import</span><h2>انتقال رشد {childName} از دفترچه</h2><p>عکس فقط برای استخراج داده پردازش می‌شود و پس از تحلیل در نینیبو نگهداری نمی‌شود.</p></div>
-      <button type="button" className="booklet-close" onClick={onClose} disabled={busy} aria-label="بستن"><X size={20} /></button>
+      <button type="button" className="booklet-close" onClick={resetAndClose} disabled={busy} aria-label="بستن"><X size={20} /></button>
     </header>
 
     {!result ? <div className="booklet-import-body">
@@ -124,7 +123,7 @@ export function BookletImportModal({ childId, childName, birthDate, open, onClos
       </label>
       {file ? <div className="booklet-file-name"><Camera size={16} /><span>{file.name}</span><button type="button" onClick={() => setFile(null)}>تغییر عکس</button></div> : null}
       {error ? <div className="booklet-error">{error}</div> : null}
-      <div className="booklet-actions"><button type="button" className="primary" onClick={analyze} disabled={!file || busy}>{busy ? <LoaderCircle className="spin" size={18} /> : <Camera size={18} />}{busy ? "در حال تحلیل تصویر…" : "تحلیل و استخراج مقادیر"}</button><button type="button" onClick={onClose} disabled={busy}>انصراف</button></div>
+      <div className="booklet-actions"><button type="button" className="primary" onClick={analyze} disabled={!file || busy}>{busy ? <LoaderCircle className="spin" size={18} /> : <Camera size={18} />}{busy ? "در حال تحلیل تصویر…" : "تحلیل و استخراج مقادیر"}</button><button type="button" onClick={resetAndClose} disabled={busy}>انصراف</button></div>
     </div> : <div className="booklet-import-body">
       <div className="booklet-review-summary"><div><strong>{new Intl.NumberFormat("fa-IR").format(rows.length)}</strong><span>نقطه قابل بررسی</span></div><div><strong>{new Intl.NumberFormat("fa-IR", { style: "percent", maximumFractionDigits: 0 }).format(result.overall_confidence)}</strong><span>اطمینان تحلیل</span></div><p>سن به ماه کامل تبدیل شده و تاریخ هر ردیف از تاریخ تولد محاسبه شده است.</p></div>
       <div className="booklet-review-list">

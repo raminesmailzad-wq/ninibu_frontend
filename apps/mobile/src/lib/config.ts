@@ -12,3 +12,6 @@ export const API_BASE_URL = explicit || 'https://ninibu.com';
 export const APP_VERSION = Constants.expoConfig?.version || '0.24.2';
 export const METRO_DEV_PORT = 8082;
 export const API_DEBUG = __DEV__;
+
+export const PAYMENT_PROVIDER = process.env.EXPO_PUBLIC_NINIBU_PAYMENT_PROVIDER?.trim() || (__DEV__ ? 'sandbox' : 'disabled');
+export const PAID_CHECKOUT_AVAILABLE = PAYMENT_PROVIDER !== 'disabled';

@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
-import Ionicons from '@expo/vector-icons/Ionicons';
 import type { NotificationItem, NotificationListResponse, NotificationPreference, UpdateNotificationPreferencesRequest } from '@ninibu/types';
 import { formatJalaliDateTime } from '@ninibu/datetime';
 import { api, notificationApiPaths } from '@/lib/api';

@@ -57,6 +57,8 @@ export function ServiceBookingModal({
   const slots = useMemo(() => days.find((day) => day.date === activeDate)?.slots.filter((slot) => slot.available) ?? [], [days, activeDate]);
   const activeService = detailQuery.data ?? service;
   const analyticsFunnelKey = String(service.id);
+  const paymentProvider = process.env.NEXT_PUBLIC_NINIBU_PAYMENT_PROVIDER?.trim() || "disabled";
+  const paidCheckoutAvailable = paymentProvider !== "disabled";
 
   useEffect(() => {
     startFunnel("service_booking", analyticsFunnelKey, initialFunnelStage.current, { service_id: service.id });
@@ -114,6 +116,10 @@ export function ServiceBookingModal({
       onStageChange("schedule");
       return;
     }
+    if (activeService.price_amount > 0 && !paidCheckoutAvailable) {
+      setError("پرداخت آنلاین در حال آماده‌سازی است. فعلاً فقط خدمات رایگان قابل رزرو هستند.");
+      return;
+    }
     trackEvent("booking_submit_clicked", { funnel: "service_booking", step: "review", service_id: service.id });
     setSubmitting(true);
     setError("");
@@ -129,7 +135,7 @@ export function ServiceBookingModal({
         const createdPayment = await clientApi<Payment>(`/api/ninibu/commerce/orders/${created.order_id}/payments`, {
           method: "POST",
           headers: { "Idempotency-Key": crypto.randomUUID() },
-          body: JSON.stringify({ provider: process.env.NEXT_PUBLIC_NINIBU_PAYMENT_PROVIDER?.trim() || "sandbox" })
+          body: JSON.stringify({ provider: paymentProvider })
         });
         setPayment(createdPayment);
         writeBookingDraft(service.id, { selectedDate: activeDate, selectedSlot, attachChild, booking: created, payment: createdPayment, stage: "payment", serviceName: service.name });
@@ -274,7 +280,8 @@ export function ServiceBookingModal({
       <label className="service-notes"><span>یادداشت برای ارائه‌دهنده <small>اختیاری</small></span><Textarea value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="مثلاً توضیح کوتاه درباره هدف جلسه؛ اطلاعات پزشکی حساس را فقط در جای مناسب ثبت کنید." /></label>
       {stage === "review" && selectedSlot && <div className="booking-funnel-hint">زمان انتخاب شد؛ در صورت تأیید، مرحله بعد ثبت رزرو و در صورت نیاز پرداخت است.</div>}
       {error && <p className="service-error">{error}</p>}
-      <Button disabled={submitting || !selectedSlot} onClick={createBooking}>{submitting ? "در حال ثبت…" : activeService.price_amount > 0 ? "ادامه و پرداخت" : "ثبت رزرو رایگان"}</Button>
+      {activeService.price_amount > 0 && !paidCheckoutAvailable ? <p className="booking-payment-unavailable">پرداخت آنلاین در حال آماده‌سازی است؛ رزرو خدمات پولی موقتاً غیرفعال است.</p> : null}
+      <Button disabled={submitting || !selectedSlot || (activeService.price_amount > 0 && !paidCheckoutAvailable)} onClick={createBooking}>{submitting ? "در حال ثبت…" : activeService.price_amount > 0 ? "ادامه و پرداخت" : "ثبت رزرو رایگان"}</Button>
     </div>
   </ModalFrame>;
 }

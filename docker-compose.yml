@@ -7,7 +7,7 @@ services:
       network: host
       args:
         NEXT_PUBLIC_NINIBU_ANALYTICS_ENDPOINT: ""
-        NEXT_PUBLIC_NINIBU_PAYMENT_PROVIDER: "sandbox"
+        NEXT_PUBLIC_NINIBU_PAYMENT_PROVIDER: "${NEXT_PUBLIC_NINIBU_PAYMENT_PROVIDER:-disabled}"
     restart: unless-stopped
     environment:
       NODE_ENV: production

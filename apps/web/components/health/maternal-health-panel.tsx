@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { HeartHandshake, Sparkles, X } from "lucide-react";
 import type { MaternalGuidanceResponse, MaternalLifeStage, MaternalProfile } from "@ninibu/types";
@@ -70,15 +70,6 @@ function MaternalModal({ initialMode, profile, guidance, onClose }: { initialMod
   const [notes, setNotes] = useState(profile?.notes ?? "");
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    if (!profile) return;
-    setStage(profile.life_stage);
-    setFirstPeriodDate(profile.first_period_date ?? "");
-    setLastPeriodDate(profile.last_period_date ?? "");
-    setLastDeliveryDate(profile.last_delivery_date ?? "");
-    setBreastfeeding(profile.breastfeeding);
-    setNotes(profile.notes ?? "");
-  }, [profile]);
 
   const update = useMutation({
     mutationFn: () => clientApi<MaternalProfile>("/api/ninibu/maternal-health/profile", {

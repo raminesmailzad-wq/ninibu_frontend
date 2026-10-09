@@ -36,16 +36,16 @@ const GENDER_LABELS: Record<string, string> = {
 
 type ProfilePanelProps = {
   profile?: Profile;
-  children: Child[];
+  childItems: Child[];
   activeChildId?: number;
   onSelectChild: (childId: number) => void;
   onLogout: () => void;
 };
 
-export function ProfilePanel({ profile, children, activeChildId, onSelectChild, onLogout }: ProfilePanelProps) {
+export function ProfilePanel({ profile, childItems, activeChildId, onSelectChild, onLogout }: ProfilePanelProps) {
   const [modal, setModal] = useState<"parent" | "residence" | "child" | null>(null);
 
-  const ownerChildren = useMemo(() => children.filter((child) => child.access?.is_owner !== false), [children]);
+  const ownerChildren = useMemo(() => childItems.filter((child) => child.access?.is_owner !== false), [childItems]);
 
   return <section className="profile-page profile-v07">
     <div className="profile-hero-card profile-hero-v07">
@@ -70,7 +70,7 @@ export function ProfilePanel({ profile, children, activeChildId, onSelectChild, 
       </article>
       <article className="surface-card profile-overview-card">
         <span className="profile-card-icon"><ShieldCheck size={18} /></span>
-        <div><small>وضعیت حساب</small><strong>{profile?.onboarding_completed ? "راه‌اندازی کامل" : "نیاز به تکمیل"}</strong><p>{new Intl.NumberFormat("fa-IR").format(children.length)} فرزند متصل</p></div>
+        <div><small>وضعیت حساب</small><strong>{profile?.onboarding_completed ? "راه‌اندازی کامل" : "نیاز به تکمیل"}</strong><p>{new Intl.NumberFormat("fa-IR").format(childItems.length)} فرزند متصل</p></div>
       </article>
     </div>
 

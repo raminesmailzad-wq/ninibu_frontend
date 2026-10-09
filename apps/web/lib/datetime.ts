@@ -41,7 +41,7 @@ function isGregorianLeap(year: number): boolean {
 }
 
 export function jalaliToGregorian(year: number, month: number, day: number): GregorianDate {
-  let jalaliYear = year + 1595;
+  const jalaliYear = year + 1595;
   let days = -355668 + (365 * jalaliYear) + (div(jalaliYear, 33) * 8) + div((jalaliYear % 33) + 3, 4) + day;
   days += month < 7 ? (month - 1) * 31 : ((month - 7) * 30) + 186;
 

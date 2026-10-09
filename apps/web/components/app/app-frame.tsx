@@ -148,7 +148,7 @@ export function AppFrame({ onLogout }: { onLogout: () => void }) {
         {section === "discover" && <><SponsoredSlot placement="public_content_list" className="section-sponsored-slot" /><DiscoverHub child={activeChild} profile={profile} /></>}
         {section === "services" && <ServicesHub child={activeChild} profile={profile} />}
         {section === "shop" && <ShopHub profile={profile} />}
-        {section === "profile" && <ProfilePanel profile={profile} children={children} activeChildId={activeChild.id} onSelectChild={changeActiveChild} onLogout={logout} />}
+        {section === "profile" && <ProfilePanel profile={profile} childItems={children} activeChildId={activeChild.id} onSelectChild={changeActiveChild} onLogout={logout} />}
       </div>
     </main>
 
