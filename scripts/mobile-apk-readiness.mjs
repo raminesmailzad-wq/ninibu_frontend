@@ -25,6 +25,9 @@ if (app.android?.package !== 'com.ninibu.app') problems.push('Android package ب
 if (!Number.isInteger(app.android?.versionCode) || app.android.versionCode < 1) problems.push('android.versionCode معتبر نیست');
 if (eas?.build?.preview?.android?.buildType !== 'apk') problems.push('EAS preview باید android.buildType=apk داشته باشد');
 if (eas?.build?.preview?.env?.EXPO_PUBLIC_NINIBU_BACKEND_URL !== 'https://ninibu.com') problems.push('Backend URL پروفایل preview باید https://ninibu.com باشد');
+if (eas?.build?.production?.env?.EXPO_PUBLIC_NINIBU_BACKEND_URL !== 'https://ninibu.com') problems.push('Backend URL پروفایل production باید https://ninibu.com باشد');
+if (eas?.build?.preview?.env?.EXPO_PUBLIC_NINIBU_PAYMENT_PROVIDER !== 'disabled') problems.push('Payment provider پروفایل preview باید disabled باشد');
+if (eas?.build?.production?.env?.EXPO_PUBLIC_NINIBU_PAYMENT_PROVIDER !== 'disabled') problems.push('Payment provider پروفایل production باید disabled باشد');
 
 for (const dependency of ['expo', 'expo-router', 'expo-font', 'expo-secure-store', 'expo-splash-screen', 'expo-location', 'expo-linking', 'expo-system-ui', 'expo-camera', 'expo-image-picker', 'react-native-webview', 'react', 'react-native']) {
   if (!mobilePackage.dependencies?.[dependency]) problems.push(`dependency لازم وجود ندارد: ${dependency}`);
