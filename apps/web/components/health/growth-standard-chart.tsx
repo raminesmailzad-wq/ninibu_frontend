@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Activity, Info, Ruler, Scale, SmilePlus } from "lucide-react";
-import type { GrowthAssessmentPoint, GrowthChart, GrowthIndicator, GrowthReferencePoint } from "@ninibu/types";
+import type { GrowthChart, GrowthIndicator, GrowthReferencePoint } from "@ninibu/types";
 import { formatDate, formatNumber } from "@/lib/format";
 
 const WIDTH = 760;

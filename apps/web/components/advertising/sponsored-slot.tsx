@@ -48,7 +48,7 @@ export function SponsoredSlot({ placement, className = "" }: { placement: SafeAd
     if (!item || !delivery?.request_id || impressions.current.has(item.creative.id)) return;
     impressions.current.add(item.creative.id);
     void clientApi("/api/ninibu/advertising/events", { method: "POST", body: JSON.stringify(eventBody(delivery.request_id, item.creative.id, "impression", { screen: placement })) }).catch(() => undefined);
-  }, [item, delivery?.request_id]);
+  }, [item, delivery?.request_id, placement]);
 
   if (!item || !delivery?.request_id) return null;
   const activeItem = item;

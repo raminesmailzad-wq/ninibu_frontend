@@ -76,7 +76,7 @@ function ServiceCatalog({ child }: { child: Child }) {
     if (!routeState) return;
     const href = bookingRoute(routeState.serviceId, stage);
     if (href !== pathname) router.replace(href);
-  }, [routeState?.serviceId, pathname, router]);
+  }, [routeState, pathname, router]);
 
   return <div className="service-catalog">
     <div className="service-toolbar surface-card"><label className="service-search"><Search size={17} /><Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="جست‌وجوی مشاور، دوره یا خدمت…" /></label><Select value={categoryId} onChange={(event) => setCategoryId(event.target.value)}><option value="">همه دسته‌ها</option>{categories.data?.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</Select></div>

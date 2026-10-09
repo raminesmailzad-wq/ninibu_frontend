@@ -8,10 +8,10 @@ import { api, apiPaths } from '@/lib/api';
 import { Badge, Button, Card, ChoiceModal, EmptyState, ErrorState, Field, FormModal, Header, IconButton, Loading, Screen, SectionTitle, SegmentedControl, SelectField } from '@/components/ui';
 import { colors, typography } from '@/theme';
 
-const reactions: Array<{ type: CommunityReactionType; label: string }> = [
+const reactions: { type: CommunityReactionType; label: string }[] = [
   { type: 'like', label: 'پسند' }, { type: 'helpful', label: 'مفید' }, { type: 'support', label: 'همراهی' }, { type: 'thanks', label: 'سپاس' },
 ];
-const reportReasons: Array<{ id: number; value: CommunityReportReason; label: string }> = [
+const reportReasons: { id: number; value: CommunityReportReason; label: string }[] = [
   { id: 1, value: 'medical_misinformation', label: 'اطلاعات پزشکی نادرست' }, { id: 2, value: 'dangerous_advice', label: 'توصیه خطرناک' }, { id: 3, value: 'harassment', label: 'آزار یا توهین' }, { id: 4, value: 'spam', label: 'اسپم' }, { id: 5, value: 'advertising', label: 'تبلیغ نامرتبط' }, { id: 6, value: 'privacy_violation', label: 'نقض حریم خصوصی' }, { id: 7, value: 'inappropriate_content', label: 'محتوای نامناسب' }, { id: 8, value: 'other', label: 'سایر' },
 ];
 

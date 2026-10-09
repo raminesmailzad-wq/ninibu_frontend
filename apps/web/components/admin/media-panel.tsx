@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { File, FileImage, Link2, Pencil, Plus, RefreshCw, Trash2, UploadCloud } from "lucide-react";
+import { File, FileImage, Link2, Pencil, RefreshCw, Trash2, UploadCloud } from "lucide-react";
 import type { AdminKnowledgeList, AdminMediaAsset, AdminMediaList } from "@ninibu/types";
 import { clientApi } from "@/lib/client-api";
 import { Button } from "@/components/ui/button";

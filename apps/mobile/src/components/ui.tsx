@@ -342,7 +342,7 @@ export function FormModal({ visible, title, subtitle, onClose, children }: { vis
   </Modal>;
 }
 
-export function SegmentedControl<T extends string>({ items, value, onChange }: { items: Array<{ value: T; label: string }>; value: T; onChange: (value: T) => void }) {
+export function SegmentedControl<T extends string>({ items, value, onChange }: { items: { value: T; label: string }[]; value: T; onChange: (value: T) => void }) {
   return <View style={s.segmented}>
     {items.map((item) => <Pressable key={item.value} onPress={() => onChange(item.value)} style={[s.segment, value === item.value && s.segmentActive]}>
       <Text style={[s.segmentText, value === item.value && s.segmentTextActive]}>{item.label}</Text>

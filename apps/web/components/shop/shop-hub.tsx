@@ -293,7 +293,7 @@ function OrderDetail({ orderId }: { orderId: number }) {
     if (data && ["paid", "confirmed", "completed", "fulfilled"].includes(data.status)) {
       completeFunnel("commerce_checkout", "active_cart", { order_id: data.id, status: data.status });
     }
-  }, [data?.id, data?.status]);
+  }, [data]);
   const payable = data && ["pending_payment", "created", "pending"].includes(data.status) && data.status !== "cancelled";
   return <div className="shop-panel surface-card order-detail"><header className="shop-panel-heading"><div><span className="shop-panel-icon"><Package size={20} /></span><div><span className="eyebrow">جزئیات سفارش</span><h2>{data?.order_number || `سفارش ${new Intl.NumberFormat("fa-IR").format(orderId)}`}</h2></div></div><button className="text-link" onClick={() => router.push("/shop/orders")}>همه سفارش‌ها <ArrowLeft size={14} /></button></header>
     {order.isLoading && <div className="shop-state">در حال دریافت سفارش…</div>}

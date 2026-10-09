@@ -31,7 +31,7 @@ import {
 import { useChild } from '@/providers/ChildProvider';
 import { colors, typography } from '@/theme';
 
-const stages: Array<{ id: number; key: MaternalLifeStage; label: string }> = [
+const stages: { id: number; key: MaternalLifeStage; label: string }[] = [
   { id: 1, key: 'menstrual', label: 'چرخه و سلامت عمومی' },
   { id: 2, key: 'preconception', label: 'آمادگی برای بارداری' },
   { id: 3, key: 'pregnancy', label: 'بارداری' },

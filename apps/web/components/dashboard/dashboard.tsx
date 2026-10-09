@@ -39,7 +39,7 @@ export function Dashboard({ child, profile, unreadCount, onQuickAction, onOpenHe
   const resumeDraft = bookingDrafts[0];
   const upcomingBooking = useMemo(() => dedupeBookings(bookings.data?.items ?? [])
     .filter((item) => item.status === "confirmed" && Date.parse(item.starts_at) >= now)
-    .sort((a, b) => Date.parse(a.starts_at) - Date.parse(b.starts_at))[0], [bookings.data]);
+    .sort((a, b) => Date.parse(a.starts_at) - Date.parse(b.starts_at))[0], [bookings.data, now]);
   const consultationWaiting = useMemo(() => (consultations.data?.items ?? [])
     .filter((item) => item.status === "waiting_for_parent")
     .sort((a, b) => Date.parse(b.updated_at) - Date.parse(a.updated_at))[0], [consultations.data]);

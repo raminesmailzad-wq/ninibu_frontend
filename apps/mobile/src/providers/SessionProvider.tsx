@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { Profile, User } from '@ninibu/types';
 import { ApiError, api, apiPaths, logout as clearSession } from '@/lib/api';
 import { getTokens } from '@/lib/storage';
@@ -26,7 +26,7 @@ export function SessionProvider({children}:{children:ReactNode}){
   const [user,setUser]=useState<User>();
   const [profile,setProfile]=useState<Profile>();
 
-  async function loadSession(strict:boolean){
+  const loadSession=useCallback(async(strict:boolean)=>{
     const tokens=await getTokens();
     sessionLog('load session', { strict, hasTokens: !!tokens, hasAccessToken: !!tokens?.accessToken, hasRefreshToken: !!tokens?.refreshToken });
     if(!tokens){
@@ -68,12 +68,12 @@ export function SessionProvider({children}:{children:ReactNode}){
     }finally{
       setReady(true);
     }
-  }
+  },[]);
 
-  async function refresh(){ await loadSession(false); }
-  async function signedIn(){ await loadSession(true); }
+  const refresh=useCallback(async()=>{ await loadSession(false); },[loadSession]);
+  const signedIn=useCallback(async()=>{ await loadSession(true); },[loadSession]);
 
-  useEffect(()=>{ void refresh(); },[]);
+  useEffect(()=>{ void refresh(); },[refresh]);
 
   const value=useMemo(()=>({
     ready,
@@ -88,7 +88,7 @@ export function SessionProvider({children}:{children:ReactNode}){
       setUser(undefined);
       setProfile(undefined);
     }
-  }),[ready,user,profile]);
+  }),[ready,user,profile,refresh,signedIn]);
 
   return <Context.Provider value={value}>{children}</Context.Provider>;
 }

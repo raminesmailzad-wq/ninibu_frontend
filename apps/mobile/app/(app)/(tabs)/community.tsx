@@ -21,13 +21,13 @@ import { SponsoredSlot } from '@/components/SponsoredSlot';
 import { useSession } from '@/providers/SessionProvider';
 
 type Tab = 'feed' | 'groups' | 'mine';
-const reactionOptions: Array<{ type: CommunityReactionType; label: string; emoji: string }> = [
+const reactionOptions: { type: CommunityReactionType; label: string; emoji: string }[] = [
   { type: 'like', label: 'پسند', emoji: '♡' },
   { type: 'helpful', label: 'مفید', emoji: '✓' },
   { type: 'support', label: 'همراهی', emoji: '🤝' },
   { type: 'thanks', label: 'سپاس', emoji: '🙏' },
 ];
-const postTypes: Array<{ id: number; value: CommunityPostType; label: string }> = [
+const postTypes: { id: number; value: CommunityPostType; label: string }[] = [
   { id: 1, value: 'question', label: 'پرسش' }, { id: 2, value: 'experience', label: 'تجربه' }, { id: 3, value: 'discussion', label: 'گفت‌وگو' }, { id: 4, value: 'tip', label: 'نکته' },
 ];
 

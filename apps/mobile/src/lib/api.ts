@@ -71,7 +71,7 @@ export function resolveApiMessage(failure?: ApiFailure, status = 0, fallback = '
   if (message) {
     if (/[؀-ۿ]/.test(message)) return message;
     const normalized = message.toLowerCase();
-    const phrases: Array<[RegExp, string]> = [
+    const phrases: [RegExp, string][] = [
       [/invalid credentials|wrong password|bad credentials/, 'شماره موبایل یا رمز عبور صحیح نیست.'],
       [/unauthorized|invalid token|token expired|session not found/, 'نشست شما معتبر نیست. لطفاً دوباره وارد شوید.'],
       [/forbidden|access denied/, 'شما به این بخش دسترسی ندارید.'],

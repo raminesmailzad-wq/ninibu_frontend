@@ -12,6 +12,7 @@
     "lint": "turbo lint",
     "typecheck": "turbo typecheck",
     "test": "turbo test",
+    "verify": "pnpm typecheck && pnpm lint && pnpm test && pnpm build",
     "audit:dates": "node scripts/audit-dates.mjs",
     "dev:web": "pnpm --filter @ninibu/web dev",
     "dev:mobile": "pnpm --filter @ninibu/mobile start",

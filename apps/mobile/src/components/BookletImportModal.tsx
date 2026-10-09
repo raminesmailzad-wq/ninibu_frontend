@@ -12,7 +12,7 @@ import { colors, typography } from '@/theme';
 type Asset = { uri: string; fileName?: string | null; mimeType?: string | null; width?: number; height?: number };
 type ReviewRow = { itemId: number; accepted: boolean; measuredAt: string; value: string; confidence: number; warning?: string; unit: string; ageMonths: number };
 
-const pages: Array<{ value: DocumentImportPageType; title: string; hint: string }> = [
+const pages: { value: DocumentImportPageType; title: string; hint: string }[] = [
   { value: 'weight_for_age', title: 'وزن نسبت به سن', hint: 'پنل سال اول؛ ۰ تا ۱۲ ماه' },
   { value: 'height_for_age', title: 'قد نسبت به سن', hint: 'از تولد تا ۵ سالگی' },
   { value: 'head_circumference_for_age', title: 'دور سر نسبت به سن', hint: 'از تولد تا ۲ سالگی' },
