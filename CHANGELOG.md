@@ -1,3 +1,13 @@
+# v0.24.3 — Keyboard-safe forms and optional child onboarding
+
+- Mobile form modals remain scrollable with the keyboard open and focused shared fields are brought into view automatically.
+- Mobile Jalali date entry is selection-only for year, month and valid day; numeric typing is no longer required.
+- Child creation is optional during onboarding for users before birth or before they are ready to add a child profile.
+- Child-scoped health capabilities are gated until a child exists, while maternal health, community, discovery/content, services/consultations, shop and account features remain available.
+- Web mirrors the no-child state and keeps general discovery/services usable without fabricating a child context.
+- Version alignment: root/Web/Mobile/shared packages `0.24.3`, Android versionCode `40`, Docker image default `ninibu-frontend:0.24.3`.
+- Requires Backend v0.31.3 for child-optional onboarding completion.
+
 # v0.24.2 — Smart Booklet camera + DOB accuracy fix
 
 - Added a dedicated native Expo camera screen with an explicit wide booklet-page frame. The phone stays portrait while the physical growth-chart page is placed landscape inside the guide.
