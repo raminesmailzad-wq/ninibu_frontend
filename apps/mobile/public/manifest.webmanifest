@@ -1,0 +1,16 @@
+{
+  "name": "نینیبو | همراه هوشمند والدین",
+  "short_name": "نینیبو",
+  "description": "همراه والدین برای رشد، سلامت و تجربه بهتر خانواده",
+  "lang": "fa",
+  "dir": "rtl",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F8F7FB",
+  "theme_color": "#F8F7FB",
+  "icons": [
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

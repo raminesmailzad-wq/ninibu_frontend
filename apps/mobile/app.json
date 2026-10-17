@@ -82,6 +82,17 @@
       "eas": {
         "projectId": "e614fc0c-d8b4-4521-8916-e4558762fa94"
       }
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/icon.png",
+      "name": "نینیبو",
+      "shortName": "نینیبو",
+      "lang": "fa",
+      "dir": "rtl",
+      "themeColor": "#F8F7FB",
+      "backgroundColor": "#F8F7FB"
     }
   }
 }

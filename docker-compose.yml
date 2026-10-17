@@ -28,6 +28,24 @@ services:
       retries: 5
       start_period: 30s
 
+  pwa:
+    image: ${NINIBU_PWA_IMAGE:-ninibu-pwa:0.24.3}
+    build:
+      context: .
+      dockerfile: Dockerfile.pwa
+      network: host
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3001:8080"
+    networks:
+      - ninibu_backend
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8080/ || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
 networks:
   ninibu_backend:
     external: true

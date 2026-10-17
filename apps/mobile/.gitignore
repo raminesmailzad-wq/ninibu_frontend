@@ -3,3 +3,5 @@ node_modules/
 app-example/
 .env
 *.log
+
+dist/
