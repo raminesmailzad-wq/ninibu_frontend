@@ -24,57 +24,71 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { colors, shadow, typography } from '@/theme';
 import { gregorianToJalaliInput, isValidJalaliDate, jalaliInputToGregorian, todayJalaliInput, toPersianDigits } from '@ninibu/datetime';
 
-type KeyboardScrollValue = { ensureVisible: (target: View | null) => void };
+type KeyboardScrollValue = {
+  ensureVisible: (target: View | null) => void;
+};
 const KeyboardScrollContext = createContext<KeyboardScrollValue | null>(null);
 
-function useKeyboardScroll(scrollRef: RefObject<ScrollView | null>) {
+function useKeyboardScroll(scrollRef: RefObject<ScrollView | null>, contentRef: RefObject<View | null>) {
   const activeTargetRef = useRef<View | null>(null);
 
-  const scrollTargetToTop = useCallback((target: View | null) => {
+  const scrollTargetToTop = useCallback((target: View | null, animated = true) => {
     const scroll = scrollRef.current;
-    const scrollNode = scroll ? findNodeHandle(scroll) : null;
-    if (!target || !scroll || !scrollNode) return;
+    const contentNode = contentRef.current ? findNodeHandle(contentRef.current) : null;
+    if (!target || !scroll || !contentNode) return;
     target.measureLayout(
-      scrollNode,
-      (_x, y) => scroll.scrollTo({ y: Math.max(0, y - 6), animated: true }),
+      contentNode,
+      (_x, y) => scroll.scrollTo({ y: Math.max(0, y - 2), animated }),
       () => undefined,
     );
-  }, [scrollRef]);
+  }, [contentRef, scrollRef]);
 
   const ensureVisible = useCallback((target: View | null) => {
     activeTargetRef.current = target;
     requestAnimationFrame(() => scrollTargetToTop(target));
-    // Android changes the available viewport while the keyboard animates.
-    // Re-anchor the whole field (label + input) once the layout has settled.
-    setTimeout(() => scrollTargetToTop(target), 140);
-    setTimeout(() => scrollTargetToTop(target), 340);
+    setTimeout(() => scrollTargetToTop(target), 120);
+    setTimeout(() => scrollTargetToTop(target), 280);
+    setTimeout(() => scrollTargetToTop(target), 520);
   }, [scrollTargetToTop]);
 
   useEffect(() => {
-    const subscription = Keyboard.addListener('keyboardDidShow', () => {
+    const shown = Keyboard.addListener('keyboardDidShow', () => {
       const target = activeTargetRef.current;
       if (!target) return;
       requestAnimationFrame(() => scrollTargetToTop(target));
       setTimeout(() => scrollTargetToTop(target), 100);
     });
-    return () => subscription.remove();
+    return () => shown.remove();
   }, [scrollTargetToTop]);
 
   return useMemo<KeyboardScrollValue>(() => ({ ensureVisible }), [ensureVisible]);
 }
 
-export function KeyboardAwareScrollView({ children, ...props }: ScrollViewProps & { children: ReactNode }) {
+export function KeyboardAwareScrollView({ children, contentContainerStyle, ...props }: ScrollViewProps & { children: ReactNode }) {
   const scrollRef = useRef<ScrollView>(null);
-  const keyboardScroll = useKeyboardScroll(scrollRef);
+  const contentRef = useRef<View>(null);
+  const keyboardScroll = useKeyboardScroll(scrollRef, contentRef);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+
+  useEffect(() => {
+    const shown = Keyboard.addListener('keyboardDidShow', (event) => setKeyboardHeight(event.endCoordinates.height));
+    const hidden = Keyboard.addListener('keyboardDidHide', () => setKeyboardHeight(0));
+    return () => { shown.remove(); hidden.remove(); };
+  }, []);
+
+  const keyboardSpacer = keyboardHeight > 0 ? Math.max(420, Math.ceil(keyboardHeight * 0.9)) : 0;
+
   return <ScrollView
+    {...props}
     ref={scrollRef}
     keyboardShouldPersistTaps="handled"
     keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
-    automaticallyAdjustKeyboardInsets
+    automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
     nestedScrollEnabled
-    {...props}
   >
-    <KeyboardScrollContext.Provider value={keyboardScroll}>{children}</KeyboardScrollContext.Provider>
+    <View ref={contentRef} collapsable={false} style={[contentContainerStyle, keyboardSpacer ? { paddingBottom: keyboardSpacer } : undefined]}>
+      <KeyboardScrollContext.Provider value={keyboardScroll}>{children}</KeyboardScrollContext.Provider>
+    </View>
   </ScrollView>;
 }
 
@@ -91,22 +105,15 @@ export function Screen({
   scroll?: boolean;
   contentStyle?: StyleProp<ViewStyle>;
 }) {
-  const scrollRef = useRef<ScrollView>(null);
-  const keyboardScroll = useKeyboardScroll(scrollRef);
   const body = scroll ? (
-    <ScrollView
-      ref={scrollRef}
-      keyboardShouldPersistTaps="handled"
-      keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
-      automaticallyAdjustKeyboardInsets
+    <KeyboardAwareScrollView
       showsVerticalScrollIndicator={false}
-      nestedScrollEnabled
       contentInsetAdjustmentBehavior="automatic"
       contentContainerStyle={[s.screenContent, contentStyle]}
       refreshControl={onRefresh ? <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} /> : undefined}
     >
-      <KeyboardScrollContext.Provider value={keyboardScroll}>{children}</KeyboardScrollContext.Provider>
-    </ScrollView>
+      {children}
+    </KeyboardAwareScrollView>
   ) : (
     <View style={[s.screenContent, { flex: 1 }, contentStyle]}>{children}</View>
   );
@@ -213,14 +220,16 @@ export function Field({
   const inputRef = useRef<TextInputType>(null);
   const fieldRef = useRef<View>(null);
   const keyboardScroll = useContext(KeyboardScrollContext);
+  const [focused, setFocused] = useState(false);
   return <View ref={fieldRef} collapsable={false} style={s.field}>
     <View style={s.labelRow}>
-      <Text style={s.label}>{label}</Text>
+      <Text style={[s.label, focused && s.labelFocused]}>{label}</Text>
       {hint ? <Text style={s.hint}>{hint}</Text> : null}
     </View>
     <TextInput
       ref={inputRef}
-      onFocus={() => keyboardScroll?.ensureVisible(fieldRef.current)}
+      onFocus={() => { setFocused(true); keyboardScroll?.ensureVisible(fieldRef.current); }}
+      onBlur={() => setFocused(false)}
       value={value}
       onChangeText={onChangeText}
       placeholder={placeholder}
@@ -233,7 +242,7 @@ export function Field({
       autoCapitalize="none"
       textAlign="right"
       selectionColor={colors.primary}
-      style={[s.input, multiline && s.inputMultiline, !editable && s.inputDisabled, error && s.inputError]}
+      style={[s.input, multiline && s.inputMultiline, focused && s.inputFocused, !editable && s.inputDisabled, error && s.inputError]}
     />
     {error ? <Text style={s.errorText}>{error}</Text> : null}
   </View>;
@@ -423,8 +432,6 @@ export function JalaliDateModalInput({ label, value, onChange, required = false 
 
 export function FormModal({ visible, title, subtitle, onClose, children }: { visible: boolean; title: string; subtitle?: string; onClose: () => void; children: ReactNode }) {
   const insets = useSafeAreaInsets();
-  const scrollRef = useRef<ScrollView>(null);
-  const keyboardScroll = useKeyboardScroll(scrollRef);
   return <Modal visible={visible} transparent statusBarTranslucent animationType="fade" onRequestClose={onClose}>
     <View style={s.modalRoot}>
       <Pressable style={s.scrim} onPress={onClose} />
@@ -437,19 +444,12 @@ export function FormModal({ visible, title, subtitle, onClose, children }: { vis
             </View>
             <IconButton icon="close" onPress={onClose} label="بستن" />
           </View>
-          <KeyboardScrollContext.Provider value={keyboardScroll}>
-            <ScrollView
-              ref={scrollRef}
-              keyboardShouldPersistTaps="handled"
-              keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
-              automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
-              showsVerticalScrollIndicator
-              nestedScrollEnabled
-              contentContainerStyle={[s.formModalBody, { paddingBottom: Math.max(180, insets.bottom + 120) }]}
-            >
-              {children}
-            </ScrollView>
-          </KeyboardScrollContext.Provider>
+          <KeyboardAwareScrollView
+            showsVerticalScrollIndicator
+            contentContainerStyle={[s.formModalBody, { paddingBottom: Math.max(56, insets.bottom + 36) }]}
+          >
+            {children}
+          </KeyboardAwareScrollView>
         </View>
       </KeyboardAvoidingView>
     </View>
@@ -501,9 +501,11 @@ const s = StyleSheet.create({
   field: { gap: 7, minWidth: 0 },
   labelRow: { flexDirection: 'row-reverse', justifyContent: 'space-between', gap: 8 },
   label: { fontFamily: typography.bold, fontSize: 12.5, fontWeight: '800', color: colors.foreground, textAlign: 'right', writingDirection: 'rtl' },
+  labelFocused: { color: colors.primaryStrong },
   hint: { fontFamily: typography.regular, fontSize: 10, color: colors.muted, textAlign: 'left' },
   input: { fontFamily: typography.regular, minHeight: 50, borderRadius: 15, borderWidth: 1, borderColor: colors.border, backgroundColor: '#fff', paddingHorizontal: 14, color: colors.foreground, fontSize: 14, writingDirection: 'rtl' },
   inputMultiline: { fontFamily: typography.regular, minHeight: 112, paddingTop: 12, paddingBottom: 12, textAlignVertical: 'top' },
+  inputFocused: { borderColor: colors.primary, borderWidth: 2, backgroundColor: '#FCFBFF' },
   inputDisabled: { fontFamily: typography.regular, opacity: 0.65, backgroundColor: colors.mutedBackground },
   inputError: { fontFamily: typography.regular, borderColor: '#E9A2B0' },
   errorText: { fontFamily: typography.regular, fontSize: 10.5, color: colors.danger, textAlign: 'right', writingDirection: 'rtl', lineHeight: 18 },
@@ -530,7 +532,7 @@ const s = StyleSheet.create({
   choice: { minHeight: 56, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border, flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 6 },
   choiceSelected: { backgroundColor: colors.primarySoft, borderRadius: 14 },
   choiceText: { fontFamily: typography.regular, fontSize: 13.5, color: colors.foreground, writingDirection: 'rtl', textAlign: 'right' },
-  choiceTextSelected: { fontFamily: typography.bold, color: colors.primaryStrong, fontWeight: '900' },
+  choiceTextSelected: { color: colors.primaryStrong },
   select: { minHeight: 50, borderRadius: 15, borderWidth: 1, borderColor: colors.border, backgroundColor: '#fff', paddingHorizontal: 14, flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
   selectText: { fontFamily: typography.regular, flex: 1, fontSize: 13.5, color: colors.foreground, writingDirection: 'rtl', textAlign: 'right' },
   placeholder: { fontFamily: typography.regular, color: '#A39CAB' },

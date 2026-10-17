@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { href } from '@/lib/navigation';
@@ -39,6 +39,13 @@ export default function ProfileScreen() {
   async function logout() {
     await session.signOut();
     router.replace(href('/login'));
+  }
+
+  function confirmLogout() {
+    Alert.alert('خروج از حساب', 'می‌خواهید از حساب نینیبو خارج شوید؟', [
+      { text: 'انصراف', style: 'cancel' },
+      { text: 'خروج', style: 'destructive', onPress: () => void logout() },
+    ]);
   }
 
   async function saveAds() {
@@ -105,7 +112,7 @@ export default function ProfileScreen() {
       <Button title="ذخیره تنظیمات تبلیغات" variant="secondary" loading={adBusy} onPress={saveAds} />
     </Card>
 
-    <Button title="خروج از حساب" variant="danger" icon="log-out-outline" onPress={logout} />
+    <Button title="خروج از حساب" variant="danger" icon="log-out-outline" onPress={confirmLogout} />
 
     {edit ? <ProfileModal
       mode={edit}
