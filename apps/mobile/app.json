@@ -14,7 +14,7 @@
       "config": {
         "usesNonExemptEncryption": false
       },
-      "buildNumber": "43"
+      "buildNumber": "44"
     },
     "android": {
       "package": "com.ninibu.app",
@@ -24,7 +24,7 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": true,
-      "versionCode": 43,
+      "versionCode": 44,
       "blockedPermissions": [
         "android.permission.SYSTEM_ALERT_WINDOW"
       ],
