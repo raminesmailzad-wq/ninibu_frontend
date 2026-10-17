@@ -23,7 +23,7 @@ export function ServiceBookingModal({
   onViewBookings,
 }: {
   service: ServiceOffering;
-  child: Child;
+  child?: Child;
   stage: BookingStage;
   onStageChange: (stage: BookingStage) => void;
   onClose: () => void;
@@ -33,7 +33,7 @@ export function ServiceBookingModal({
   const initialDraft = useMemo(() => readBookingDraft(service.id), [service.id]);
   const [selectedDate, setSelectedDate] = useState(initialDraft.selectedDate ?? "");
   const [selectedSlot, setSelectedSlot] = useState(initialDraft.selectedSlot ?? "");
-  const [attachChild, setAttachChild] = useState(initialDraft.attachChild ?? true);
+  const [attachChild, setAttachChild] = useState(child ? (initialDraft.attachChild ?? true) : false);
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -127,7 +127,7 @@ export function ServiceBookingModal({
       const created = await clientApi<Booking>("/api/ninibu/bookings", {
         method: "POST",
         headers: { "Idempotency-Key": crypto.randomUUID() },
-        body: JSON.stringify({ service_offering_id: service.id, child_id: attachChild ? child.id : undefined, starts_at: selectedSlot, notes: notes.trim() })
+        body: JSON.stringify({ service_offering_id: service.id, child_id: attachChild && child ? child.id : undefined, starts_at: selectedSlot, notes: notes.trim() })
       });
       setBooking(created);
       await queryClient.invalidateQueries({ queryKey: ["bookings"] });
@@ -276,7 +276,7 @@ export function ServiceBookingModal({
         </>}
       </section>
 
-      <label className="attach-child-row"><input type="checkbox" checked={attachChild} onChange={(event) => setAttachChild(event.target.checked)} /><span><strong>این رزرو برای {child.first_name} است</strong><small>رزرو کودک فقط کودک را به وقت مرتبط می‌کند و دسترسی درمانی جدیدی به ارائه‌دهنده نمی‌دهد.</small></span></label>
+      {child ? <label className="attach-child-row"><input type="checkbox" checked={attachChild} onChange={(event) => setAttachChild(event.target.checked)} /><span><strong>این رزرو برای {child.first_name} است</strong><small>رزرو کودک فقط کودک را به وقت مرتبط می‌کند و دسترسی درمانی جدیدی به ارائه‌دهنده نمی‌دهد.</small></span></label> : null}
       <label className="service-notes"><span>یادداشت برای ارائه‌دهنده <small>اختیاری</small></span><Textarea value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="مثلاً توضیح کوتاه درباره هدف جلسه؛ اطلاعات پزشکی حساس را فقط در جای مناسب ثبت کنید." /></label>
       {stage === "review" && selectedSlot && <div className="booking-funnel-hint">زمان انتخاب شد؛ در صورت تأیید، مرحله بعد ثبت رزرو و در صورت نیاز پرداخت است.</div>}
       {error && <p className="service-error">{error}</p>}

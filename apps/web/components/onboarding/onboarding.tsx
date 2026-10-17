@@ -76,13 +76,24 @@ export function Onboarding({ onComplete }: { onComplete: () => void }) {
     finally { setLoading(false); }
   }
 
+  async function finishOnboarding() {
+    await api("/api/ninibu/profile/onboarding/complete", { method: "POST", body: JSON.stringify({ skip_preferences: true }) });
+    onComplete();
+  }
+
   async function saveChild() {
     setLoading(true); setError("");
     try {
       await api("/api/ninibu/children", { method: "POST", body: JSON.stringify({ ...child, blood_type: null, birth_weight_grams: null, birth_height_cm: null, birth_head_circumference_cm: null, notes: "" }) });
-      await api("/api/ninibu/profile/onboarding/complete", { method: "POST", body: JSON.stringify({ skip_preferences: true }) });
-      onComplete();
+      await finishOnboarding();
     } catch (cause) { setError(cause instanceof Error ? cause.message : "ثبت فرزند انجام نشد"); }
+    finally { setLoading(false); }
+  }
+
+  async function skipChild() {
+    setLoading(true); setError("");
+    try { await finishOnboarding(); }
+    catch (cause) { setError(cause instanceof Error ? cause.message : "تکمیل راه‌اندازی انجام نشد"); }
     finally { setLoading(false); }
   }
 
@@ -109,11 +120,11 @@ export function Onboarding({ onComplete }: { onComplete: () => void }) {
     </div>}
 
     {step === "child" && <div className="panel">
-      <h1>فرزندتان را اضافه کنید</h1><p>اطلاعات پزشکی را بعداً از بخش سلامت تکمیل می‌کنید.</p>
+      <h1>اگر فرزندی دارید، اضافه کنید</h1><p>این مرحله اختیاری است. اگر هنوز فرزندی ندارید یا می‌خواهید بعداً اطلاعات را وارد کنید، می‌توانید مستقیماً وارد نینیبو شوید.</p>
       <div className="grid-two"><Field label="نام"><Input value={child.first_name} onChange={(event) => setChild((current) => ({ ...current, first_name: event.target.value }))} /></Field><Field label="نام خانوادگی"><Input value={child.last_name} onChange={(event) => setChild((current) => ({ ...current, last_name: event.target.value }))} /></Field></div>
       <Field label="تاریخ تولد جلالی"><JalaliDateInput required value={child.birth_date} onChange={(birth_date) => setChild((current) => ({ ...current, birth_date }))} /></Field>
       <Field label="جنسیت"><Select value={child.gender} onChange={(event) => setChild((current) => ({ ...current, gender: event.target.value }))}><option value="">انتخاب کنید</option><option value="female">دختر</option><option value="male">پسر</option><option value="other">سایر</option></Select></Field>
-      <Button onClick={saveChild} disabled={loading}>ورود به نینیبو</Button>
+      <div className="onboarding-actions"><Button onClick={saveChild} disabled={loading}>افزودن فرزند و ورود به نینیبو</Button><Button variant="outline" onClick={skipChild} disabled={loading}>فعلاً فرزندی اضافه نمی‌کنم</Button></div>
     </div>}
     {error && <p className="error panel-error">{error}</p>}
   </section>;

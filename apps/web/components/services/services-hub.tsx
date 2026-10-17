@@ -15,7 +15,7 @@ import { formatMoney, serviceDeliveryLabel } from "./services-data";
 import { bookingRoute, bookingRouteState, servicesTabFromPathname, type BookingStage } from "@/lib/routes";
 import { trackEvent } from "@/lib/analytics";
 
-export function ServicesHub({ child, profile }: { child: Child; profile?: Profile }) {
+export function ServicesHub({ child, profile }: { child?: Child; profile?: Profile }) {
   const pathname = usePathname();
   const router = useRouter();
   const tab = servicesTabFromPathname(pathname);
@@ -29,8 +29,8 @@ export function ServicesHub({ child, profile }: { child: Child; profile?: Profil
 
   return <section className="services-page">
     <div className="services-hero">
-      <div><span className="eyebrow">خدمات نینیبو</span><h1>مشاوره، دوره و رزرو خدمات</h1><p>خدمات مناسب را پیدا کن، زمان آزاد ببین و بدون دادن دسترسی ناخواسته به پرونده سلامت {child.first_name} رزرو انجام بده.</p></div>
-      <div className="services-hero-meta"><span><MapPin size={16} /> {profile?.city?.local_name || profile?.city?.name || "شهر ثبت نشده"}</span><span><Stethoscope size={16} /> کودک فعال: {child.first_name}</span></div>
+      <div><span className="eyebrow">خدمات نینیبو</span><h1>مشاوره، دوره و رزرو خدمات</h1><p>خدمات مناسب را پیدا کن، زمان آزاد ببین و بدون دادن دسترسی ناخواسته به پرونده سلامت رزرو انجام بده.</p></div>
+      <div className="services-hero-meta"><span><MapPin size={16} /> {profile?.city?.local_name || profile?.city?.name || "شهر ثبت نشده"}</span>{child ? <span><Stethoscope size={16} /> کودک فعال: {child.first_name}</span> : <span><Stethoscope size={16} /> بدون اتصال به پرونده کودک</span>}</div>
     </div>
     <div className="ninibu-free-note surface-card"><strong>استفاده از نینیبو رایگان است.</strong><span>پرداخت فقط زمانی انجام می‌شود که یک خدمت، مشاوره یا دوره پولی رزرو کنید؛ مدل درآمد نینیبو از کارمزد ارائه‌دهنده خدمت است و اشتراک عمومی نداریم.</span></div>
     <div className="services-tabs" role="tablist">
@@ -44,7 +44,7 @@ export function ServicesHub({ child, profile }: { child: Child; profile?: Profil
   </section>;
 }
 
-function ServiceCatalog({ child }: { child: Child }) {
+function ServiceCatalog({ child }: { child?: Child }) {
   const router = useRouter();
   const pathname = usePathname();
   const routeState = bookingRouteState(pathname);

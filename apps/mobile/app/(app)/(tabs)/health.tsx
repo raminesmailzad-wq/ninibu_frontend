@@ -15,6 +15,7 @@ import type {
 import { formatJalaliShortDate, parseLocalizedDecimal, toPersianDigits, todayGregorianDate } from '@ninibu/datetime';
 import { growthMeasurementSchema } from '@ninibu/validation';
 import { api, apiPaths } from '@/lib/api';
+import { href } from '@/lib/navigation';
 import { useChild } from '@/providers/ChildProvider';
 import { Badge, Button, Card, EmptyState, ErrorState, Field, FormModal, Header, JalaliDateModalInput, Loading, Screen, SectionTitle, SegmentedControl } from '@/components/ui';
 import { ChildSwitcher } from '@/components/ChildSwitcher';
@@ -81,7 +82,15 @@ export default function Health() {
 
   useEffect(() => { void load(); }, [load]);
 
-  if (!selected) return <Screen><Header title="سلامت فرزند" /><EmptyState title="فرزندی برای نمایش پرونده وجود ندارد" /></Screen>;
+  if (!selected) return <Screen>
+    <Header title="سلامت فرزند" subtitle="این بخش پس از افزودن فرزند فعال می‌شود" />
+    <EmptyState
+      icon="happy-outline"
+      title="هنوز فرزندی اضافه نشده"
+      text="رشد، واکسن، ویزیت، حساسیت و دارو به پرونده یک فرزند متصل هستند. هر زمان آماده بودید، از حساب و خانواده فرزند را اضافه کنید."
+      action={<Button title="افزودن فرزند" icon="add" onPress={() => router.push(href('/profile'))} />}
+    />
+  </Screen>;
 
   return <Screen refreshing={loading} onRefresh={load}>
     <Header title="سلامت فرزند" subtitle={`رشد و سوابق سلامت ${selected.first_name}`} />

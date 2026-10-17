@@ -93,6 +93,12 @@ export default function Onboarding() {
     }
   }
 
+  async function finishOnboarding() {
+    await api(apiPaths.onboardingComplete, { method: 'POST', body: JSON.stringify({ skip_preferences: true }) });
+    await session.refresh();
+    router.replace(href('/'));
+  }
+
   async function saveChild() {
     setLoading(true);
     setError('');
@@ -113,11 +119,21 @@ export default function Onboarding() {
           notes: '',
         }),
       });
-      await api(apiPaths.onboardingComplete, { method: 'POST', body: JSON.stringify({ skip_preferences: true }) });
-      await session.refresh();
-      router.replace(href('/'));
+      await finishOnboarding();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'ثبت فرزند انجام نشد.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function skipChild() {
+    setLoading(true);
+    setError('');
+    try {
+      await finishOnboarding();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'تکمیل راه‌اندازی انجام نشد.');
     } finally {
       setLoading(false);
     }
@@ -160,13 +176,14 @@ export default function Onboarding() {
         <Field label="آدرس (اختیاری)" value={profile.residence_address || ''} onChangeText={(value) => setProfile((current) => ({ ...current, residence_address: value }))} />
         <Button title="ادامه" onPress={saveResidence} loading={loading} />
       </> : <>
-        <Text style={styles.title}>فرزندتان را اضافه کنید</Text>
-        <Text style={styles.copy}>اطلاعات پزشکی را بعداً از بخش سلامت فرزند تکمیل می‌کنید.</Text>
+        <Text style={styles.title}>اگر فرزندی دارید، اضافه کنید</Text>
+        <Text style={styles.copy}>این مرحله اختیاری است. اگر هنوز فرزندی ندارید، در انتظار تولد هستید یا می‌خواهید بعداً اطلاعات را وارد کنید، می‌توانید مستقیم وارد نینیبو شوید.</Text>
         <Field label="نام" value={child.first_name} onChangeText={(value) => setChild((current) => ({ ...current, first_name: value }))} />
         <Field label="نام خانوادگی" value={child.last_name} onChangeText={(value) => setChild((current) => ({ ...current, last_name: value }))} />
         <JalaliDateModalInput label="تاریخ تولد" value={child.birth_date} onChange={(value) => setChild((current) => ({ ...current, birth_date: value }))} required />
         <SelectField label="جنسیت" value={childGenders.find((item) => item.value === child.gender)?.name} placeholder="انتخاب کنید" onPress={() => setModal('childGender')} />
-        <Button title="ورود به نینیبو" onPress={saveChild} loading={loading} />
+        <Button title="افزودن فرزند و ورود به نینیبو" onPress={saveChild} loading={loading} />
+        <Button title="فعلاً فرزندی اضافه نمی‌کنم" variant="secondary" onPress={skipChild} disabled={loading} />
       </>}
       {error ? <Text style={styles.error}>{error}</Text> : null}
     </Card>

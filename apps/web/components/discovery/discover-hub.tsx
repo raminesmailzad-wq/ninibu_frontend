@@ -60,7 +60,7 @@ function itemsOf<T>(value: T[] | { items?: T[] } | undefined): T[] {
   return value?.items ?? [];
 }
 
-export function DiscoverHub({ child, profile }: { child: Child; profile?: Profile }) {
+export function DiscoverHub({ child, profile }: { child?: Child; profile?: Profile }) {
   const [tab, setTab] = useState<DiscoverTab>("smart");
   const [selectedSlug, setSelectedSlug] = useState("");
   const [careSearchSeed, setCareSearchSeed] = useState("");
@@ -83,7 +83,7 @@ export function DiscoverHub({ child, profile }: { child: Child; profile?: Profil
         <h1>پیدا کن، بخوان و آگاهانه انتخاب کن</h1>
         <p>محتوای معتبر، جست‌وجوی یکپارچه، پیشنهادهای قابل توضیح و مراکز درمانی تأییدشده؛ بدون استفاده از پرونده سلامت برای تبلیغات.</p>
       </div>
-      <div className="discover-hero-badge"><Sparkles size={22}/><div><strong>پیشنهاد برای {child.first_name}</strong><small>بر اساس علایق و فعالیت‌های مجاز</small></div></div>
+      <div className="discover-hero-badge"><Sparkles size={22}/><div><strong>{child ? `پیشنهاد برای ${child.first_name}` : "پیشنهادهای عمومی والدین"}</strong><small>{child ? "بر اساس علایق و فعالیت‌های مجاز" : "بدون نیاز به پرونده فرزند"}</small></div></div>
     </div>
 
     <nav className="discover-tabs" aria-label="بخش‌های کشف">
@@ -93,7 +93,7 @@ export function DiscoverHub({ child, profile }: { child: Child; profile?: Profil
       <DiscoverTabButton active={tab === "care"} onClick={() => changeTab("care")} icon={MapPin}>مراکز درمانی</DiscoverTabButton>
     </nav>
 
-    {tab === "smart" && <SmartFeed child={child} onOpenKnowledge={(slug) => openKnowledge(slug, "smart_feed")} onJump={(next) => changeTab(next, "shortcut")} />}
+    {tab === "smart" && (child ? <SmartFeed child={child} onOpenKnowledge={(slug) => openKnowledge(slug, "smart_feed")} onJump={(next) => changeTab(next, "shortcut")} /> : <NoChildSmartFeed onJump={(next) => changeTab(next, "shortcut")} />)}
     {tab === "knowledge" && <KnowledgeLibrary child={child} onOpen={(slug) => openKnowledge(slug, "knowledge_library")} />}
     {tab === "search" && <UnifiedSearch onOpenKnowledge={(slug) => openKnowledge(slug, "search_result")} onOpenCare={(title) => { setCareSearchSeed(title); changeTab("care", "search_result"); }} />}
     {tab === "care" && <CareDiscovery profile={profile} initialSearch={careSearchSeed} />}
@@ -104,6 +104,17 @@ export function DiscoverHub({ child, profile }: { child: Child; profile?: Profil
 
 function DiscoverTabButton({ active, onClick, icon: Icon, children }: { active: boolean; onClick: () => void; icon: typeof Sparkles; children: ReactNode }) {
   return <button className={active ? "is-active" : ""} onClick={onClick}><Icon size={17}/><span>{children}</span></button>;
+}
+
+function NoChildSmartFeed({ onJump }: { onJump: (tab: DiscoverTab) => void }) {
+  return <div className="discover-stack">
+    <DiscoveryState>برای پیشنهادهای وابسته به سن کودک، بعداً می‌توانید فرزند را اضافه کنید. دانشنامه، جست‌وجو و مراکز درمانی همین حالا در دسترس هستند.</DiscoveryState>
+    <section className="discovery-shortcuts">
+      <button onClick={() => onJump("knowledge")}><BookOpen size={20}/><div><strong>دانشنامه والدین</strong><small>محتوای منتشرشده و بازبینی‌شده</small></div><ChevronLeft size={17}/></button>
+      <button onClick={() => onJump("search")}><Search size={20}/><div><strong>جست‌وجوی همه نینیبو</strong><small>محتوا، گروه، متخصص، خدمت و فروشگاه</small></div><ChevronLeft size={17}/></button>
+      <button onClick={() => onJump("care")}><MapPin size={20}/><div><strong>مراکز تاییدشده نزدیک</strong><small>بر اساس شهر یا موقعیت لحظه‌ای شما</small></div><ChevronLeft size={17}/></button>
+    </section>
+  </div>;
 }
 
 function SmartFeed({ child, onOpenKnowledge, onJump }: { child: Child; onOpenKnowledge: (slug: string) => void; onJump: (tab: DiscoverTab) => void }) {
@@ -141,10 +152,10 @@ function SmartFeed({ child, onOpenKnowledge, onJump }: { child: Child; onOpenKno
   </div>;
 }
 
-function KnowledgeLibrary({ child, onOpen }: { child: Child; onOpen: (slug: string) => void }) {
+function KnowledgeLibrary({ child, onOpen }: { child?: Child; onOpen: (slug: string) => void }) {
   const [category, setCategory] = useState("");
   const [contentType, setContentType] = useState("");
-  const age = childAgeDays(child.birth_date);
+  const age = child ? childAgeDays(child.birth_date) : undefined;
   const categories = useQuery({ queryKey: ["content", "categories"], queryFn: () => clientApi<KnowledgeCategory[] | { items: KnowledgeCategory[] }>("/api/ninibu/content/categories") });
   const bookmarks = useQuery({ queryKey: ["content", "bookmarks"], queryFn: () => clientApi<KnowledgeContent[] | { items: KnowledgeContent[] }>("/api/ninibu/content/bookmarks") });
   const query = new URLSearchParams({ language: "fa", page: "1", limit: "24" });

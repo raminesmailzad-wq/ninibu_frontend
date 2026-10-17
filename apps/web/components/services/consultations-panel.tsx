@@ -15,7 +15,7 @@ import { consultationPrivacyLabel, consultationStatusLabel, formatDateTime } fro
 import { consultationRoute, consultationRouteState } from "@/lib/routes";
 import { trackEvent } from "@/lib/analytics";
 
-export function ConsultationsPanel({ child }: { child: Child }) {
+export function ConsultationsPanel({ child }: { child?: Child }) {
   const queryClient = useQueryClient();
   const pathname = usePathname();
   const router = useRouter();
@@ -24,7 +24,7 @@ export function ConsultationsPanel({ child }: { child: Child }) {
   const selectedId = consultationRouteState(pathname);
   const categories = useQuery({ queryKey: ["consultations", "categories"], queryFn: () => clientApi<ConsultationCategory[]>("/api/ninibu/consultations/categories") });
   const questions = useQuery({
-    queryKey: ["consultations", view, child.id],
+    queryKey: ["consultations", view, child?.id ?? "no-child"],
     queryFn: () => clientApi<ConsultationQuestionListResponse>(view === "mine" ? "/api/ninibu/consultations/questions?limit=100" : "/api/ninibu/consultations/public/questions?limit=100")
   });
   const items = useMemo(() => questions.data?.items ?? [], [questions.data]);
@@ -51,13 +51,13 @@ export function ConsultationsPanel({ child }: { child: Child }) {
   </div>;
 }
 
-function QuestionComposer({ child, categories, onClose, onCreated }: { child: Child; categories: ConsultationCategory[]; onClose: () => void; onCreated: (question: ConsultationQuestion) => Promise<void> }) {
+function QuestionComposer({ child, categories, onClose, onCreated }: { child?: Child; categories: ConsultationCategory[]; onClose: () => void; onCreated: (question: ConsultationQuestion) => Promise<void> }) {
   const firstCategory = categories[0]?.code ?? "other";
   const [categoryCode, setCategoryCode] = useState(firstCategory);
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [privacy, setPrivacy] = useState<ConsultationPrivacy>("private");
-  const [attachChild, setAttachChild] = useState(true);
+  const [attachChild, setAttachChild] = useState(Boolean(child));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
@@ -66,7 +66,7 @@ function QuestionComposer({ child, categories, onClose, onCreated }: { child: Ch
     if (!categoryCode) return setError("دسته‌بندی را انتخاب کنید.");
     setBusy(true); setError("");
     try {
-      const created = await clientApi<ConsultationQuestion>("/api/ninibu/consultations/questions", { method: "POST", body: JSON.stringify({ child_id: attachChild ? child.id : undefined, category_code: categoryCode, title: title.trim(), body: body.trim(), privacy }) });
+      const created = await clientApi<ConsultationQuestion>("/api/ninibu/consultations/questions", { method: "POST", body: JSON.stringify({ child_id: attachChild && child ? child.id : undefined, category_code: categoryCode, title: title.trim(), body: body.trim(), privacy }) });
       await onCreated(created);
     } catch (caught) { setError(caught instanceof NinibuApiError ? caught.message : "پرسش ثبت نشد."); }
     finally { setBusy(false); }
@@ -79,7 +79,7 @@ function QuestionComposer({ child, categories, onClose, onCreated }: { child: Ch
         <label><span>عنوان</span><Input value={title} maxLength={250} onChange={(event) => setTitle(event.target.value)} placeholder="مثلاً چطور برنامه خواب کودک را منظم‌تر کنم؟" /></label>
         <label><span>شرح پرسش</span><Textarea value={body} maxLength={10000} onChange={(event) => setBody(event.target.value)} placeholder="جزئیات لازم را بنویسید. برای اورژانس یا وضعیت فوری از این بخش استفاده نکنید." /></label>
         <label><span>حریم خصوصی</span><Select value={privacy} onChange={(event) => setPrivacy(event.target.value as ConsultationPrivacy)}><option value="private">خصوصی — فقط شما و متخصص مجاز</option><option value="anonymous_public">عمومی ناشناس — بعد از پاسخ قابل مشاهده</option><option value="public">عمومی — بعد از پاسخ با هویت حساب</option></Select></label>
-        <label className="attach-child-row"><input type="checkbox" checked={attachChild} onChange={(event) => setAttachChild(event.target.checked)} /><span><strong>پرسش درباره {child.first_name} است</strong><small>این اتصال به‌تنهایی مجوز مشاهده پرونده سلامت ایجاد نمی‌کند.</small></span></label>
+        {child ? <label className="attach-child-row"><input type="checkbox" checked={attachChild} onChange={(event) => setAttachChild(event.target.checked)} /><span><strong>پرسش درباره {child.first_name} است</strong><small>این اتصال به‌تنهایی مجوز مشاهده پرونده سلامت ایجاد نمی‌کند.</small></span></label> : null}
         <div className="consultation-safety"><strong>یادآوری ایمنی</strong><p>این بخش برای پاسخ غیرهم‌زمان است. در شرایط اورژانسی یا علائم شدید باید از خدمات درمانی فوری استفاده شود.</p></div>
         {error && <p className="service-error">{error}</p>}
         <Button disabled={busy} onClick={submit}>{busy ? "در حال ثبت…" : "ثبت پرسش"}</Button>

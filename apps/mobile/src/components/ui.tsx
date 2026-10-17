@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from 'react';
 import {
   ActivityIndicator,
+  findNodeHandle,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -12,13 +13,29 @@ import {
   TextInput,
   View,
   type KeyboardTypeOptions,
+  type TextInput as TextInputType,
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, shadow, typography } from '@/theme';
-import { gregorianToJalaliInput, jalaliInputToGregorian, todayJalaliInput, toPersianDigits } from '@ninibu/datetime';
+import { gregorianToJalaliInput, isValidJalaliDate, jalaliInputToGregorian, todayJalaliInput, toPersianDigits } from '@ninibu/datetime';
+
+type KeyboardScrollValue = { ensureVisible: (input: TextInputType | null) => void };
+const KeyboardScrollContext = createContext<KeyboardScrollValue | null>(null);
+
+function useKeyboardScroll(scrollRef: RefObject<ScrollView | null>) {
+  return useMemo<KeyboardScrollValue>(() => ({
+    ensureVisible(input) {
+      const node = input ? findNodeHandle(input) : null;
+      if (!node) return;
+      requestAnimationFrame(() => {
+        scrollRef.current?.scrollResponderScrollNativeHandleToKeyboard(node, 120, true);
+      });
+    },
+  }), [scrollRef]);
+}
 
 export function Screen({
   children,
@@ -33,8 +50,11 @@ export function Screen({
   scroll?: boolean;
   contentStyle?: StyleProp<ViewStyle>;
 }) {
+  const scrollRef = useRef<ScrollView>(null);
+  const keyboardScroll = useKeyboardScroll(scrollRef);
   const body = scroll ? (
     <ScrollView
+      ref={scrollRef}
       keyboardShouldPersistTaps="handled"
       keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
       automaticallyAdjustKeyboardInsets
@@ -44,7 +64,7 @@ export function Screen({
       contentContainerStyle={[s.screenContent, contentStyle]}
       refreshControl={onRefresh ? <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} /> : undefined}
     >
-      {children}
+      <KeyboardScrollContext.Provider value={keyboardScroll}>{children}</KeyboardScrollContext.Provider>
     </ScrollView>
   ) : (
     <View style={[s.screenContent, { flex: 1 }, contentStyle]}>{children}</View>
@@ -149,12 +169,16 @@ export function Field({
   editable?: boolean;
   maxLength?: number;
 }) {
+  const inputRef = useRef<TextInputType>(null);
+  const keyboardScroll = useContext(KeyboardScrollContext);
   return <View style={s.field}>
     <View style={s.labelRow}>
       <Text style={s.label}>{label}</Text>
       {hint ? <Text style={s.hint}>{hint}</Text> : null}
     </View>
     <TextInput
+      ref={inputRef}
+      onFocus={() => keyboardScroll?.ensureVisible(inputRef.current)}
       value={value}
       onChangeText={onChangeText}
       placeholder={placeholder}
@@ -252,24 +276,40 @@ export function JalaliDateModalInput({ label, value, onChange, required = false 
   const [year, setYear] = useState('');
   const [month, setMonth] = useState('');
   const [day, setDay] = useState('');
+  const [picker, setPicker] = useState<'year' | 'month' | 'day' | null>(null);
   const [error, setError] = useState('');
   const visual = useMemo(() => value ? gregorianToJalaliInput(value) : '', [value]);
+  const todayYear = Number(normalizeAsciiDigits(todayJalaliInput()).split('/')[0] || '1405');
 
   const syncDraft = useCallback(() => {
     const source = normalizeAsciiDigits(value ? gregorianToJalaliInput(value) : todayJalaliInput()).split('/');
-    setYear(source[0] || '1405');
+    setYear(source[0] || String(todayYear));
     setMonth(source[1] || '01');
     setDay(source[2] || '01');
     setError('');
-  }, [value]);
+  }, [value, todayYear]);
 
   useEffect(() => { if (open) syncDraft(); }, [open, syncDraft]);
 
+  const years = useMemo(() => Array.from({ length: 151 }, (_, index) => {
+    const y = todayYear + 20 - index;
+    return { id: y, name: toPersianDigits(y), value: String(y) };
+  }), [todayYear]);
+  const months = useMemo(() => ['فروردین','اردیبهشت','خرداد','تیر','مرداد','شهریور','مهر','آبان','آذر','دی','بهمن','اسفند'].map((name, index) => ({ id: index + 1, name, value: String(index + 1).padStart(2, '0') })), []);
+  const days = useMemo(() => {
+    const y = Number(year || todayYear);
+    const m = Number(month || 1);
+    return Array.from({ length: 31 }, (_, index) => index + 1)
+      .filter((d) => isValidJalaliDate(y, m, d))
+      .map((d) => ({ id: d, name: toPersianDigits(d), value: String(d).padStart(2, '0') }));
+  }, [year, month, todayYear]);
+
+  useEffect(() => {
+    if (!days.some((item) => item.value === day) && days.length) setDay(days[days.length - 1].value);
+  }, [days, day]);
+
   function save() {
-    const y = normalizeAsciiDigits(year).replace(/\D/g, '').slice(0, 4);
-    const m = normalizeAsciiDigits(month).replace(/\D/g, '').slice(0, 2);
-    const d = normalizeAsciiDigits(day).replace(/\D/g, '').slice(0, 2);
-    const input = `${y.padStart(4, '0')}/${m.padStart(2, '0')}/${d.padStart(2, '0')}`;
+    const input = `${year}/${month}/${day}`;
     const gregorian = jalaliInputToGregorian(input);
     if (!gregorian) {
       setError('تاریخ جلالی معتبر نیست.');
@@ -288,45 +328,50 @@ export function JalaliDateModalInput({ label, value, onChange, required = false 
     <Modal visible={open} transparent statusBarTranslucent animationType="fade" onRequestClose={() => setOpen(false)}>
       <View style={s.modalRoot}>
         <Pressable style={s.scrim} onPress={() => setOpen(false)} />
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={s.dateModalWrap}>
+        <View style={s.dateModalWrap}>
           <View style={s.dateModal}>
             <View style={s.sheetHead}>
               <View style={{ flex: 1 }}>
                 <Text style={s.sheetTitle}>{label}</Text>
-                <Text style={s.dateHelp}>سال، ماه و روز را مستقیم انتخاب یا وارد کنید.</Text>
+                <Text style={s.dateHelp}>روز، ماه و سال را انتخاب کنید.</Text>
               </View>
               <IconButton icon="close" onPress={() => setOpen(false)} label="بستن" />
             </View>
             <View style={s.dateLabels}>
               <Text style={s.dateLabel}>روز</Text>
               <Text style={s.dateLabel}>ماه</Text>
-              <Text style={[s.dateLabel, { flex: 1.3 }]}>سال</Text>
+              <Text style={s.dateLabel}>سال</Text>
             </View>
             <View style={s.dateRow}>
-              <TextInput value={day} onChangeText={(v) => setDay(normalizeAsciiDigits(v).replace(/\D/g, '').slice(0, 2))} keyboardType="number-pad" maxLength={2} style={[s.input, s.datePart]} textAlign="center" placeholder="۲۱" placeholderTextColor="#A39CAB" />
-              <TextInput value={month} onChangeText={(v) => setMonth(normalizeAsciiDigits(v).replace(/\D/g, '').slice(0, 2))} keyboardType="number-pad" maxLength={2} style={[s.input, s.datePart]} textAlign="center" placeholder="۰۵" placeholderTextColor="#A39CAB" />
-              <TextInput value={year} onChangeText={(v) => setYear(normalizeAsciiDigits(v).replace(/\D/g, '').slice(0, 4))} keyboardType="number-pad" maxLength={4} style={[s.input, s.dateYear]} textAlign="center" placeholder="۱۴۰۵" placeholderTextColor="#A39CAB" />
+              <Pressable style={s.dateChoice} onPress={() => setPicker('day')}><Text style={s.dateChoiceText}>{toPersianDigits(day)}</Text><Ionicons name="chevron-down" size={16} color={colors.muted} /></Pressable>
+              <Pressable style={s.dateChoice} onPress={() => setPicker('month')}><Text style={s.dateChoiceText}>{months.find((item) => item.value === month)?.name || toPersianDigits(month)}</Text><Ionicons name="chevron-down" size={16} color={colors.muted} /></Pressable>
+              <Pressable style={s.dateChoice} onPress={() => setPicker('year')}><Text style={s.dateChoiceText}>{toPersianDigits(year)}</Text><Ionicons name="chevron-down" size={16} color={colors.muted} /></Pressable>
             </View>
-            <Text style={s.datePreview}>تاریخ انتخابی: {toPersianDigits(`${year || '----'}/${month || '--'}/${day || '--'}`)}</Text>
+            <Text style={s.datePreview}>تاریخ انتخابی: {toPersianDigits(`${year}/${month}/${day}`)}</Text>
             {error ? <Text style={s.errorText}>{error}</Text> : null}
             <View style={s.dateActions}>
               <View style={{ flex: 1 }}><Button title="تأیید تاریخ" onPress={save} /></View>
               <View style={{ flex: 1 }}><Button title="انصراف" variant="ghost" onPress={() => setOpen(false)} /></View>
             </View>
           </View>
-        </KeyboardAvoidingView>
+        </View>
       </View>
     </Modal>
+    <ChoiceModal visible={picker === 'day'} title="انتخاب روز" items={days} label={(item) => item.name} onChoose={(item) => setDay(item.value)} onClose={() => setPicker(null)} />
+    <ChoiceModal visible={picker === 'month'} title="انتخاب ماه" items={months} label={(item) => item.name} onChoose={(item) => setMonth(item.value)} onClose={() => setPicker(null)} />
+    <ChoiceModal visible={picker === 'year'} title="انتخاب سال" items={years} label={(item) => item.name} onChoose={(item) => setYear(item.value)} onClose={() => setPicker(null)} />
   </View>;
 }
 
 export function FormModal({ visible, title, subtitle, onClose, children }: { visible: boolean; title: string; subtitle?: string; onClose: () => void; children: ReactNode }) {
   const insets = useSafeAreaInsets();
+  const scrollRef = useRef<ScrollView>(null);
+  const keyboardScroll = useKeyboardScroll(scrollRef);
   return <Modal visible={visible} transparent statusBarTranslucent animationType="fade" onRequestClose={onClose}>
     <View style={s.modalRoot}>
       <Pressable style={s.scrim} onPress={onClose} />
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={s.formModalKeyboard}>
-        <View style={[s.formModal, { paddingBottom: Math.max(18, insets.bottom + 8) }]}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={s.formModalKeyboard}>
+        <View style={[s.formModal, { paddingBottom: Math.max(12, insets.bottom + 6) }]}>
           <View style={s.formModalHead}>
             <View style={{ flex: 1 }}>
               <Text style={s.formModalTitle}>{title}</Text>
@@ -334,15 +379,19 @@ export function FormModal({ visible, title, subtitle, onClose, children }: { vis
             </View>
             <IconButton icon="close" onPress={onClose} label="بستن" />
           </View>
-          <ScrollView
-            keyboardShouldPersistTaps="handled"
-            keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
-            automaticallyAdjustKeyboardInsets
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={s.formModalBody}
-          >
-            {children}
-          </ScrollView>
+          <KeyboardScrollContext.Provider value={keyboardScroll}>
+            <ScrollView
+              ref={scrollRef}
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
+              automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
+              showsVerticalScrollIndicator
+              nestedScrollEnabled
+              contentContainerStyle={[s.formModalBody, { paddingBottom: Math.max(180, insets.bottom + 120) }]}
+            >
+              {children}
+            </ScrollView>
+          </KeyboardScrollContext.Provider>
         </View>
       </KeyboardAvoidingView>
     </View>
@@ -431,16 +480,16 @@ const s = StyleSheet.create({
   dateLabels: { flexDirection: 'row-reverse', gap: 8 },
   dateLabel: { fontFamily: typography.regular, flex: 1, fontSize: 10.5, color: colors.muted, textAlign: 'center', writingDirection: 'rtl' },
   dateRow: { flexDirection: 'row-reverse', gap: 8 },
-  datePart: { flex: 1 },
-  dateYear: { flex: 1.3 },
+  dateChoice: { flex: 1, minHeight: 52, borderRadius: 15, borderWidth: 1, borderColor: colors.border, backgroundColor: '#fff', paddingHorizontal: 9, flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between', gap: 4 },
+  dateChoiceText: { flex: 1, fontFamily: typography.bold, fontSize: 12, color: colors.foreground, fontWeight: '800', textAlign: 'center', writingDirection: 'rtl' },
   datePreview: { fontFamily: typography.regular, fontSize: 11, color: colors.primaryStrong, textAlign: 'right', writingDirection: 'rtl', backgroundColor: colors.primarySoft, borderRadius: 12, paddingHorizontal: 10, paddingVertical: 8 },
   dateActions: { flexDirection: 'row-reverse', gap: 8 },
-  formModalKeyboard: { flex: 1, justifyContent: 'center', paddingHorizontal: 10, paddingVertical: 18 },
+  formModalKeyboard: { flex: 1, justifyContent: 'flex-end', paddingHorizontal: 10, paddingTop: 18, paddingBottom: 8 },
   formModal: { maxHeight: '92%', backgroundColor: '#fff', borderRadius: 27, paddingTop: 16, paddingHorizontal: 16, ...shadow },
   formModalHead: { flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between', gap: 12, paddingBottom: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border },
   formModalTitle: { fontFamily: typography.bold, fontSize: 18, fontWeight: '900', color: colors.foreground, textAlign: 'right', writingDirection: 'rtl' },
   formModalSubtitle: { fontFamily: typography.regular, fontSize: 10.5, color: colors.muted, textAlign: 'right', writingDirection: 'rtl', lineHeight: 18, marginTop: 3 },
-  formModalBody: { paddingTop: 15, paddingBottom: 4, gap: 13 },
+  formModalBody: { paddingTop: 15, gap: 13 },
   segmented: { flexDirection: 'row-reverse', backgroundColor: '#fff', borderRadius: 17, padding: 4, borderWidth: 1, borderColor: colors.border, gap: 3 },
   segment: { flex: 1, minHeight: 40, alignItems: 'center', justifyContent: 'center', borderRadius: 13, paddingHorizontal: 5 },
   segmentActive: { backgroundColor: colors.primarySoft },

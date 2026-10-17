@@ -2,7 +2,7 @@
   "expo": {
     "name": "نینیبو",
     "slug": "ninibu-mobile",
-    "version": "0.24.2",
+    "version": "0.24.3",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "scheme": "ninibu",
@@ -14,7 +14,7 @@
       "config": {
         "usesNonExemptEncryption": false
       },
-      "buildNumber": "35"
+      "buildNumber": "36"
     },
     "android": {
       "package": "com.ninibu.app",
@@ -24,7 +24,7 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": true,
-      "versionCode": 39,
+      "versionCode": 40,
       "blockedPermissions": [
         "android.permission.SYSTEM_ALERT_WINDOW"
       ],

@@ -18,7 +18,7 @@ import { formatJalaliShortDate, toPersianDigits } from '@ninibu/datetime';
 import { api, apiPaths } from '@/lib/api';
 import { useChild } from '@/providers/ChildProvider';
 import { useSession } from '@/providers/SessionProvider';
-import { Badge, Card, EmptyState, Header, IconButton, Loading, Screen, SectionTitle, Stat } from '@/components/ui';
+import { Badge, Button, Card, EmptyState, Header, IconButton, Loading, Screen, SectionTitle, Stat } from '@/components/ui';
 import { ChildSwitcher } from '@/components/ChildSwitcher';
 import { SponsoredSlot } from '@/components/SponsoredSlot';
 import { colors, typography } from '@/theme';
@@ -78,7 +78,43 @@ export default function Home() {
   const firstName = profile?.first_name || user?.first_name || 'والد عزیز';
 
   if (childrenLoading) return <Screen><Loading /></Screen>;
-  if (!selected) return <Screen><Header title="نینیبو" /><EmptyState icon="happy-outline" title="هنوز فرزندی ثبت نشده" text="از بخش پروفایل یک فرزند اضافه کنید." /></Screen>;
+  if (!selected) return <Screen>
+    <Header
+      title={`سلام ${firstName} 👋`}
+      subtitle="نینیبو برای والدین، از پیش از تولد تا سال‌های اول کودکی"
+      right={<IconButton icon="notifications-outline" label="اعلان‌ها" onPress={() => router.push(href('/notifications'))} />}
+    />
+    <Card style={styles.hero}>
+      <View style={styles.heroIcon}><Ionicons name="sparkles" size={24} color={colors.primary} /></View>
+      <View style={{ flex: 1 }}>
+        <Text style={styles.heroTitle}>خوش آمدید</Text>
+        <Text style={styles.heroText}>برای استفاده از جامعه والدین، سلامت مادر، محتوا، خدمات و فروشگاه نیازی به ساخت پرونده فرزند ندارید.</Text>
+      </View>
+    </Card>
+    <SectionTitle title="پرونده فرزند" />
+    <Card>
+      <Text style={styles.cardTitle}>هنوز فرزندی اضافه نشده</Text>
+      <Text style={styles.emptyCopy}>قابلیت‌های رشد، واکسن، ویزیت و سایر سوابق کودک تا زمان افزودن فرزند غیرفعال هستند.</Text>
+      <View style={{ marginTop: 12 }}><Button title="افزودن فرزند" icon="add" onPress={() => router.push(href('/profile'))} /></View>
+    </Card>
+    <View style={styles.quick}>
+      <Quick icon="analytics-outline" title="رشد" subtitle="پس از افزودن فرزند" disabled onPress={() => {}} />
+      <Quick icon="medical-outline" title="واکسن" subtitle="پس از افزودن فرزند" disabled onPress={() => {}} />
+      <Quick icon="medkit-outline" title="ویزیت" subtitle="پس از افزودن فرزند" disabled onPress={() => {}} />
+    </View>
+    <SectionTitle title="سلامت خانواده" />
+    <View style={styles.familyGrid}>
+      <FamilyPath icon="heart" title="سلامت فرزند" text="پس از افزودن فرزند فعال می‌شود" disabled onPress={() => {}} />
+      <FamilyPath icon="heart-circle" title="سلامت مادر" text="چرخه، بارداری، شیردهی و مراقبت از خود" accent onPress={() => router.push(href('/maternal-health'))} />
+    </View>
+    <SectionTitle title="بخش‌های در دسترس" />
+    <View style={{ gap: 9 }}>
+      <Path icon="chatbubbles-outline" title="جامعه والدین" text="تجربه‌ها، گروه‌ها و دیدگاه‌ها" onPress={() => router.push(href('/community'))} />
+      <Path icon="calendar-outline" title="خدمات و مشاوره" text="رزرو خدمت و پرسش از متخصص" onPress={() => router.push(href('/services'))} />
+      <Path icon="compass-outline" title="کشف و محتوا" text="مطالب و پیشنهادهای مرتبط" onPress={() => router.push(href('/discover'))} />
+      <Path icon="bag-handle-outline" title="فروشگاه" text="محصولات و سفارش‌ها" onPress={() => router.push(href('/shop'))} />
+    </View>
+  </Screen>;
 
   return <Screen refreshing={loading} onRefresh={load}>
     <Header
@@ -178,16 +214,16 @@ export default function Home() {
   </Screen>;
 }
 
-function Quick({ icon, title, subtitle, onPress }: { icon: keyof typeof Ionicons.glyphMap; title: string; subtitle: string; onPress: () => void }) {
-  return <Pressable style={({ pressed }) => [styles.quickItem, pressed && { opacity: 0.75 }]} onPress={onPress}>
+function Quick({ icon, title, subtitle, onPress, disabled = false }: { icon: keyof typeof Ionicons.glyphMap; title: string; subtitle: string; onPress: () => void; disabled?: boolean }) {
+  return <Pressable disabled={disabled} style={({ pressed }) => [styles.quickItem, disabled && styles.disabledFeature, pressed && !disabled && { opacity: 0.75 }]} onPress={onPress}>
     <View style={styles.quickIcon}><Ionicons name={icon} size={21} color={colors.primary} /></View>
     <Text style={styles.quickTitle}>{title}</Text>
     <Text style={styles.quickSub}>{subtitle}</Text>
   </Pressable>;
 }
 
-function FamilyPath({ icon, title, text, onPress, accent = false }: { icon: keyof typeof Ionicons.glyphMap; title: string; text: string; onPress: () => void; accent?: boolean }) {
-  return <Pressable onPress={onPress} style={({ pressed }) => [styles.familyCard, accent && styles.familyCardAccent, pressed && { opacity: 0.78 }]}>
+function FamilyPath({ icon, title, text, onPress, accent = false, disabled = false }: { icon: keyof typeof Ionicons.glyphMap; title: string; text: string; onPress: () => void; accent?: boolean; disabled?: boolean }) {
+  return <Pressable disabled={disabled} onPress={onPress} style={({ pressed }) => [styles.familyCard, accent && styles.familyCardAccent, disabled && styles.disabledFeature, pressed && !disabled && { opacity: 0.78 }]}>
     <View style={[styles.familyIcon, accent && styles.familyIconAccent]}><Ionicons name={icon} size={22} color={accent ? colors.accent : colors.primary} /></View>
     <Text style={styles.familyTitle}>{title}</Text>
     <Text style={styles.familyText}>{text}</Text>
@@ -217,6 +253,7 @@ const styles = StyleSheet.create({
   heroTitle: { fontFamily: typography.bold, fontSize: 21, fontWeight: '900', color: colors.foreground, textAlign: 'right', writingDirection: 'rtl', marginTop: 2 },
   heroText: { fontFamily: typography.regular, fontSize: 10.5, color: colors.muted, textAlign: 'right', writingDirection: 'rtl', lineHeight: 18, marginTop: 4 },
   quick: { flexDirection: 'row-reverse', gap: 8 },
+  disabledFeature: { opacity: 0.48 },
   quickItem: { flex: 1, backgroundColor: '#fff', borderRadius: 19, borderWidth: 1, borderColor: colors.border, padding: 10, alignItems: 'center', minHeight: 112, justifyContent: 'center' },
   quickIcon: { width: 42, height: 42, borderRadius: 14, backgroundColor: colors.primarySoft, alignItems: 'center', justifyContent: 'center', marginBottom: 6 },
   quickTitle: { fontFamily: typography.bold, fontSize: 12.5, fontWeight: '900', color: colors.foreground, writingDirection: 'rtl' },

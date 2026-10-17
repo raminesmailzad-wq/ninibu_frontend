@@ -93,18 +93,10 @@ export function AppFrame({ onLogout }: { onLogout: () => void }) {
     </main>;
   }
 
-  if (!activeChild) {
-    return <main className="fatal-state">
-      <div className="fatal-icon"><Plus size={28} /></div>
-      <h1>هنوز فرزندی ثبت نشده</h1>
-      <p>برای استفاده از داشبورد سلامت ابتدا یک فرزند به حساب اضافه کنید.</p>
-    </main>;
-  }
-
   const profile = profileQuery.data;
   const unreadCount = unreadQuery.data?.count ?? 0;
   const headerSubtitle = section === "maternal" ? `سلام ${profile?.first_name || ""} 👋` : `سلام ${profile?.first_name || ""} 👋`;
-  const headerTitle = section === "maternal" ? "امروز حال شما چطوره؟" : `امروز حال ${activeChild.first_name} چطوره؟`;
+  const headerTitle = section === "maternal" ? "امروز حال شما چطوره؟" : activeChild ? `امروز حال ${activeChild.first_name} چطوره؟` : "امروز همراه شما هستیم";
 
   return <div className="app-layout">
     <RouteAnalytics />
@@ -115,7 +107,7 @@ export function AppFrame({ onLogout }: { onLogout: () => void }) {
         </button>
         <button className="sidebar-close" onClick={() => setMobileMenu(false)} aria-label="بستن منو"><X size={20} /></button>
       </div>
-      <ChildSwitcher items={children} activeId={activeChild.id} onChange={changeActiveChild} />
+      {activeChild ? <ChildSwitcher items={children} activeId={activeChild.id} onChange={changeActiveChild} /> : <Button variant="outline" onClick={() => navigateTo("profile")}><Plus size={16} /> افزودن فرزند</Button>}
       <DesktopNavigation active={section} onChange={(next) => { navigateTo(next); setMobileMenu(false); }} />
       <div className="sidebar-footer">
         <div className="mini-profile">
@@ -136,23 +128,54 @@ export function AppFrame({ onLogout }: { onLogout: () => void }) {
         </div>
         <div className="app-header-actions">
           <NotificationCenter unreadCount={unreadCount} openRequest={notificationOpenRequest} />
-          <div className="mobile-child-switcher"><ChildSwitcher items={children} activeId={activeChild.id} onChange={changeActiveChild} /></div>
+          <div className="mobile-child-switcher">{activeChild ? <ChildSwitcher items={children} activeId={activeChild.id} onChange={changeActiveChild} /> : <Button variant="outline" onClick={() => navigateTo("profile")}><Plus size={16} /> افزودن فرزند</Button>}</div>
         </div>
       </header>
 
       <div className="app-content">
-        {section === "home" && <Dashboard child={activeChild} profile={profile} unreadCount={unreadCount} onQuickAction={setQuickAction} onOpenHealth={() => navigateTo("health")} onOpenMaternalHealth={() => navigateTo("maternal")} onOpenNotifications={() => setNotificationOpenRequest((current) => current + 1)} onNavigate={navigateTo} />}
-        {section === "health" && <HealthDashboard child={activeChild} onQuickAction={setQuickAction} />}
+        {section === "home" && (activeChild ? <Dashboard child={activeChild} profile={profile} unreadCount={unreadCount} onQuickAction={setQuickAction} onOpenHealth={() => navigateTo("health")} onOpenMaternalHealth={() => navigateTo("maternal")} onOpenNotifications={() => setNotificationOpenRequest((current) => current + 1)} onNavigate={navigateTo} /> : <NoChildDashboard firstName={profile?.first_name} onNavigate={navigateTo} />)}
+        {section === "health" && (activeChild ? <HealthDashboard child={activeChild} onQuickAction={setQuickAction} /> : <NoChildHealth onAddChild={() => navigateTo("profile")} />)}
         {section === "maternal" && <MaternalHealthHub />}
         {section === "community" && <><SponsoredSlot placement="community_feed" className="section-sponsored-slot" /><Community accountProfile={profile} /></>}
         {section === "discover" && <><SponsoredSlot placement="public_content_list" className="section-sponsored-slot" /><DiscoverHub child={activeChild} profile={profile} /></>}
         {section === "services" && <ServicesHub child={activeChild} profile={profile} />}
         {section === "shop" && <ShopHub profile={profile} />}
-        {section === "profile" && <ProfilePanel profile={profile} childItems={children} activeChildId={activeChild.id} onSelectChild={changeActiveChild} onLogout={logout} />}
+        {section === "profile" && <ProfilePanel profile={profile} childItems={children} activeChildId={activeChild?.id} onSelectChild={changeActiveChild} onLogout={logout} />}
       </div>
     </main>
 
     <MobileNavigation active={section} onChange={navigateTo} />
-    <QuickActionDialog action={quickAction} child={activeChild} onClose={() => setQuickAction(null)} />
+    {activeChild ? <QuickActionDialog action={quickAction} child={activeChild} onClose={() => setQuickAction(null)} /> : null}
   </div>;
+}
+
+function NoChildDashboard({ firstName, onNavigate }: { firstName?: string; onNavigate: (section: AppSection) => void }) {
+  return <div className="dashboard-page">
+    <section className="welcome-card">
+      <div className="welcome-copy">
+        <span className="eyebrow">سلام {firstName || "والد عزیز"} 👋</span>
+        <h1>نینیبو بدون پرونده فرزند هم کنار شماست</h1>
+        <p>اگر هنوز فرزندی ندارید، در انتظار تولد هستید یا می‌خواهید بعداً اطلاعات را اضافه کنید، می‌توانید از بخش‌های عمومی نینیبو استفاده کنید.</p>
+        <div className="welcome-meta"><span>سلامت مادر، جامعه، محتوا و خدمات فعال هستند</span></div>
+      </div>
+    </section>
+    <section className="overview-grid">
+      <article className="surface-card"><h3>پرونده فرزند</h3><p>رشد، واکسن، ویزیت، دارو و سایر سوابق کودک پس از افزودن فرزند فعال می‌شوند.</p><Button onClick={() => onNavigate("profile")}><Plus size={16} /> افزودن فرزند</Button></article>
+      <article className="surface-card"><h3>سلامت مادر</h3><p>چرخه، بارداری، شیردهی و مراقبت از خود مستقل از پرونده فرزند در دسترس است.</p><Button variant="outline" onClick={() => onNavigate("maternal")}>ورود به سلامت مادر</Button></article>
+    </section>
+    <section className="discovery-strip" aria-label="مسیرهای در دسترس">
+      <button type="button" className="discovery-item" onClick={() => onNavigate("community")}><div><strong>جامعه والدین</strong><small>گروه‌ها و تجربه‌ها</small></div></button>
+      <button type="button" className="discovery-item" onClick={() => onNavigate("discover")}><div><strong>کشف و محتوا</strong><small>دانشنامه و مراکز</small></div></button>
+      <button type="button" className="discovery-item" onClick={() => onNavigate("services")}><div><strong>خدمات و مشاوره</strong><small>بدون الزام اتصال به کودک</small></div></button>
+    </section>
+  </div>;
+}
+
+function NoChildHealth({ onAddChild }: { onAddChild: () => void }) {
+  return <section className="fatal-state">
+    <div className="fatal-icon"><Plus size={28} /></div>
+    <h1>هنوز فرزندی اضافه نشده</h1>
+    <p>قابلیت‌های سلامت کودک به پرونده فرزند وابسته هستند. سایر بخش‌های نینیبو همچنان قابل استفاده‌اند.</p>
+    <Button onClick={onAddChild}><Plus size={16} /> افزودن فرزند</Button>
+  </section>;
 }
