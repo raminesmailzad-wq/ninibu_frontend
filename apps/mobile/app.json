@@ -24,7 +24,7 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": true,
-      "versionCode": 40,
+      "versionCode": 41,
       "blockedPermissions": [
         "android.permission.SYSTEM_ALERT_WINDOW"
       ],

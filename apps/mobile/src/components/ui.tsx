@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import {
   ActivityIndicator,
   findNodeHandle,
+  Keyboard,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -26,15 +27,34 @@ type KeyboardScrollValue = { ensureVisible: (input: TextInputType | null) => voi
 const KeyboardScrollContext = createContext<KeyboardScrollValue | null>(null);
 
 function useKeyboardScroll(scrollRef: RefObject<ScrollView | null>) {
-  return useMemo<KeyboardScrollValue>(() => ({
-    ensureVisible(input) {
-      const node = input ? findNodeHandle(input) : null;
-      if (!node) return;
-      requestAnimationFrame(() => {
-        scrollRef.current?.scrollResponderScrollNativeHandleToKeyboard(node, 120, true);
-      });
-    },
-  }), [scrollRef]);
+  const activeInputRef = useRef<TextInputType | null>(null);
+
+  const scrollInputIntoView = useCallback((input: TextInputType | null) => {
+    const node = input ? findNodeHandle(input) : null;
+    if (!node) return;
+    scrollRef.current?.scrollResponderScrollNativeHandleToKeyboard(node, 110, true);
+  }, [scrollRef]);
+
+  const ensureVisible = useCallback((input: TextInputType | null) => {
+    activeInputRef.current = input;
+    requestAnimationFrame(() => scrollInputIntoView(input));
+    // Android resizes the modal after focus. Re-run after the keyboard animation
+    // so lower fields remain visible instead of slipping behind the keyboard.
+    setTimeout(() => scrollInputIntoView(input), 160);
+    setTimeout(() => scrollInputIntoView(input), 360);
+  }, [scrollInputIntoView]);
+
+  useEffect(() => {
+    const subscription = Keyboard.addListener('keyboardDidShow', () => {
+      const input = activeInputRef.current;
+      if (!input) return;
+      requestAnimationFrame(() => scrollInputIntoView(input));
+      setTimeout(() => scrollInputIntoView(input), 80);
+    });
+    return () => subscription.remove();
+  }, [scrollInputIntoView]);
+
+  return useMemo<KeyboardScrollValue>(() => ({ ensureVisible }), [ensureVisible]);
 }
 
 export function Screen({
@@ -233,7 +253,20 @@ export function RowLink({ icon, title, subtitle, onPress, badge }: { icon: keyof
   </Pressable>;
 }
 
-export function ChoiceModal<T extends { id: number }>({ visible, title, items, label, onChoose, onClose }: { visible: boolean; title: string; items: T[]; label: (item: T) => string; onChoose: (item: T) => void; onClose: () => void }) {
+export function ChoiceModal<T extends { id: number }>({ visible, title, items, label, onChoose, onClose, selectedId }: { visible: boolean; title: string; items: T[]; label: (item: T) => string; onChoose: (item: T) => void; onClose: () => void; selectedId?: number }) {
+  const scrollRef = useRef<ScrollView>(null);
+  const selectedIndex = useMemo(() => selectedId == null ? -1 : items.findIndex((item) => item.id === selectedId), [items, selectedId]);
+  const scrollToSelected = useCallback(() => {
+    if (selectedIndex < 0) return;
+    scrollRef.current?.scrollTo({ y: Math.max(0, selectedIndex * 56 - 112), animated: false });
+  }, [selectedIndex]);
+
+  useEffect(() => {
+    if (!visible || selectedIndex < 0) return;
+    const timer = setTimeout(scrollToSelected, 80);
+    return () => clearTimeout(timer);
+  }, [visible, selectedIndex, scrollToSelected]);
+
   return <Modal visible={visible} transparent statusBarTranslucent animationType="fade" onRequestClose={onClose}>
     <View style={s.modalRoot}>
       <Pressable style={s.scrim} onPress={onClose} />
@@ -243,11 +276,14 @@ export function ChoiceModal<T extends { id: number }>({ visible, title, items, l
           <Text style={s.sheetTitle}>{title}</Text>
           <IconButton icon="close" onPress={onClose} label="بستن" />
         </View>
-        <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={s.choiceList}>
-          {items.map((item) => <Pressable key={item.id} style={({ pressed }) => [s.choice, pressed && s.rowPressed]} onPress={() => { onChoose(item); onClose(); }}>
-            <Text style={s.choiceText}>{label(item)}</Text>
-            <Ionicons name="chevron-back" size={17} color={colors.muted} />
-          </Pressable>)}
+        <ScrollView ref={scrollRef} keyboardShouldPersistTaps="handled" contentContainerStyle={s.choiceList} onContentSizeChange={scrollToSelected}>
+          {items.map((item) => {
+            const selected = item.id === selectedId;
+            return <Pressable key={item.id} style={({ pressed }) => [s.choice, selected && s.choiceSelected, pressed && s.rowPressed]} onPress={() => { onChoose(item); onClose(); }}>
+              <Text style={[s.choiceText, selected && s.choiceTextSelected]}>{label(item)}</Text>
+              <Ionicons name={selected ? 'checkmark-circle' : 'chevron-back'} size={18} color={selected ? colors.primary : colors.muted} />
+            </Pressable>;
+          })}
         </ScrollView>
       </SafeAreaView>
     </View>
@@ -357,9 +393,9 @@ export function JalaliDateModalInput({ label, value, onChange, required = false 
         </View>
       </View>
     </Modal>
-    <ChoiceModal visible={picker === 'day'} title="انتخاب روز" items={days} label={(item) => item.name} onChoose={(item) => setDay(item.value)} onClose={() => setPicker(null)} />
-    <ChoiceModal visible={picker === 'month'} title="انتخاب ماه" items={months} label={(item) => item.name} onChoose={(item) => setMonth(item.value)} onClose={() => setPicker(null)} />
-    <ChoiceModal visible={picker === 'year'} title="انتخاب سال" items={years} label={(item) => item.name} onChoose={(item) => setYear(item.value)} onClose={() => setPicker(null)} />
+    <ChoiceModal visible={picker === 'day'} title="انتخاب روز" items={days} selectedId={Number(day)} label={(item) => item.name} onChoose={(item) => setDay(item.value)} onClose={() => setPicker(null)} />
+    <ChoiceModal visible={picker === 'month'} title="انتخاب ماه" items={months} selectedId={Number(month)} label={(item) => item.name} onChoose={(item) => setMonth(item.value)} onClose={() => setPicker(null)} />
+    <ChoiceModal visible={picker === 'year'} title="انتخاب سال" items={years} selectedId={Number(year)} label={(item) => item.name} onChoose={(item) => setYear(item.value)} onClose={() => setPicker(null)} />
   </View>;
 }
 
@@ -370,7 +406,7 @@ export function FormModal({ visible, title, subtitle, onClose, children }: { vis
   return <Modal visible={visible} transparent statusBarTranslucent animationType="fade" onRequestClose={onClose}>
     <View style={s.modalRoot}>
       <Pressable style={s.scrim} onPress={onClose} />
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={s.formModalKeyboard}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={0} style={s.formModalKeyboard}>
         <View style={[s.formModal, { paddingBottom: Math.max(12, insets.bottom + 6) }]}>
           <View style={s.formModalHead}>
             <View style={{ flex: 1 }}>
@@ -470,7 +506,9 @@ const s = StyleSheet.create({
   sheetTitle: { fontFamily: typography.bold, fontSize: 17, fontWeight: '900', writingDirection: 'rtl', color: colors.foreground, textAlign: 'right' },
   choiceList: { paddingBottom: 20 },
   choice: { minHeight: 56, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border, flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 6 },
+  choiceSelected: { backgroundColor: colors.primarySoft, borderRadius: 14 },
   choiceText: { fontFamily: typography.regular, fontSize: 13.5, color: colors.foreground, writingDirection: 'rtl', textAlign: 'right' },
+  choiceTextSelected: { fontFamily: typography.bold, color: colors.primaryStrong, fontWeight: '900' },
   select: { minHeight: 50, borderRadius: 15, borderWidth: 1, borderColor: colors.border, backgroundColor: '#fff', paddingHorizontal: 14, flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
   selectText: { fontFamily: typography.regular, flex: 1, fontSize: 13.5, color: colors.foreground, writingDirection: 'rtl', textAlign: 'right' },
   placeholder: { fontFamily: typography.regular, color: '#A39CAB' },
@@ -485,7 +523,7 @@ const s = StyleSheet.create({
   datePreview: { fontFamily: typography.regular, fontSize: 11, color: colors.primaryStrong, textAlign: 'right', writingDirection: 'rtl', backgroundColor: colors.primarySoft, borderRadius: 12, paddingHorizontal: 10, paddingVertical: 8 },
   dateActions: { flexDirection: 'row-reverse', gap: 8 },
   formModalKeyboard: { flex: 1, justifyContent: 'flex-end', paddingHorizontal: 10, paddingTop: 18, paddingBottom: 8 },
-  formModal: { maxHeight: '92%', backgroundColor: '#fff', borderRadius: 27, paddingTop: 16, paddingHorizontal: 16, ...shadow },
+  formModal: { maxHeight: '92%', flexShrink: 1, backgroundColor: '#fff', borderRadius: 27, paddingTop: 16, paddingHorizontal: 16, ...shadow },
   formModalHead: { flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between', gap: 12, paddingBottom: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border },
   formModalTitle: { fontFamily: typography.bold, fontSize: 18, fontWeight: '900', color: colors.foreground, textAlign: 'right', writingDirection: 'rtl' },
   formModalSubtitle: { fontFamily: typography.regular, fontSize: 10.5, color: colors.muted, textAlign: 'right', writingDirection: 'rtl', lineHeight: 18, marginTop: 3 },
