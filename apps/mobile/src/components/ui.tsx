@@ -15,6 +15,7 @@ import {
   View,
   type KeyboardTypeOptions,
   type TextInput as TextInputType,
+  type ScrollViewProps,
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
@@ -23,38 +24,58 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { colors, shadow, typography } from '@/theme';
 import { gregorianToJalaliInput, isValidJalaliDate, jalaliInputToGregorian, todayJalaliInput, toPersianDigits } from '@ninibu/datetime';
 
-type KeyboardScrollValue = { ensureVisible: (input: TextInputType | null) => void };
+type KeyboardScrollValue = { ensureVisible: (target: View | null) => void };
 const KeyboardScrollContext = createContext<KeyboardScrollValue | null>(null);
 
 function useKeyboardScroll(scrollRef: RefObject<ScrollView | null>) {
-  const activeInputRef = useRef<TextInputType | null>(null);
+  const activeTargetRef = useRef<View | null>(null);
 
-  const scrollInputIntoView = useCallback((input: TextInputType | null) => {
-    const node = input ? findNodeHandle(input) : null;
-    if (!node) return;
-    scrollRef.current?.scrollResponderScrollNativeHandleToKeyboard(node, 110, true);
+  const scrollTargetToTop = useCallback((target: View | null) => {
+    const scroll = scrollRef.current;
+    const scrollNode = scroll ? findNodeHandle(scroll) : null;
+    if (!target || !scroll || !scrollNode) return;
+    target.measureLayout(
+      scrollNode,
+      (_x, y) => scroll.scrollTo({ y: Math.max(0, y - 6), animated: true }),
+      () => undefined,
+    );
   }, [scrollRef]);
 
-  const ensureVisible = useCallback((input: TextInputType | null) => {
-    activeInputRef.current = input;
-    requestAnimationFrame(() => scrollInputIntoView(input));
-    // Android resizes the modal after focus. Re-run after the keyboard animation
-    // so lower fields remain visible instead of slipping behind the keyboard.
-    setTimeout(() => scrollInputIntoView(input), 160);
-    setTimeout(() => scrollInputIntoView(input), 360);
-  }, [scrollInputIntoView]);
+  const ensureVisible = useCallback((target: View | null) => {
+    activeTargetRef.current = target;
+    requestAnimationFrame(() => scrollTargetToTop(target));
+    // Android changes the available viewport while the keyboard animates.
+    // Re-anchor the whole field (label + input) once the layout has settled.
+    setTimeout(() => scrollTargetToTop(target), 140);
+    setTimeout(() => scrollTargetToTop(target), 340);
+  }, [scrollTargetToTop]);
 
   useEffect(() => {
     const subscription = Keyboard.addListener('keyboardDidShow', () => {
-      const input = activeInputRef.current;
-      if (!input) return;
-      requestAnimationFrame(() => scrollInputIntoView(input));
-      setTimeout(() => scrollInputIntoView(input), 80);
+      const target = activeTargetRef.current;
+      if (!target) return;
+      requestAnimationFrame(() => scrollTargetToTop(target));
+      setTimeout(() => scrollTargetToTop(target), 100);
     });
     return () => subscription.remove();
-  }, [scrollInputIntoView]);
+  }, [scrollTargetToTop]);
 
   return useMemo<KeyboardScrollValue>(() => ({ ensureVisible }), [ensureVisible]);
+}
+
+export function KeyboardAwareScrollView({ children, ...props }: ScrollViewProps & { children: ReactNode }) {
+  const scrollRef = useRef<ScrollView>(null);
+  const keyboardScroll = useKeyboardScroll(scrollRef);
+  return <ScrollView
+    ref={scrollRef}
+    keyboardShouldPersistTaps="handled"
+    keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
+    automaticallyAdjustKeyboardInsets
+    nestedScrollEnabled
+    {...props}
+  >
+    <KeyboardScrollContext.Provider value={keyboardScroll}>{children}</KeyboardScrollContext.Provider>
+  </ScrollView>;
 }
 
 export function Screen({
@@ -190,15 +211,16 @@ export function Field({
   maxLength?: number;
 }) {
   const inputRef = useRef<TextInputType>(null);
+  const fieldRef = useRef<View>(null);
   const keyboardScroll = useContext(KeyboardScrollContext);
-  return <View style={s.field}>
+  return <View ref={fieldRef} collapsable={false} style={s.field}>
     <View style={s.labelRow}>
       <Text style={s.label}>{label}</Text>
       {hint ? <Text style={s.hint}>{hint}</Text> : null}
     </View>
     <TextInput
       ref={inputRef}
-      onFocus={() => keyboardScroll?.ensureVisible(inputRef.current)}
+      onFocus={() => keyboardScroll?.ensureVisible(fieldRef.current)}
       value={value}
       onChangeText={onChangeText}
       placeholder={placeholder}
