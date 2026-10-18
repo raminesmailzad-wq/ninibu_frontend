@@ -10,7 +10,7 @@ services:
         NEXT_PUBLIC_NINIBU_PAYMENT_PROVIDER: "${NEXT_PUBLIC_NINIBU_PAYMENT_PROVIDER:-disabled}"
         NEXT_PUBLIC_NINIBU_SITE_URL: "${NEXT_PUBLIC_NINIBU_SITE_URL:-https://ninibu.com}"
         NEXT_PUBLIC_NINIBU_PWA_URL: "${NEXT_PUBLIC_NINIBU_PWA_URL:-https://app.ninibu.com}"
-        NEXT_PUBLIC_NINIBU_CAFEBAZAAR_URL: "${NEXT_PUBLIC_NINIBU_CAFEBAZAAR_URL:-}"
+        NEXT_PUBLIC_NINIBU_CAFEBAZAAR_URL: "${NEXT_PUBLIC_NINIBU_CAFEBAZAAR_URL:-https://cafebazaar.ir/app/com.ninibu.app}"
     restart: unless-stopped
     environment:
       NODE_ENV: production

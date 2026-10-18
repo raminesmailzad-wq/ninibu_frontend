@@ -8,7 +8,7 @@ import { rawBackend } from "@/lib/backend";
 
 export const SITE_URL = (process.env.NEXT_PUBLIC_NINIBU_SITE_URL || "https://ninibu.com").replace(/\/$/, "");
 export const PWA_URL = (process.env.NEXT_PUBLIC_NINIBU_PWA_URL || "https://app.ninibu.com").replace(/\/$/, "");
-export const CAFEBAZAAR_URL = (process.env.NEXT_PUBLIC_NINIBU_CAFEBAZAAR_URL || "").trim();
+export const CAFEBAZAAR_URL = (process.env.NEXT_PUBLIC_NINIBU_CAFEBAZAAR_URL || "https://cafebazaar.ir/app/com.ninibu.app").trim();
 
 export async function getPublicArticles(limit = 12, page = 1) {
   try {

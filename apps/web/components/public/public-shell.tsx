@@ -7,7 +7,7 @@ export function PublicHeader() {
   return <header className="public-header">
     <div className="public-container public-header-inner">
       <Link href="/" className="public-brand" aria-label="صفحه اصلی نینیبو">
-        <Image src="/brand/ninibu-logo.png" alt="نینیبو" width={512} height={512} priority />
+        <Image src="/brand/ninibu-header.jpg" alt="نینیبو" width={880} height={910} priority />
       </Link>
       <nav className="public-nav" aria-label="ناوبری سایت">
         <Link href="/#features">امکانات</Link>

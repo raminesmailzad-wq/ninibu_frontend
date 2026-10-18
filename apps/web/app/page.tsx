@@ -26,7 +26,7 @@ export default async function Page() {
       <div className="public-container public-hero-grid">
         <div className="public-hero-copy">
           <span className="public-eyebrow"><Sparkles size={16}/> همراه خانواده، از بارداری تا سال‌های آغازین کودکی</span>
-          <h1>والدگری، وقتی اطلاعات و تجربه‌ها <em>کنار هم</em> هستند.</h1>
+          <h1>همراه هوشمند خانواده، <em>از بارداری تا ۶ سالگی</em></h1>
           <p>نینیبو برای والدینی ساخته شده که می‌خواهند سلامت و رشد کودک، سلامت مادر، محتوای معتبر، تجربه والدین و خدمات موردنیاز خانواده را در یک مسیر ساده و منسجم داشته باشند.</p>
           <DownloadButtons/>
           <div className="public-hero-trust"><span><ShieldCheck size={16}/> حریم خصوصی در طراحی محصول</span><span><Activity size={16}/> پیگیری سلامت و رشد</span><span><MessageCircleHeart size={16}/> تجربه واقعی والدین</span></div>
@@ -57,7 +57,6 @@ export default async function Page() {
 
     <section className="public-section"><div className="public-container">
       <div className="public-section-head"><div><span>از زبان والدین</span><h2>تجربه‌هایی که ارزش به‌اشتراک‌گذاری دارند</h2></div><Link href="/experiences" className="public-section-link">همه تجربه‌ها <ArrowLeft size={16}/></Link></div>
-      <div className="public-experience-intro"><ShieldCheck size={21}/><p>این بخش فقط تجربه‌هایی را نشان می‌دهد که مدیریت نینیبو به‌صورت جداگانه برای انتشار عمومی تأیید کرده است. انتشار عمومی به معنی تأیید پزشکی محتوای تجربه نیست.</p></div>
       {experiences.items.length ? <div className="public-content-grid">{experiences.items.map((item)=><Link href={`/experiences/${item.slug}`} className="public-content-card experience" key={item.post_id}><span className="public-card-type">تجربه والدین</span><h3>{item.title}</h3><p>{item.excerpt}</p><footer><small>{item.author_name} · {faDate(item.published_at)}</small><b>بخوانید <ArrowLeft size={14}/></b></footer></Link>)}</div> : <div className="public-empty"><MessageCircleHeart size={26}/><strong>اولین تجربه‌های منتخب به‌زودی</strong><p>ادمین می‌تواند از پنل جامعه، پست‌های مناسب را برای نمایش عمومی انتخاب کند.</p></div>}
     </div></section>
 
