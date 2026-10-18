@@ -1,0 +1,13 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { ArrowRight, BookOpenText, ExternalLink } from "lucide-react";
+import { PublicShell } from "@/components/public/public-shell";
+import { absoluteUrl, faDate, getPublicArticle } from "@/lib/public-site";
+
+type Props = { params: Promise<{ slug: string }> };
+export const dynamic = "force-dynamic";
+
+export async function generateMetadata({params}:Props):Promise<Metadata>{const {slug}=await params;const d=await getPublicArticle(slug);if(!d)return {title:"مطلب پیدا نشد"};const description=d.content.summary||d.revision.summary||"مطلبی از نینیبو برای والدین";return {title:d.content.title,description,alternates:{canonical:absoluteUrl(`/articles/${d.content.slug}`)},openGraph:{type:"article",title:d.content.title,description,url:absoluteUrl(`/articles/${d.content.slug}`),publishedTime:d.content.published_at}}}
+
+export default async function ArticlePage({params}:Props){const {slug}=await params;const d=await getPublicArticle(slug);if(!d)notFound();const description=d.content.summary||d.revision.summary||"";const schema={"@context":"https://schema.org","@type":"Article",headline:d.content.title,description,datePublished:d.content.published_at,dateModified:d.content.updated_at,inLanguage:"fa-IR",mainEntityOfPage:absoluteUrl(`/articles/${d.content.slug}`),publisher:{"@type":"Organization",name:"نینیبو",logo:{"@type":"ImageObject",url:absoluteUrl("/brand/ninibu-logo.png")}}};return <PublicShell><script type="application/ld+json" dangerouslySetInnerHTML={{__html:JSON.stringify(schema)}}/><article className="public-article public-container"><Link className="public-back" href="/articles"><ArrowRight size={16}/> بازگشت به مطالب</Link><header><div className="public-article-tags">{d.categories.map(x=><span key={x.id}>{x.name}</span>)}</div><h1>{d.content.title}</h1>{description?<p>{description}</p>:null}<div className="public-article-meta"><span><BookOpenText size={15}/> {d.content.content_type}</span><span>{faDate(d.content.published_at)}</span>{d.content.medical_review_required?<span>نیازمند بازبینی پزشکی</span>:null}</div></header><div className="public-article-body" dangerouslySetInnerHTML={{__html:d.revision.body}}/>{d.disclaimers.length?<aside className="public-disclaimer">{d.disclaimers.map(x=><p key={x.id}>{x.text}</p>)}</aside>:null}{d.sources.length?<section className="public-sources"><h2>منابع</h2>{d.sources.map(x=><div key={x.id}><span>{x.title}{x.publisher?` — ${x.publisher}`:""}</span>{x.url?<a href={x.url} rel="noopener noreferrer nofollow"><ExternalLink size={14}/> مشاهده منبع</a>:null}</div>)}</section>:null}</article></PublicShell>}

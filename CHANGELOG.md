@@ -1,3 +1,11 @@
+# v0.24.4 — Public landing, SEO and editorial experiences
+
+- Replaced the root dashboard redirect with a public SEO-first Ninibu landing while keeping the authenticated dashboard routes intact.
+- Added SSR article and approved-parent-experience surfaces, dynamic metadata, canonical URLs, JSON-LD, `robots.txt` and `sitemap.xml`.
+- Added admin editorial controls for selecting Community posts for the public website, with SEO slug/title/description management and explicit unpublish.
+- Added environment-configurable PWA and CafeBazaar download links.
+- Web/root version is `0.24.4`; Android/PWA remains `0.24.3`.
+
 # v0.24.3 — Keyboard-safe forms and optional child onboarding
 
 - Mobile form modals remain scrollable with the keyboard open and focused shared fields are brought into view automatically.

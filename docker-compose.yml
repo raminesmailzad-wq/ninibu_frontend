@@ -1,6 +1,6 @@
 services:
   frontend:
-    image: ${NINIBU_FRONTEND_IMAGE:-ninibu-frontend:0.24.3}
+    image: ${NINIBU_FRONTEND_IMAGE:-ninibu-frontend:0.24.4}
     build:
       context: .
       dockerfile: Dockerfile
@@ -8,6 +8,9 @@ services:
       args:
         NEXT_PUBLIC_NINIBU_ANALYTICS_ENDPOINT: ""
         NEXT_PUBLIC_NINIBU_PAYMENT_PROVIDER: "${NEXT_PUBLIC_NINIBU_PAYMENT_PROVIDER:-disabled}"
+        NEXT_PUBLIC_NINIBU_SITE_URL: "${NEXT_PUBLIC_NINIBU_SITE_URL:-https://ninibu.com}"
+        NEXT_PUBLIC_NINIBU_PWA_URL: "${NEXT_PUBLIC_NINIBU_PWA_URL:-https://app.ninibu.com}"
+        NEXT_PUBLIC_NINIBU_CAFEBAZAAR_URL: "${NEXT_PUBLIC_NINIBU_CAFEBAZAAR_URL:-}"
     restart: unless-stopped
     environment:
       NODE_ENV: production

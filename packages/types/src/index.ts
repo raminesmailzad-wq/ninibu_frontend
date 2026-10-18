@@ -1011,6 +1011,41 @@ export type AdminCommunityReport = {
 };
 export type AdminCommunityReportList = { items: AdminCommunityReport[]; pagination: Pagination };
 
+export type CommunityWebPublication = {
+  id: number;
+  post_id: number;
+  slug: string;
+  excerpt: string;
+  seo_title: string;
+  seo_description: string;
+  is_published: boolean;
+  published_at: string;
+  updated_at: string;
+};
+
+export type PublicCommunityExperience = {
+  post_id: number;
+  slug: string;
+  title: string;
+  excerpt: string;
+  body: string;
+  seo_title: string;
+  seo_description: string;
+  author_name: string;
+  author_type: string;
+  is_anonymous: boolean;
+  group_name: string;
+  post_type: string;
+  comment_count: number;
+  reaction_count: number;
+  published_at: string;
+  original_published_at: string;
+  medical_disclaimer: string;
+};
+export type PublicCommunityExperienceList = { items: PublicCommunityExperience[]; pagination: Pagination };
+export type AdminCommunityWebCandidate = { post: CommunityPost; publication?: CommunityWebPublication };
+export type AdminCommunityWebCandidateList = { items: AdminCommunityWebCandidate[]; pagination: Pagination };
+
 export type AdminFeatureFlag = { id: number; code: string; name: string; description?: string; enabled: boolean; rollout_percent: number; updated_by_user_id?: number; updated_at: string };
 export type AdminSystemSetting = { id: number; key: string; value: string; value_type: string; description?: string; is_public: boolean; updated_by_user_id?: number; updated_at: string };
 export type AdminAuditEvent = { id: number; actor_user_id: number; action: string; entity_type?: string; entity_id?: string; metadata?: Record<string, unknown>; created_at: string };
