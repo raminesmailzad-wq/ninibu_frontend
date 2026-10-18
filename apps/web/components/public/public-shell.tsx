@@ -37,7 +37,7 @@ export function PublicFooter() {
   return <footer className="public-footer">
     <div className="public-container public-footer-grid">
       <div className="public-footer-brand">
-        <Image src="/brand/ninibu-logo.png" alt="نینیبو" width={512} height={512}/>
+        <Image src="/brand/ninibu-logo-transparent.png" alt="نینیبو" width={860} height={900}/>
         <p>همراه هوشمند والدین؛ از بارداری تا سال‌های آغازین رشد کودک، برای سلامت، رشد، تجربه و تصمیم‌های روزمره خانواده.</p>
       </div>
       <div><strong>نینیبو</strong><Link href="/#features">امکانات</Link><Link href="/articles">مطالب</Link><Link href="/experiences">تجربه والدین</Link></div>
