@@ -10,7 +10,7 @@ export async function rawBackend<T>(path: string, init: RequestInit = {}): Promi
   const isFormData = typeof FormData !== "undefined" && init.body instanceof FormData;
   const response = await fetch(`${backendURL()}${path}`, {
     ...init,
-    headers: { ...(init.body && !isFormData ? { "content-type": "application/json" } : {}), ...(init.headers ?? {}) },
+    headers: { "x-ninibu-surface": "web", ...(init.body && !isFormData ? { "content-type": "application/json" } : {}), ...(init.headers ?? {}) },
     cache: "no-store"
   });
   if (response.status === 204) {

@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { BarChart3, BookOpenText, CircleDollarSign, FileImage, LayoutDashboard, LogOut, MapPinned, Megaphone, MessageSquareWarning, Settings2, ShieldCheck, Store, UsersRound } from "lucide-react";
+import { Activity, BarChart3, BookOpenText, CircleDollarSign, FileImage, LayoutDashboard, LogOut, MapPinned, Megaphone, MessageSquareWarning, Settings2, ShieldCheck, Store, UsersRound } from "lucide-react";
 import type { AuthSession, User } from "@ninibu/types";
 import { AdminLogin } from "@/components/admin/admin-login";
 import { Button } from "@/components/ui/button";
@@ -17,12 +17,14 @@ import { AdminFinancePanel } from "@/components/admin/finance-panel";
 import { AdminSystemPanel } from "@/components/admin/system-panel";
 import { AdminMediaPanel } from "@/components/admin/media-panel";
 import { AdminCareLocationsPanel } from "@/components/admin/care-locations-panel";
+import { AdminAnalyticsPanel } from "@/components/admin/analytics-panel";
 
-type Section = "dashboard" | "content" | "media" | "care-locations" | "advertising" | "providers" | "community" | "users" | "finance" | "system";
+type Section = "dashboard" | "analytics" | "content" | "media" | "care-locations" | "advertising" | "providers" | "community" | "users" | "finance" | "system";
 type Phase = "loading" | "login" | "forbidden" | "ready";
 
 const nav: Array<{ key: Section; label: string; icon: typeof LayoutDashboard }> = [
   { key: "dashboard", label: "نمای کلی", icon: LayoutDashboard },
+  { key: "analytics", label: "رفتار کاربران", icon: Activity },
   { key: "content", label: "محتوا", icon: BookOpenText },
   { key: "media", label: "رسانه و فایل", icon: FileImage },
   { key: "care-locations", label: "مراکز و نقشه", icon: MapPinned },
@@ -77,6 +79,7 @@ export function AdminShell() {
     </aside>
     <main className="admin-main">
       {section === "dashboard" && <AdminDashboardPanel onNavigate={(key) => router.push(`/admin/${key}`)} />}
+      {section === "analytics" && <AdminAnalyticsPanel />}
       {section === "content" && <AdminContentPanel />}
       {section === "media" && <AdminMediaPanel />}
       {section === "care-locations" && <AdminCareLocationsPanel />}

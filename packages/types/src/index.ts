@@ -952,6 +952,17 @@ export type AdminDashboard = {
   privacy_note?: string;
 };
 
+export type AdminProductAnalytics = {
+  period_days: number; generated_at: string; tracking_since?: string; privacy_note: string;
+  summary: { total_users: number; new_users: number; active_1d: number; active_7d: number; active_30d: number; users_with_child: number; users_with_health_data: number; returning_users: number };
+  funnel: Array<{ key: string; label: string; count: number; percent: number }>;
+  feature_adoption: Array<{ key: string; label: string; users: number; records: number; percent: number }>;
+  top_sections: Array<{ section: string; label: string; requests: number; users: number; share: number }>;
+  surfaces: Array<{ surface: string; label: string; requests: number; users: number; share: number }>;
+  daily_activity: Array<{ date: string; requests: number; users: number }>;
+  users: Array<{ id: number; mobile: string; first_name: string; last_name: string; created_at: string; last_login_at?: string; last_activity_at?: string; child_count: number; health_data_count: number; request_count: number; top_section: string; top_section_label: string; surfaces: string[]; activity_status: string }>;
+};
+
 export type AdminUser = {
   id: number; mobile: string; first_name: string; last_name: string; role: string; active: boolean; environment_managed: boolean;
   created_at: string; last_login_at?: string;
